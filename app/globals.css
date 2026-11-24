@@ -133,7 +133,6 @@ input { font: inherit; color: inherit; }
   background: var(--glass);
   border: 1px solid var(--hairline);
   backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   font-size: 1.05rem;
   line-height: 1;
 }
@@ -152,11 +151,11 @@ input { font: inherit; color: inherit; }
   justify-content: space-between;
   padding: 0 0.5rem 0 1.25rem;
   border-radius: 999px;
-  background: var(--glass);
+  /* glass as on premotio: half-white over a 10px blur, with a hairline edge */
+  background: rgba(255, 255, 255, 0.5);
   border: 1px solid var(--hairline);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  transition: transform 0.6s var(--ease), opacity 0.4s;
+  backdrop-filter: blur(10px);
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
 }
 .nav.is-hidden { transform: translate(-50%, calc(-100% - 1.5rem)); opacity: 0; }
 .nav-brand { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 1.1875rem; letter-spacing: -0.03em; }
@@ -319,7 +318,7 @@ input { font: inherit; color: inherit; }
   transform: translate(-50%, calc(-50% + (1 - var(--rise)) * 75vh)) rotate(calc((1 - var(--rise)) * -10deg));
 }
 .phone-screen { height: 100%; border-radius: 2.2rem; overflow: hidden; background: var(--bg); position: relative; }
-.phone-nav { position: absolute; left: 0.6rem; right: 0.6rem; top: 0.6rem; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0.7rem; border-radius: 999px; background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-size: 0.6875rem; }
+.phone-nav { position: absolute; left: 0.6rem; right: 0.6rem; top: 0.6rem; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0.7rem; border-radius: 999px; background: var(--glass); backdrop-filter: blur(10px); font-size: 0.6875rem; }
 .phone-nav span { padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--ink); color: var(--inverse-fg); font-size: 0.5625rem; }
 .phone-feed { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; padding: 3.25rem 0.5rem 0.5rem; transform: translateY(calc(var(--t) * -38%)); }
 .phone-col { display: flex; flex-direction: column; gap: 0.4rem; }
@@ -461,7 +460,6 @@ input { font: inherit; color: inherit; }
   font-weight: 500;
   background: var(--glass);
   backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--hairline);
   opacity: 0;
   transform: translateY(-4px);
@@ -492,7 +490,6 @@ input { font: inherit; color: inherit; }
   inset: 0;
   background: rgba(2, 7, 10, 0.5);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   animation: fade 0.3s both;
 }
 .modal-panel {
