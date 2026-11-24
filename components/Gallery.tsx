@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Card, { ratioOf } from "./Card";
+import type { Kind } from "./Stats";
 import type { Item, Site } from "@/lib/types";
 
 const PAGE = 40;
@@ -24,6 +25,10 @@ export default function Gallery({
   items,
   category,
   setCategory,
+  kind,
+  setKind,
+  onlyPrompt,
+  setOnlyPrompt,
   onOpen,
   onListChange,
 }: {
@@ -31,11 +36,14 @@ export default function Gallery({
   items: Item[];
   category: string;
   setCategory: (id: string) => void;
+  kind: Kind;
+  setKind: (k: Kind) => void;
+  onlyPrompt: boolean;
+  setOnlyPrompt: (v: boolean) => void;
   onOpen: (id: string) => void;
   onListChange: (list: Item[]) => void;
 }) {
   const [query, setQuery] = useState("");
-  const [onlyPrompt, setOnlyPrompt] = useState(false);
   const [oldest, setOldest] = useState(false);
   const [limit, setLimit] = useState(PAGE);
   const cols = useColumnCount();
@@ -50,15 +58,17 @@ export default function Gallery({
     const q = query.trim().toLowerCase();
     const list = items.filter((i) => {
       if (category !== "all" && i.category !== category) return false;
+      if (kind === "image" && i.media.type !== "image") return false;
+      if (kind === "motion" && i.media.type === "image") return false;
       if (onlyPrompt && !i.prompt) return false;
       if (!q) return true;
       return [i.title, i.prompt, i.note, i.model, ...i.tags].some((s) => s?.toLowerCase().includes(q));
     });
     return oldest ? list.reverse() : list;
-  }, [items, category, onlyPrompt, query, oldest]);
+  }, [items, category, kind, onlyPrompt, query, oldest]);
 
   useEffect(() => onListChange(filtered), [filtered, onListChange]);
-  useEffect(() => setLimit(PAGE), [category, onlyPrompt, query, oldest]);
+  useEffect(() => setLimit(PAGE), [category, kind, onlyPrompt, query, oldest]);
 
   const columns = useMemo(() => {
     const out: Item[][] = Array.from({ length: cols }, () => []);
@@ -93,7 +103,20 @@ export default function Gallery({
               aria-label="搜索"
             />
           </label>
-          <button className={`toggle${onlyPrompt ? " is-on" : ""}`} onClick={() => setOnlyPrompt((v) => !v)} aria-pressed={onlyPrompt}>
+          <div className="seg seg--line" role="radiogroup" aria-label="类型">
+            {(
+              [
+                ["all", "全部类型"],
+                ["image", "图片"],
+                ["motion", "动效与界面"],
+              ] as const
+            ).map(([k, label]) => (
+              <button key={k} role="radio" aria-checked={kind === k} className={kind === k ? "is-on" : ""} onClick={() => setKind(k)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <button className={`toggle${onlyPrompt ? " is-on" : ""}`} onClick={() => setOnlyPrompt(!onlyPrompt)} aria-pressed={onlyPrompt}>
             只看带提示词
           </button>
           <button className="toggle" onClick={() => setOldest((v) => !v)}>

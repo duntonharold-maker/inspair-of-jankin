@@ -1,18 +1,19 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Categories from "./Categories";
+import Cta from "./Cta";
 import Footer from "./Footer";
 import Gallery from "./Gallery";
-import Hero from "./Hero";
-import McpSection from "./McpSection";
 import Modal from "./Modal";
 import Nav from "./Nav";
-import Wall from "./Wall";
+import Stats, { type Kind } from "./Stats";
+import Story from "./story/Story";
 import { scrollToId } from "@/lib/scroll";
 import type { Item, Site } from "@/lib/types";
 
 export default function Home({ items, site, repoUrl }: { items: Item[]; site: Site; repoUrl?: string }) {
   const [category, setCategory] = useState("all");
+  const [kind, setKind] = useState<Kind>("all");
+  const [onlyPrompt, setOnlyPrompt] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [list, setList] = useState<Item[]>(items);
   const pushed = useRef(false);
@@ -69,6 +70,14 @@ export default function Home({ items, site, repoUrl }: { items: Item[]; site: Si
 
   const pickCategory = useCallback((id: string) => {
     setCategory(id);
+    setKind("all");
+    scrollToId("all");
+  }, []);
+
+  const browse = useCallback((f: { kind?: Kind; onlyPrompt?: boolean } = {}) => {
+    setCategory("all");
+    setKind(f.kind ?? "all");
+    setOnlyPrompt(Boolean(f.onlyPrompt));
     scrollToId("all");
   }, []);
 
@@ -80,18 +89,21 @@ export default function Home({ items, site, repoUrl }: { items: Item[]; site: Si
     <>
       <Nav site={site} onRandom={items.length ? random : undefined} />
       <main>
-        <Hero site={site} count={items.length} />
-        <Wall items={items} onOpen={open} />
-        <Categories site={site} items={items} onPick={pickCategory} />
+        <Story items={items} site={site} onOpen={open} onPickCategory={pickCategory} />
+        <Stats items={items} site={site} onBrowse={browse} />
         <Gallery
           site={site}
           items={items}
           category={category}
           setCategory={setCategory}
+          kind={kind}
+          setKind={setKind}
+          onlyPrompt={onlyPrompt}
+          setOnlyPrompt={setOnlyPrompt}
           onOpen={open}
           onListChange={setList}
         />
-        <McpSection />
+        <Cta onRandom={random} onBrowse={() => browse()} />
       </main>
       <Footer site={site} repoUrl={repoUrl} />
       {openItem && <Modal item={openItem} site={site} onClose={close} onPrev={nav.prev} onNext={nav.next} />}
