@@ -1,12 +1,10 @@
 "use client";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import type { Effect } from "./scene";
 
 /** Story progress shared with every screen without re-rendering React on each frame. */
 export class StoryStore {
   p = 0;
   vh = 900;
-  effect: { mode: Effect; amount: number; manual: boolean } = { mode: "off", amount: 1, manual: false };
   private subs = new Set<(p: number) => void>();
   set(p: number) {
     this.p = p;

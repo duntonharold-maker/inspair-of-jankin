@@ -37,8 +37,6 @@ export default function Nav({ site, onRandom }: { site: Site; onRandom?: () => v
       <nav className="nav-links" aria-label="页面导航">
         <a href="/#fresh">最新</a>
         <a href="/#categories">分类</a>
-        <a href="/#how">怎么收</a>
-        <a href="/#mcp">MCP</a>
         <a href="/#all">全部</a>
       </nav>
       {onRandom ? (

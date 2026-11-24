@@ -3,10 +3,6 @@ export const SCREENS = [
   { id: "hero", len: 1.4 },
   { id: "library", len: 4.6 },
   { id: "categories", len: 4.4 },
-  { id: "shortcut", len: 3.0 },
-  { id: "custom", len: 5.6 },
-  { id: "distort", len: 3.4 },
-  { id: "agents", len: 4.2 },
   { id: "devices", len: 2.4 },
   { id: "export", len: 2.8 },
 ] as const;
@@ -34,18 +30,10 @@ export const MARKS = {
   gather: [START.library - 0.4, START.library + 1.2] as [number, number],
   unroll: [START.library + 1.7, START.library + 3.0] as [number, number],
   exit: [START.categories - 0.5, START.categories + 0.3] as [number, number],
-  distort: [START.distort, START.distort + 0.7, START.distort + LEN.distort - 0.7, START.distort + LEN.distort] as [
-    number,
-    number,
-    number,
-    number,
-  ],
 };
 
 /** Scroll positions (viewport heights into the story) that the nav links jump to. */
 export const ANCHORS: { id: string; at: number }[] = [
   { id: "fresh", at: START.library + 3.4 },
   { id: "categories", at: START.categories + 0.25 },
-  { id: "how", at: START.custom + 0.2 },
-  { id: "mcp", at: START.agents + 0.3 },
 ];

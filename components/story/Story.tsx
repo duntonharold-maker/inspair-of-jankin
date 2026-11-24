@@ -1,15 +1,11 @@
 "use client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import AgentsScreen from "./screens/Agents";
+import { useEffect, useMemo, useRef, useState } from "react";
 import CategoriesScreen from "./screens/Categories";
-import CustomScreen from "./screens/Custom";
 import DevicesScreen from "./screens/Devices";
-import DistortScreen from "./screens/Distort";
 import ExportScreen from "./screens/Export";
 import HeroScreen from "./screens/Hero";
 import LibraryScreen from "./screens/Library";
-import ShortcutScreen from "./screens/Shortcut";
-import type { Effect, StoryScene } from "./scene";
+import type { StoryScene } from "./scene";
 import { StoryContext, StoryStore } from "./store";
 import { ANCHORS, MARKS, SCREENS, START, TOTAL, local } from "./timeline";
 import type { Item, Site } from "@/lib/types";
@@ -103,7 +99,6 @@ export default function Story({
         scene = createStoryScene(canvasRef.current, items);
         scene.setMarks(MARKS);
         scene.setProgress(store.p);
-        scene.setEffect(store.effect.mode, store.effect.amount);
         sceneRef.current = scene;
         setGl("on");
       })
@@ -119,7 +114,7 @@ export default function Story({
   useEffect(() => {
     if (gl !== "on") return;
     const root = rootRef.current!;
-    const interactive = (el: EventTarget | null) => el instanceof Element && el.closest("a,button,input,label,.chat,.modal");
+    const interactive = (el: EventTarget | null) => el instanceof Element && el.closest("a,button,input,label,.modal");
     const pickable = () => store.p < START.categories && !document.documentElement.classList.contains("is-locked");
     // Hover follows the pointer, and is re-checked while scrolling so cards that slide under a
     // still cursor light up too.
@@ -164,8 +159,6 @@ export default function Story({
     };
   }, [gl, onOpen, store]);
 
-  const onEffect = useCallback((mode: Effect, amount: number) => sceneRef.current?.setEffect(mode, amount), []);
-
   return (
     <StoryContext.Provider value={store}>
       <div ref={rootRef} className={`story gl-${gl}`} style={{ ["--total" as string]: TOTAL }}>
@@ -176,10 +169,6 @@ export default function Story({
           <HeroScreen site={site} count={items.length} />
           <LibraryScreen />
           <CategoriesScreen site={site} items={items} onPick={onPickCategory} />
-          <ShortcutScreen />
-          <CustomScreen items={items} />
-          <DistortScreen onEffect={onEffect} />
-          <AgentsScreen />
           <DevicesScreen items={items} site={site} />
           <ExportScreen items={items} />
           <canvas ref={canvasRef} className="story-scene" aria-hidden="true" />

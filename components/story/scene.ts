@@ -1,7 +1,7 @@
 /**
  * The cards behind the story: they tumble in the air in the hero, gather into a turning ring,
- * unroll into a tilted wall on the left half, leave, and come back as a carousel for the
- * "Bend anything" screen. Everything is driven by the story progress (in viewport heights).
+ * unroll into a tilted wall on the left half, then leave. Everything is driven by the story
+ * progress (in viewport heights).
  */
 import {
   Euler,
@@ -21,19 +21,15 @@ import {
 import { cardTexture, type CardTexture } from "./textures";
 import type { Item } from "@/lib/types";
 
-export type Effect = "off" | "flare" | "prism" | "bend";
-
 export type SceneMarks = {
   gather: [number, number];
   unroll: [number, number];
   exit: [number, number];
-  distort: [number, number, number, number];
 };
 
 export type StoryScene = {
   setProgress(p: number): void;
   setMarks(m: SceneMarks): void;
-  setEffect(e: Effect, amount: number): void;
   /** The card under the pointer, if any. */
   pick(clientX: number, clientY: number): { id: string; index: number } | null;
   /** Lift one card (index from `pick`), or none with -1. */
@@ -65,7 +61,6 @@ const fragment = /* glsl */ `
 uniform sampler2D uMap;
 uniform float uHasMap;
 uniform float uAlpha;
-uniform float uPrism;
 uniform vec4 uClip;
 uniform vec3 uPaper;
 uniform vec3 uTint;
@@ -89,12 +84,7 @@ void main() {
   if (uHasMap > 0.5) {
     // the back of a card shows its picture mirrored, like a print seen through thin paper
     vec2 uv = gl_FrontFacing ? vUv : vec2(1.0 - vUv.x, vUv.y);
-    vec2 dir = vec2(1.0, 0.35) * uPrism;
-    colour = vec3(
-      texture2D(uMap, uv + dir).r,
-      texture2D(uMap, uv).g,
-      texture2D(uMap, uv - dir).b
-    );
+    colour = texture2D(uMap, uv).rgb;
   }
 #ifdef GHOST
   colour *= uTint;
@@ -209,7 +199,6 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     uTime: { value: 0 },
     uClip: { value: new Vector4(0, 0, 1e5, 1e5) },
     uPaper: { value: new Vector3(0.97, 0.965, 0.955) },
-    uPrism: { value: 0 },
   };
 
   const material = (ghost: boolean) =>
@@ -302,11 +291,9 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
 
   /* ---------------------------------------------------------- layout */
 
-  let marks: SceneMarks = { gather: [0.6, 2.2], unroll: [2.9, 4.2], exit: [5, 5.8], distort: [14, 14.7, 16.3, 17] };
+  let marks: SceneMarks = { gather: [0.6, 2.2], unroll: [2.9, 4.2], exit: [5, 5.8] };
   let progress = 0;
   let hovered = -1;
-  let effect: Effect = "off";
-  let amount = 1;
   let viewW = 1;
   let viewH = 1;
   let pxW = 1;
@@ -319,7 +306,6 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
   // Turned 23° in its own plane, then laid back 46°: on screen the rows rise ~17° and the
   // columns fall ~60°, as on premotio's wall.
   const qWall = new Quaternion().setFromEuler(new Euler(-0.8, 0, 0)).multiply(new Quaternion().setFromEuler(new Euler(0, 0, 0.41)));
-  const qCarousel = new Quaternion().setFromEuler(new Euler(0.12, 0, 0));
   const v = new Vector3();
   const proj = new Vector3();
 
@@ -361,20 +347,6 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     out.s = size;
   }
 
-  /** A filmstrip of big cards drifting right to left on a shallow curve. */
-  function carouselPose(k: number, t: number, p: number, out: { p: Vector3; q: Quaternion; s: number }) {
-    const size = viewH * (mobile ? 0.34 : 0.44);
-    const gap = size * 0.75 * 1.18;
-    const span = gap * N;
-    let x = (k * gap - (t * 0.35 + p * 1.6) * gap) % span;
-    if (x < 0) x += span;
-    x -= span / 2;
-    const bend = x / (viewW * 0.9);
-    out.p.set(x, -viewH * (mobile ? 0.02 : 0.07), -bend * bend * viewH * 0.55);
-    out.q.copy(qCarousel).multiply(tmpQ2.setFromEuler(tmpE.set(0, -bend * 0.55, 0)));
-    out.s = size;
-  }
-
   const A = { p: new Vector3(), q: new Quaternion(), s: 1 };
   const B = { p: new Vector3(), q: new Quaternion(), s: 1 };
 
@@ -396,12 +368,8 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     const g = phase(p, ...marks.gather);
     const u = phase(p, ...marks.unroll);
     const x = phase(p, ...marks.exit);
-    const [d0, d1, d2, d3] = marks.distort;
-    const inDistort = p > (marks.exit[1] + d0) / 2;
-    const dIn = phase(p, d0, d1);
-    const dOut = phase(p, d2, d3);
 
-    const anyVisible = inDistort ? dIn > 0 && dOut < 1 : x < 1;
+    const anyVisible = x < 1;
     if (!anyVisible) {
       if (wasVisible) {
         renderer.clear();
@@ -411,27 +379,21 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     }
     wasVisible = true;
 
-    setLens(inDistort ? 0 : easeInOut(phase(p, marks.unroll[0] + (marks.unroll[1] - marks.unroll[0]) * 0.25, marks.unroll[1])));
+    setLens(easeInOut(phase(p, marks.unroll[0] + (marks.unroll[1] - marks.unroll[0]) * 0.25, marks.unroll[1])));
 
     // clip the settled wall to the left half (or the top on phones)
     const settle = easeInOut(phase(p, marks.unroll[0] + (marks.unroll[1] - marks.unroll[0]) * 0.55, marks.unroll[1]));
-    const clipOn = !inDistort && settle > 0 ? settle : 0;
+    const clipOn = settle > 0 ? settle : 0;
     if (mobile) shared.uClip.value.set(0, pxH * 0.5 * clipOn, 1e5, 1e5);
     else shared.uClip.value.set(0, 0, pxW - (pxW * 0.5) * clipOn, 1e5);
 
-    // effect strength in the distort screen
-    const fx = inDistort ? dIn * (1 - dOut) : 0;
-    shared.uPrism.value = effect === "prism" ? 0.018 * amount * fx : 0;
-    const bendFx = effect === "bend" ? 1.4 * amount * fx : 0;
-    const flareFx = effect === "flare" ? amount * fx : 0;
-
-    const stir = !inDistort && u < 0.5;
+    const stir = u < 0.5;
     for (let k = 0; k < N; k++) {
       const c = cards[k];
       let alpha = 1;
       let wave = 0;
       let landed = 0;
-      if (!inDistort) {
+      {
         const gk = stagger(g, c.s.sg);
         floatPose(c, t, A);
         if (gk > 0) {
@@ -457,13 +419,6 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
           alpha = 1 - xk;
         }
         wave = (1 - gk) * 0.5 + gk * (1 - uk) * 0.18;
-      } else {
-        carouselPose(k, t, p, A);
-        const ik = stagger(dIn, c.s.sg, 0.4);
-        const ok = stagger(dOut, c.s.sg, 0.4);
-        A.p.y += -viewH * 1.2 * (1 - ik) + viewH * 1.2 * ok;
-        alpha = Math.min(ik * 1.5, 1) * (1 - ok);
-        wave = 0.1;
       }
 
       // pointer stir: a spring that the cursor's motion kicks
@@ -519,17 +474,13 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
 
       const u0 = c.mesh.material.uniforms;
       u0.uAlpha.value = alpha;
-      u0.uBend.value = Math.min(1.2, speed / (viewH * 2.2)) + bendFx + (!inDistort ? 0.12 : 0.05);
-      u0.uWave.value = wave + bendFx * 0.3;
+      u0.uBend.value = Math.min(1.2, speed / (viewH * 2.2)) + 0.12;
+      u0.uWave.value = wave;
 
-      // ghosts: spectral copies trailing along the motion (or a fixed flare direction)
-      const boost = !inDistort ? 1 + (1 - g) * 1.6 : 1;
-      let trail = Math.min(viewH * 0.16, speed * 0.028 * boost);
+      // ghosts: spectral copies trailing along the motion
+      const boost = 1 + (1 - g) * 1.6;
+      const trail = Math.min(viewH * 0.16, speed * 0.028 * boost);
       const dir = v.copy(c.vel).normalize();
-      if (flareFx > 0) {
-        trail = viewH * 0.16 * flareFx;
-        dir.set(1, 0.18, 0).normalize();
-      }
       const strength = clamp01((trail - viewH * 0.004) / (viewH * 0.05));
       for (let gi = 0; gi < GHOSTS; gi++) {
         const m = c.ghosts[gi];
@@ -543,7 +494,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
         m.quaternion.copy(A.q);
         m.scale.setScalar(A.s * (1 + f * 0.04));
         const gu = m.material.uniforms;
-        gu.uAlpha.value = alpha * strength * (flareFx > 0 ? 0.14 : 0.2) * (1 - f * 0.8);
+        gu.uAlpha.value = alpha * strength * 0.2 * (1 - f * 0.8);
         gu.uBend.value = u0.uBend.value;
         gu.uWave.value = u0.uWave.value;
         gu.uPhase.value = u0.uPhase.value;
@@ -601,10 +552,6 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     },
     setMarks(m) {
       marks = m;
-    },
-    setEffect(e, a) {
-      effect = e;
-      amount = a;
     },
     pick(clientX, clientY) {
       ndc.set((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1);

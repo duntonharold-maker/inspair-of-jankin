@@ -21,11 +21,6 @@ export default function Footer({ site, repoUrl }: { site: Site; repoUrl?: string
             <a href="/#all">全部</a>
           </div>
           <div>
-            <h4>了解</h4>
-            <a href="/#how">怎么收</a>
-            <a href="/#mcp">MCP</a>
-          </div>
-          <div>
             <h4>更多</h4>
             {repoUrl && (
               <a href={repoUrl} target="_blank" rel="noopener noreferrer">
