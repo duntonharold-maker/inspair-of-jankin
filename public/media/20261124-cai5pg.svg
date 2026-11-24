@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <style>
+    .h{animation:p 1.6s cubic-bezier(.3,0,.2,1) infinite;transform-box:fill-box;transform-origin:center}
+    .r{animation:r 1.6s ease-out infinite;transform-box:fill-box;transform-origin:center}
+    @keyframes p{0%,100%{transform:scale(1)}12%{transform:scale(1.22)}24%{transform:scale(.94)}36%{transform:scale(1.08)}50%{transform:scale(1)}}
+    @keyframes r{0%{transform:scale(.6);opacity:.55}60%,100%{transform:scale(1.5);opacity:0}}
+  </style>
+  <rect width="240" height="240" rx="56" fill="#1b1b1f"/>
+  <circle class="r" cx="120" cy="122" r="46" fill="none" stroke="#ff3b5c" stroke-width="3"/>
+  <path class="h" fill="#ff3b5c" d="M120 165c-3 0-5-1-7-3-21-18-46-37-46-62 0-17 13-30 29-30 10 0 19 5 24 13 5-8 14-13 24-13 16 0 29 13 29 30 0 25-25 44-46 62-2 2-4 3-7 3z"/>
+</svg>

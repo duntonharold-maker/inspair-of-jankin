@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <style>
+    .d{animation:b 1.1s cubic-bezier(.45,0,.2,1) infinite;transform-box:fill-box;transform-origin:center}
+    .d2{animation-delay:.14s}.d3{animation-delay:.28s}
+    @keyframes b{0%,60%,100%{transform:translateY(0) scale(1,1)}20%{transform:translateY(-34px) scale(.92,1.08)}38%{transform:translateY(0) scale(1.12,.86)}}
+  </style>
+  <rect width="240" height="240" rx="56" fill="#f2efe9"/>
+  <circle class="d" cx="78" cy="132" r="16" fill="#ff5b2e"/>
+  <circle class="d d2" cx="120" cy="132" r="16" fill="#1d1d1f"/>
+  <circle class="d d3" cx="162" cy="132" r="16" fill="#ff5b2e"/>
+</svg>

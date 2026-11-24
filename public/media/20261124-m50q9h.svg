@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200">
+  <style>
+    .track{animation:t 2.6s cubic-bezier(.65,0,.35,1) infinite}
+    .knob{animation:k 2.6s cubic-bezier(.65,0,.35,1) infinite}
+    .knobshape{animation:sq 2.6s cubic-bezier(.65,0,.35,1) infinite;transform-box:fill-box;transform-origin:center}
+    @keyframes t{0%,35%{fill:#d9d9de}50%,85%{fill:#34c759}100%{fill:#d9d9de}}
+    @keyframes k{0%,35%{transform:translateX(0)}50%,85%{transform:translateX(80px)}100%{transform:translateX(0)}}
+    @keyframes sq{0%,35%,50%,85%,100%{transform:scale(1,1)}42%,92%{transform:scale(1.25,.9)}}
+  </style>
+  <rect width="320" height="200" rx="44" fill="#f5f5f7"/>
+  <rect class="track" x="80" y="60" width="160" height="80" rx="40" fill="#d9d9de"/>
+  <g class="knob"><rect class="knobshape" x="88" y="68" width="64" height="64" rx="32" fill="#fff" style="filter:drop-shadow(0 4px 6px rgba(0,0,0,.18))"/></g>
+</svg>

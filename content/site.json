@@ -1,0 +1,14 @@
+{
+  "name": "inspair",
+  "owner": "Jankin",
+  "description": "Jankin 的灵感集合：图片、带动效的 UI，以及生成它们的提示词。",
+  "categories": [
+    { "id": "illustration", "name": "Illustration", "label": "插画" },
+    { "id": "poster", "name": "Posters", "label": "海报" },
+    { "id": "photo", "name": "Photography", "label": "摄影" },
+    { "id": "3d", "name": "3D", "label": "三维" },
+    { "id": "icon", "name": "Icons", "label": "图标" },
+    { "id": "motion", "name": "Motion", "label": "动效" },
+    { "id": "interface", "name": "Interface", "label": "界面" }
+  ]
+}

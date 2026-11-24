@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <style>
+    .bell{animation:s 2.2s cubic-bezier(.36,.07,.19,.97) infinite;transform-origin:120px 62px}
+    .clap{animation:c 2.2s cubic-bezier(.36,.07,.19,.97) infinite;transform-origin:120px 62px}
+    .dot{animation:d 2.2s cubic-bezier(.2,.8,.2,1) infinite;transform-box:fill-box;transform-origin:center}
+    @keyframes s{0%,55%,100%{transform:rotate(0)}5%{transform:rotate(16deg)}12%{transform:rotate(-14deg)}19%{transform:rotate(10deg)}26%{transform:rotate(-7deg)}33%{transform:rotate(4deg)}40%{transform:rotate(-2deg)}}
+    @keyframes c{0%,55%,100%{transform:rotate(0)}7%{transform:rotate(-12deg)}14%{transform:rotate(12deg)}21%{transform:rotate(-8deg)}28%{transform:rotate(6deg)}35%{transform:rotate(-3deg)}}
+    @keyframes d{0%,8%{transform:scale(0)}18%{transform:scale(1.25)}26%,100%{transform:scale(1)}}
+  </style>
+  <rect width="240" height="240" rx="56" fill="#e9eefc"/>
+  <g class="clap"><circle cx="120" cy="170" r="11" fill="#3b5bdb"/></g>
+  <g class="bell">
+    <path d="M120 58c-24 0-40 19-40 43v26l-12 18h104l-12-18v-26c0-24-16-43-40-43z" fill="#4c6ef5"/>
+    <rect x="112" y="46" width="16" height="16" rx="8" fill="#4c6ef5"/>
+  </g>
+  <circle class="dot" cx="158" cy="70" r="13" fill="#ff6b6b" stroke="#e9eefc" stroke-width="5"/>
+</svg>

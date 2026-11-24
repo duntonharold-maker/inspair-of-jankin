@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <style>
+    .ring{stroke-dasharray:302;stroke-dashoffset:302;animation:ring 2.4s cubic-bezier(.65,0,.35,1) infinite}
+    .tick{stroke-dasharray:90;stroke-dashoffset:90;animation:tick 2.4s cubic-bezier(.65,0,.35,1) infinite}
+    .bg{animation:bg 2.4s ease infinite;transform-box:fill-box;transform-origin:center}
+    @keyframes ring{0%{stroke-dashoffset:302}35%,85%{stroke-dashoffset:0}100%{stroke-dashoffset:0;opacity:0}}
+    @keyframes tick{0%,30%{stroke-dashoffset:90}55%,85%{stroke-dashoffset:0}100%{stroke-dashoffset:0;opacity:0}}
+    @keyframes bg{0%,35%{transform:scale(0);opacity:0}50%{transform:scale(1.06);opacity:1}60%,85%{transform:scale(1);opacity:1}100%{opacity:0}}
+  </style>
+  <rect width="240" height="240" rx="56" fill="#effaf3"/>
+  <circle class="bg" cx="120" cy="120" r="48" fill="#2fb36b"/>
+  <circle class="ring" cx="120" cy="120" r="48" fill="none" stroke="#2fb36b" stroke-width="8" stroke-linecap="round" transform="rotate(-90 120 120)"/>
+  <path class="tick" d="M97 121l16 16 31-33" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
