@@ -2,7 +2,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import CategoriesScreen from "./screens/Categories";
 import DevicesScreen from "./screens/Devices";
-import ExportScreen from "./screens/Export";
 import HeroScreen from "./screens/Hero";
 import LibraryScreen from "./screens/Library";
 import type { StoryScene } from "./scene";
@@ -170,7 +169,6 @@ export default function Story({
           <LibraryScreen />
           <CategoriesScreen site={site} items={items} onPick={onPickCategory} />
           <DevicesScreen items={items} site={site} />
-          <ExportScreen items={items} />
           <canvas ref={canvasRef} className="story-scene" aria-hidden="true" />
         </div>
       </div>

@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Card, { ratioOf } from "./Card";
-import type { Kind } from "./Stats";
 import type { Item, Site } from "@/lib/types";
+
+export type Kind = "all" | "image" | "motion";
 
 const PAGE = 40;
 

@@ -2,10 +2,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Cta from "./Cta";
 import Footer from "./Footer";
-import Gallery from "./Gallery";
+import Gallery, { type Kind } from "./Gallery";
 import Modal from "./Modal";
 import Nav from "./Nav";
-import Stats, { type Kind } from "./Stats";
 import Story from "./story/Story";
 import { scrollToId } from "@/lib/scroll";
 import type { Item, Site } from "@/lib/types";
@@ -90,7 +89,6 @@ export default function Home({ items, site, repoUrl }: { items: Item[]; site: Si
       <Nav site={site} onRandom={items.length ? random : undefined} />
       <main>
         <Story items={items} site={site} onOpen={open} onPickCategory={pickCategory} />
-        <Stats items={items} site={site} onBrowse={browse} />
         <Gallery
           site={site}
           items={items}

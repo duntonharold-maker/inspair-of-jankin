@@ -27,7 +27,6 @@ export default function Footer({ site, repoUrl }: { site: Site; repoUrl?: string
                 GitHub ↗
               </a>
             )}
-            <a href="/#stats">统计</a>
           </div>
         </nav>
       </div>

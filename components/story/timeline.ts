@@ -4,7 +4,6 @@ export const SCREENS = [
   { id: "library", len: 4.6 },
   { id: "categories", len: 4.4 },
   { id: "devices", len: 2.4 },
-  { id: "export", len: 2.8 },
 ] as const;
 
 export type ScreenId = (typeof SCREENS)[number]["id"];
