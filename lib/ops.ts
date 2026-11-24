@@ -207,3 +207,160 @@ export function search(
   const limit = q.limit ?? 20;
   return { total: hits.length, items: hits.slice(offset, offset + limit) };
 }
+
+/* ------------------------------------------------------------- organizing */
+
+const hex = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/)
+  .describe("#rrggbb");
+
+export const OrganizeInput = z.object({
+  changes: z
+    .array(
+      z.object({
+        id: z.string(),
+        category: z.string().optional(),
+        title: text(200).min(1).optional(),
+        tags: z.array(text(40)).max(20).optional().describe("Replaces all tags of the item"),
+        add_tags: z.array(text(40)).max(20).optional(),
+        remove_tags: z.array(text(40)).max(20).optional(),
+        note: text(4000).optional().describe("Replaces the note; empty string clears it"),
+        color: hex.optional(),
+        featured: z.boolean().optional(),
+      }),
+    )
+    .max(300)
+    .default([])
+    .describe("Per-item edits"),
+  rename_tags: z
+    .array(z.object({ from: text(40).min(1), to: text(40).describe('New name; "" removes the tag everywhere') }))
+    .max(100)
+    .default([])
+    .describe("Rename or merge a tag on every item that has it"),
+  new_categories: z
+    .array(
+      z.object({
+        id: z.string().regex(/^[a-z0-9-]+$/),
+        name: z.string().min(1).max(30),
+        label: z.string().min(1).max(12),
+      }),
+    )
+    .max(20)
+    .default([])
+    .describe("Categories to create (or rename) before the edits are applied"),
+  dry_run: z
+    .boolean()
+    .default(true)
+    .describe("true (default): only return the plan, change nothing. false: write everything in one commit."),
+});
+export type OrganizeSpec = z.infer<typeof OrganizeInput>;
+
+type Diff = { id: string; title: string; changes: Record<string, unknown> };
+
+/** Works out what an organize request would do, without writing anything. */
+export function planOrganize(snap: Snapshot, spec: OrganizeSpec) {
+  const errors: string[] = [];
+  const categories = snap.site.categories.map((c) => ({ ...c }));
+  for (const nc of spec.new_categories) {
+    const i = categories.findIndex((c) => c.id === nc.id);
+    if (i === -1) categories.push(nc);
+    else categories[i] = nc;
+  }
+  const valid = new Set(categories.map((c) => c.id));
+  const now = new Date().toISOString();
+  const items = snap.items.map((i) => ({ ...i, tags: [...i.tags] }));
+  const byId = new Map(items.map((i) => [i.id, i]));
+
+  for (const { from, to } of spec.rename_tags) {
+    for (const item of items) {
+      if (!item.tags.includes(from)) continue;
+      item.tags = cleanTags(item.tags.map((t) => (t === from ? to : t)).filter(Boolean));
+    }
+  }
+
+  const seen = new Set<string>();
+  for (const ch of spec.changes) {
+    const item = byId.get(ch.id);
+    if (!item) {
+      errors.push(`No item with id "${ch.id}".`);
+      continue;
+    }
+    if (seen.has(ch.id)) errors.push(`Item "${ch.id}" appears more than once in changes; merge them.`);
+    seen.add(ch.id);
+    if (ch.category !== undefined) {
+      if (!valid.has(ch.category)) errors.push(`Unknown category "${ch.category}" for "${ch.id}". Add it in new_categories.`);
+      else item.category = ch.category;
+    }
+    if (ch.title !== undefined) item.title = ch.title;
+    if (ch.tags) item.tags = cleanTags(ch.tags);
+    if (ch.add_tags) item.tags = cleanTags([...item.tags, ...ch.add_tags]);
+    if (ch.remove_tags) item.tags = item.tags.filter((t) => !ch.remove_tags!.includes(t));
+    if (ch.note !== undefined) {
+      if (ch.note) item.note = ch.note;
+      else delete item.note;
+    }
+    if (ch.color !== undefined) item.color = ch.color;
+    if (ch.featured !== undefined) {
+      if (ch.featured) item.featured = true;
+      else delete item.featured;
+    }
+  }
+
+  const diffs: Diff[] = [];
+  snap.items.forEach((before, k) => {
+    const after = items[k];
+    const changes: Record<string, unknown> = {};
+    if (before.category !== after.category) changes.category = [before.category, after.category];
+    if (before.title !== after.title) changes.title = [before.title, after.title];
+    const added = after.tags.filter((t) => !before.tags.includes(t));
+    const removed = before.tags.filter((t) => !after.tags.includes(t));
+    if (added.length) changes.tags_added = added;
+    if (removed.length) changes.tags_removed = removed;
+    if ((before.note ?? "") !== (after.note ?? "")) changes.note = [before.note ?? "", after.note ?? ""];
+    if (before.color !== after.color) changes.color = [before.color, after.color];
+    if (Boolean(before.featured) !== Boolean(after.featured)) changes.featured = [Boolean(before.featured), Boolean(after.featured)];
+    if (Object.keys(changes).length) {
+      after.updatedAt = now;
+      diffs.push({ id: after.id, title: after.title, changes });
+    }
+  });
+
+  const siteChanged = JSON.stringify(categories) !== JSON.stringify(snap.site.categories);
+  return {
+    errors,
+    diffs,
+    items,
+    site: siteChanged ? { ...snap.site, categories } : undefined,
+    newCategories: categories.filter((c) => !snap.site.categories.some((o) => o.id === c.id)),
+  };
+}
+
+/** Plans the request; unless it is a dry run, writes every change in a single commit. */
+export async function organizeItems(spec: OrganizeSpec) {
+  const store = getStore();
+  if (spec.dry_run) {
+    const plan = planOrganize(await store.read(), spec);
+    return { applied: false, ...summary(plan) };
+  }
+  const { result, commit } = await store.mutate((snap) => {
+    const plan = planOrganize(snap, spec);
+    if (plan.errors.length) throw new Error(`Nothing was changed:\n- ${plan.errors.join("\n- ")}`);
+    return {
+      items: plan.diffs.length ? plan.items : undefined,
+      site: plan.site,
+      message: `inspair: organize ${plan.diffs.length} item(s)`,
+      result: summary(plan),
+    };
+  });
+  return { applied: true, commit, ...result };
+}
+
+function summary(plan: ReturnType<typeof planOrganize>) {
+  return {
+    items_changed: plan.diffs.length,
+    categories_added: plan.newCategories,
+    errors: plan.errors,
+    changes: plan.diffs,
+  };
+}

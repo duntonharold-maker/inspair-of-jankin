@@ -1,7 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import { createUploadToken } from "./auth";
-import { ItemFields, MediaInput, addItem, deleteItems, loadMedia, search, updateItem, upsertCategory } from "./ops";
+import { preview } from "./media";
+import { ItemFields, MediaInput, OrganizeInput, addItem, deleteItems, loadMedia, organizeItems, search, updateItem, upsertCategory } from "./ops";
 import { getStore } from "./store";
 import type { Item } from "./types";
 
@@ -13,7 +14,14 @@ Workflow:
 - SVG icon or Lottie animation as text → add_item with media_text.
 - A file on the user's disk and you can run shell commands → prepare_upload, then run the returned curl command.
 - Always record the generation prompt verbatim in "prompt" when the user gives one, and the model/tool in "model".
-- Changes are committed to GitHub; the public site shows them after the next deploy (usually 1–2 minutes).`;
+- Changes are committed to GitHub; the public site shows them after the next deploy (usually 1–2 minutes).
+
+Organizing the library (re-categorising, retagging, merging duplicate tags):
+1. list_categories and search_items to see what is there.
+2. view_items to look at the pictures themselves (up to 10 per call) — judge by what you see, not only by titles.
+3. organize_items with dry_run true (the default) to get the plan; show it to the user.
+4. Only after the user agrees, call organize_items again with the same edits and dry_run false.
+   Everything is written in one commit, so prefer one organize_items call over many update_item calls.`;
 
 type Ctx = { origin: string };
 
@@ -194,6 +202,66 @@ export function registerTools(server: McpServer, ctx: Ctx) {
           expires_in_minutes: 30,
           limits: "Max ~4 MB per upload on Vercel. Large PNG/JPEG are converted to WebP automatically.",
         };
+      }),
+  );
+
+  server.registerTool(
+    "view_items",
+    {
+      title: "Look at items",
+      description:
+        "Returns a small picture of each item (first frame for GIFs and SVG animations) with its title, category and tags, so you can judge what it shows. Videos and Lottie files come back as a short description instead.",
+      inputSchema: z.object({
+        ids: z.array(z.string()).min(1).max(10),
+        size: z.number().int().min(128).max(1024).optional().describe("Longest side of the picture in px (default 512)"),
+      }),
+      annotations: { readOnlyHint: true },
+    },
+    async ({ ids, size }) => {
+      try {
+        const store = getStore();
+        const { items, site } = await store.read();
+        const content: ({ type: "text"; text: string } | { type: "image"; data: string; mimeType: string })[] = [];
+        for (const id of ids) {
+          const item = items.find((i) => i.id === id);
+          if (!item) {
+            content.push({ type: "text", text: `${id}: not found` });
+            continue;
+          }
+          const cat = site.categories.find((c) => c.id === item.category);
+          content.push({
+            type: "text",
+            text: `${item.id} · 「${item.title}」 · ${item.category}${cat ? `（${cat.label}）` : ""} · tags: ${item.tags.join(", ") || "—"} · ${item.media.type}`,
+          });
+          try {
+            const pic = await preview(await store.readFile(`public${item.media.src}`), item.media.type, size ?? 512);
+            content.push("note" in pic ? { type: "text", text: pic.note } : { type: "image", data: pic.data, mimeType: pic.mimeType });
+          } catch (e) {
+            content.push({ type: "text", text: `(could not load the media: ${e instanceof Error ? e.message : String(e)})` });
+          }
+        }
+        return { content };
+      } catch (e) {
+        return fail(e);
+      }
+    },
+  );
+
+  server.registerTool(
+    "organize_items",
+    {
+      title: "Organize many items at once",
+      description:
+        "Batch edits: change category, title, tags (replace / add / remove), note, colour or featured on many items, rename or merge tags across the whole library, and create categories — all in ONE commit. Defaults to dry_run=true, which only returns the plan (before → after for every item) and changes nothing. Show the plan to the user and call again with dry_run=false once they agree.",
+      inputSchema: OrganizeInput,
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
+    },
+    (spec) =>
+      guard(async () => {
+        const out = await organizeItems(spec);
+        return out.applied
+          ? { ...out, note: liveNote() }
+          : { ...out, note: "Dry run — nothing was changed. Call again with dry_run: false to apply." };
       }),
   );
 

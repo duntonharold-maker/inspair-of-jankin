@@ -96,6 +96,18 @@ claude mcp add --transport http inspair https://你的域名/api/mcp --header "A
 - 「找出所有带提示词的海报」「把『玻璃拟态天气卡片』设为精选」
 - 「新建一个分类：加载动画，英文名 Loaders」
 - 「删除所有带『示例』标签的条目」（仓库里自带的 17 条是演示数据）
+- 「看一遍所有图标和动效，按画面重新分类，把意思重复的标签合并，先给我看方案」
+
+### 智能整理
+
+智能体整理素材时会按这个流程来（服务端已在说明里告诉它）：
+
+1. 用 `list_categories`、`search_items` 了解现有分类和条目；
+2. 用 `view_items` 直接看图（每次最多 10 张），按画面内容判断，而不只看标题；
+3. 用 `organize_items` 生成整理方案（默认只预览，不改任何东西），列出每一条改前改后，交给你确认；
+4. 你同意后，它再用同样的内容加 `dry_run: false` 执行。所有改动合成**一次提交**，只触发一次部署。
+
+方案里有任何错误（比如分类不存在、条目找不到），执行时会整批拒绝，不会只改一半。
 
 ## MCP 工具
 
@@ -108,6 +120,8 @@ claude mcp add --transport http inspair https://你的域名/api/mcp --header "A
 | `update_item` | 修改字段，或替换媒体文件 |
 | `delete_items` | 删除条目及其媒体文件 |
 | `prepare_upload` | 为本地文件生成一条 30 分钟内有效的 `curl` 上传命令 |
+| `view_items` | 返回条目的缩略图给智能体看（视频和 Lottie 返回文字描述） |
+| `organize_items` | 批量整理：改分类、标题、标签，全站重命名或合并标签，新建分类；默认只预览，执行时一次提交 |
 | `upsert_category` | 新增或重命名分类 |
 
 上传限制：通过 `curl` 上传单个文件最大约 4 MB（Vercel 的请求体限制）；通过 `media_url` 下载最大 20 MB。

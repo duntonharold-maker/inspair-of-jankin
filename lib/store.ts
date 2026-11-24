@@ -35,6 +35,8 @@ export type Mutator<T> = (snapshot: Snapshot) => Promise<Change<T>> | Change<T>;
 export interface Store {
   readonly mode: "github" | "local";
   read(): Promise<Snapshot>;
+  /** Read one file of the repository (e.g. public/media/…) as it is now. */
+  readFile(path: string): Promise<Buffer>;
   /** Read the latest state, apply the mutator, write the result. Retries on races. */
   mutate<T>(mutator: Mutator<T>): Promise<{ result: T; commit?: string }>;
 }
@@ -66,6 +68,10 @@ class LocalStore implements Store {
       fs.readFile(this.p(SITE_PATH), "utf8"),
     ]);
     return parseSnapshot(items, site);
+  }
+
+  readFile(rel: string) {
+    return fs.readFile(this.p(rel));
   }
 
   async mutate<T>(mutator: Mutator<T>) {
@@ -133,6 +139,22 @@ class GitHubStore implements Store {
   async read() {
     const { commitSha } = await this.head();
     return this.readAt(commitSha);
+  }
+
+  async readFile(rel: string) {
+    const { commitSha } = await this.head();
+    const api = process.env.GITHUB_API_URL || "https://api.github.com";
+    const res = await fetch(`${api}/repos/${this.repo}/contents/${rel}?ref=${commitSha}`, {
+      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: "application/vnd.github.raw+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "inspair-mcp",
+      },
+    });
+    if (!res.ok) throw new Error(`GitHub GET ${rel} → ${res.status}`);
+    return Buffer.from(await res.arrayBuffer());
   }
 
   async mutate<T>(mutator: Mutator<T>) {

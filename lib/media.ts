@@ -160,3 +160,32 @@ export async function fetchMedia(url: string): Promise<{ buffer: Buffer; filenam
   if (ct.includes("text/html")) throw new Error("That URL is a web page, not a media file. Pass the direct image/video URL.");
   return { buffer: Buffer.concat(chunks), filename: u.pathname.split("/").pop() || "" };
 }
+
+export type Preview = { data: string; mimeType: "image/jpeg" } | { note: string };
+
+/**
+ * A small still of an item for an agent to look at. Images and SVGs become a JPEG (first frame,
+ * on white); videos and Lottie files cannot be rendered here, so they get a short description.
+ */
+export async function preview(buffer: Buffer, type: MediaType, max = 512): Promise<Preview> {
+  if (type === "video") return { note: "视频文件，这里无法生成预览图，请参考标题、标签和笔记。" };
+  if (type === "lottie") {
+    try {
+      const j = JSON.parse(buffer.toString("utf8")) as { w?: number; h?: number; fr?: number; ip?: number; op?: number; nm?: string; layers?: { nm?: string }[] };
+      const frames = (j.op ?? 0) - (j.ip ?? 0);
+      const secs = j.fr ? (frames / j.fr).toFixed(1) : "?";
+      const layers = (j.layers ?? []).map((l) => l.nm).filter(Boolean).slice(0, 12).join("、");
+      return { note: `Lottie 动画「${j.nm ?? ""}」，${j.w}×${j.h}，约 ${secs} 秒，图层：${layers || "未命名"}。这里无法渲染画面。` };
+    } catch {
+      return { note: "Lottie 动画，无法解析。" };
+    }
+  }
+  const { default: sharp } = await import("sharp");
+  const out = await sharp(buffer, type === "svg" ? { density: 192 } : { animated: false })
+    .rotate()
+    .resize({ width: max, height: max, fit: "inside", withoutEnlargement: true })
+    .flatten({ background: "#ffffff" })
+    .jpeg({ quality: 80 })
+    .toBuffer();
+  return { data: out.toString("base64"), mimeType: "image/jpeg" };
+}
