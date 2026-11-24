@@ -1,15 +1,25 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Cta from "./Cta";
 import Footer from "./Footer";
 import Gallery, { type Kind } from "./Gallery";
+import McpGuide from "./McpGuide";
 import Modal from "./Modal";
 import Nav from "./Nav";
 import Story from "./story/Story";
 import { scrollToId } from "@/lib/scroll";
 import type { Item, Site } from "@/lib/types";
 
-export default function Home({ items, site, repoUrl }: { items: Item[]; site: Site; repoUrl?: string }) {
+export default function Home({
+  items,
+  site,
+  repoUrl,
+  siteUrl,
+}: {
+  items: Item[];
+  site: Site;
+  repoUrl?: string;
+  siteUrl: string | null;
+}) {
   const [category, setCategory] = useState("all");
   const [kind, setKind] = useState<Kind>("all");
   const [onlyPrompt, setOnlyPrompt] = useState(false);
@@ -73,13 +83,6 @@ export default function Home({ items, site, repoUrl }: { items: Item[]; site: Si
     scrollToId("all");
   }, []);
 
-  const browse = useCallback((f: { kind?: Kind; onlyPrompt?: boolean } = {}) => {
-    setCategory("all");
-    setKind(f.kind ?? "all");
-    setOnlyPrompt(Boolean(f.onlyPrompt));
-    scrollToId("all");
-  }, []);
-
   const random = useCallback(() => {
     if (items.length) open(items[Math.floor(Math.random() * items.length)].id);
   }, [items, open]);
@@ -101,7 +104,7 @@ export default function Home({ items, site, repoUrl }: { items: Item[]; site: Si
           onOpen={open}
           onListChange={setList}
         />
-        <Cta onRandom={random} onBrowse={() => browse()} />
+        <McpGuide siteUrl={siteUrl} />
       </main>
       <Footer site={site} repoUrl={repoUrl} />
       {openItem && <Modal item={openItem} site={site} onClose={close} onPrev={nav.prev} onNext={nav.next} />}

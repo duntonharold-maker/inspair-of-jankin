@@ -33,7 +33,7 @@ npm run typecheck  # 类型检查
 具体做法：
 
 - 只给 `transform`、`opacity`、`color`、`background-color`、`border-color`、`box-shadow`、`filter` 加过渡，不要给会触发重新布局的属性（宽高、边距、`top`/`left`）加过渡。
-- 新增可点击元素时优先复用现有的类：`.btn`、`.icon-btn`、`.chip-btn`、`.toggle`、`.seg`、`.link`。这些类已经带好了三种状态。
+- 新增可点击元素时优先复用现有的类：`.btn`、`.icon-btn`、`.chip-btn`、`.toggle`、`.seg`、`.link`、`.copy-btn`。这些类已经带好了三种状态。
 - 打开图片或卡片的元素用 `cursor: zoom-in`，其余用 `cursor: pointer`；禁用状态取消悬停和按下效果，并用 `cursor: default`。
 - WebGL 场景里能点击的卡片，悬停时卡片要浮起放大，并显示指针（见 `scene.ts` 里的 `setHover`）。点击后由打开详情的动画作为反馈。
 - `prefers-reduced-motion` 打开时，全局规则会把动画时长压到接近 0，不需要单独处理，但状态变化（颜色等）要保留。
