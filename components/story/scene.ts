@@ -34,7 +34,10 @@ export type StoryScene = {
   setProgress(p: number): void;
   setMarks(m: SceneMarks): void;
   setEffect(e: Effect, amount: number): void;
-  pick(clientX: number, clientY: number): string | null;
+  /** The card under the pointer, if any. */
+  pick(clientX: number, clientY: number): { id: string; index: number } | null;
+  /** Lift one card (index from `pick`), or none with -1. */
+  setHover(index: number): void;
   resize(): void;
   dispose(): void;
 };
@@ -169,6 +172,7 @@ type Card = {
   off: Vector2;
   offVel: Vector2;
   alpha: number;
+  hover: number;
 };
 
 /* ----------------------------------------------------------------- scene */
@@ -270,7 +274,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     // the wall unrolls column by column, with a little noise
     s.su = clamp01(((k % COLS) / (COLS - 1)) * 0.8 + r() * 0.2);
     mesh.material.uniforms.uPhase.value = s.ph;
-    cards.push({ mesh, ghosts, shadow, item, s, prev: new Vector3(), vel: new Vector3(), fresh: true, off: new Vector2(), offVel: new Vector2(), alpha: 0 });
+    cards.push({ mesh, ghosts, shadow, item, s, prev: new Vector3(), vel: new Vector3(), fresh: true, off: new Vector2(), offVel: new Vector2(), alpha: 0, hover: 0 });
   }
 
   // Textures: one per distinct item, shared by every card that shows it.
@@ -300,6 +304,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
 
   let marks: SceneMarks = { gather: [0.6, 2.2], unroll: [2.9, 4.2], exit: [5, 5.8], distort: [14, 14.7, 16.3, 17] };
   let progress = 0;
+  let hovered = -1;
   let effect: Effect = "off";
   let amount = 1;
   let viewW = 1;
@@ -478,6 +483,13 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       A.p.x += c.off.x * viewW * 0.5;
       A.p.y += c.off.y * viewH * 0.5;
 
+      // hover: the card under the pointer rises toward the viewer and grows a little
+      c.hover += ((k === hovered ? 1 : 0) - c.hover) * (1 - Math.exp(-dt / 0.09));
+      if (c.hover > 0.001) {
+        A.p.add(v.set(0, 0, 0.12 * A.s * c.hover).applyQuaternion(A.q));
+        A.s *= 1 + 0.06 * c.hover;
+      }
+
       c.mesh.position.copy(A.p);
       c.mesh.quaternion.copy(A.q);
       c.mesh.scale.setScalar(A.s);
@@ -485,10 +497,11 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       // shadow: a little below and behind the card, light from the upper right
       c.shadow.visible = landed > 0.01 && alpha > 0.01;
       if (c.shadow.visible) {
-        c.shadow.position.copy(A.p).add(v.set(-0.02 * A.s, -0.045 * A.s, -0.03 * A.s).applyQuaternion(A.q));
+        const lift = 1 + c.hover * 1.6;
+        c.shadow.position.copy(A.p).add(v.set(-0.02 * A.s * lift, -0.045 * A.s * lift, -0.03 * A.s - 0.12 * A.s * c.hover).applyQuaternion(A.q));
         c.shadow.quaternion.copy(A.q);
-        c.shadow.scale.setScalar(A.s * SHADOW_SCALE);
-        c.shadow.material.uniforms.uAlpha.value = 0.2 * landed * alpha;
+        c.shadow.scale.setScalar(A.s * (SHADOW_SCALE + 0.05 * c.hover));
+        c.shadow.material.uniforms.uAlpha.value = (0.2 + 0.08 * c.hover) * landed * alpha;
       }
       c.mesh.visible = alpha > 0.002;
       c.alpha = alpha;
@@ -606,7 +619,11 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
         false,
       );
       const hit = hits[0]?.object;
-      return hit ? (cards.find((c) => c.mesh === hit)?.item.id ?? null) : null;
+      const index = hit ? cards.findIndex((c) => c.mesh === hit) : -1;
+      return index >= 0 ? { id: cards[index].item.id, index } : null;
+    },
+    setHover(index) {
+      hovered = index;
     },
     resize,
     dispose() {

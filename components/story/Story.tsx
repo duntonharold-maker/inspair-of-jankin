@@ -121,20 +121,46 @@ export default function Story({
     const root = rootRef.current!;
     const interactive = (el: EventTarget | null) => el instanceof Element && el.closest("a,button,input,label,.chat,.modal");
     const pickable = () => store.p < START.categories && !document.documentElement.classList.contains("is-locked");
+    // Hover follows the pointer, and is re-checked while scrolling so cards that slide under a
+    // still cursor light up too.
+    let last: { x: number; y: number } | null = null;
+    let frame = 0;
+    const refresh = () => {
+      frame = 0;
+      const under = last && document.elementFromPoint(last.x, last.y);
+      const hit = last && pickable() && !interactive(under) ? sceneRef.current?.pick(last.x, last.y) : null;
+      sceneRef.current?.setHover(hit ? hit.index : -1);
+      root.classList.toggle("is-pointing", Boolean(hit));
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(refresh);
+    };
     const onMove = (e: PointerEvent) => {
-      const id = pickable() && !interactive(e.target) ? sceneRef.current?.pick(e.clientX, e.clientY) : null;
-      root.classList.toggle("is-pointing", Boolean(id));
+      last = { x: e.clientX, y: e.clientY };
+      schedule();
+    };
+    const onScroll = () => {
+      if (last) schedule();
+    };
+    const onLeave = () => {
+      last = null;
+      schedule();
     };
     const onClick = (e: MouseEvent) => {
       if (!pickable() || interactive(e.target)) return;
-      const id = sceneRef.current?.pick(e.clientX, e.clientY);
-      if (id) onOpen(id);
+      const hit = sceneRef.current?.pick(e.clientX, e.clientY);
+      if (hit) onOpen(hit.id);
     };
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("click", onClick);
+    document.addEventListener("pointerleave", onLeave);
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("click", onClick);
+      document.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("scroll", onScroll);
     };
   }, [gl, onOpen, store]);
 

@@ -1,0 +1,46 @@
+@AGENTS.md
+
+# inspair 项目说明
+
+Jankin 的灵感集合网站：收藏图片、带动效的 UI，以及生成它们的提示词。视觉和交互参照 premotio.com。智能体通过 MCP 增删改内容，每次改动都会提交到这个仓库，然后 Vercel 重新部署。
+
+## 常用命令
+
+```bash
+npm run dev        # 本地开发，http://localhost:3000；MCP 接口在 /api/mcp（本地不需要密钥）
+npm run build      # 生产构建，提交前必须通过
+npm run typecheck  # 类型检查
+```
+
+## 目录
+
+- `content/site.json`、`content/items.json`：站点配置和所有条目。内容改动走 MCP 或直接改这两个文件，不要在组件里写死内容。
+- `public/media/`：媒体文件，文件名由 MCP 生成，不要手动改名。
+- `components/story/`：首页的滚动故事。`timeline.ts` 定义每一幕占多少屏，`scene.ts` 是 three.js 卡片场景，`screens/` 里是每一幕的 DOM。
+- `lib/`：存储（GitHub / 本地）、媒体处理、MCP 工具、鉴权。
+- `app/globals.css`：顶部是颜色、字体、间距、缓动等设计变量，新样式一律使用这些变量。
+
+## 要求
+
+### 要求 1：可点击的元素必须有悬停和点击动效
+
+凡是能点击的东西，包括链接、按钮、卡片、筛选标签、开关、分段选择器，以及 WebGL 场景里能点开的卡片，都必须同时具备下面三种状态，不能只换鼠标指针：
+
+1. **悬停**：鼠标移上去要有看得见的变化，比如背景或描边颜色变化、轻微上浮、图片放大、箭头右移、下划线展开。时长 150–300ms，缓动用 `var(--ease)`。悬停样式写在 `@media (hover: hover)` 里，避免触屏上一直停在悬停状态。
+2. **按下**：`:active` 时要有反馈，通常是缩小到 0.96–0.98 或略微变暗，时长约 100ms，松开后回弹。触屏上也要生效。
+3. **键盘焦点**：`:focus-visible` 要有清晰的轮廓，不能去掉。
+
+具体做法：
+
+- 只给 `transform`、`opacity`、`color`、`background-color`、`border-color`、`box-shadow`、`filter` 加过渡，不要给会触发重新布局的属性（宽高、边距、`top`/`left`）加过渡。
+- 新增可点击元素时优先复用现有的类：`.btn`、`.icon-btn`、`.chip-btn`、`.toggle`、`.seg`、`.link`。这些类已经带好了三种状态。
+- 打开图片或卡片的元素用 `cursor: zoom-in`，其余用 `cursor: pointer`；禁用状态取消悬停和按下效果，并用 `cursor: default`。
+- WebGL 场景里能点击的卡片，悬停时卡片要浮起放大，并显示指针（见 `scene.ts` 里的 `setHover`）。点击后由打开详情的动画作为反馈。
+- `prefers-reduced-motion` 打开时，全局规则会把动画时长压到接近 0，不需要单独处理，但状态变化（颜色等）要保留。
+- 提交前用鼠标和键盘各过一遍新加的可点击元素，确认三种状态都在。
+
+## 其他约定
+
+- 界面文字用中文，大标题用英文展示字体（Inter Tight），与现有风格保持一致。
+- 不要把 `MCP_SECRET`、`GITHUB_TOKEN` 等密钥写进仓库，这个仓库是公开的。
+- 改动 `scene.ts` 的卡片排布后，要确认卡片之间不会互相穿插，并且卡片墙在 4:3 到 2:1 的屏幕上都能铺满。
