@@ -1,14 +1,13 @@
 /**
- * The cards behind the story: they tumble in the air in the hero, gather into a turning ring,
- * unroll into a tilted wall on the left half, then leave. Everything is driven by the story
- * progress (in viewport heights).
+ * The cards behind the story: they hang in the air in the hero, drop into a ring, leave it for a
+ * tilted wall that settles on the left half, then go. Where each card is comes from `choreo.ts` and
+ * depends on the scroll position alone, so the cards hold still whenever the page does; this file
+ * draws them, and adds the pointer's stir, hover and the motion trails.
  */
 import {
-  Euler,
   Mesh,
   PerspectiveCamera,
   PlaneGeometry,
-  Quaternion,
   Raycaster,
   Scene,
   ShaderMaterial,
@@ -19,13 +18,10 @@ import {
   type Texture,
 } from "three";
 import { cardTexture, type CardTexture } from "./textures";
+import { FLIGHT, FLOAT, LOOSE, RING, SOLID, WALL, clamp01, createChoreo, easeInOut, newPose, phase, rng, type Marks } from "./choreo";
 import type { Item } from "@/lib/types";
 
-export type SceneMarks = {
-  gather: [number, number];
-  unroll: [number, number];
-  exit: [number, number];
-};
+export type SceneMarks = Marks;
 
 export type StoryScene = {
   setProgress(p: number): void;
@@ -44,7 +40,6 @@ const vertex = /* glsl */ `
 uniform float uBend;
 uniform float uWave;
 uniform float uPhase;
-uniform float uTime;
 varying vec2 vUv;
 varying float vShade;
 void main() {
@@ -52,7 +47,7 @@ void main() {
   vec3 p = position;
   float x = p.x / 0.375;                      // -1 … 1 across the card
   p.z += uBend * (x * x - 0.4) * 0.16;        // curl like a sheet of paper
-  p.z += uWave * sin(x * 2.4 + uTime * 1.7 + uPhase) * 0.05;
+  p.z += uWave * sin(x * 2.4 + uPhase) * 0.05;
   vShade = 1.0 - 0.22 * clamp(abs(uBend), 0.0, 1.5) * abs(x);
   gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
 }`;
@@ -121,26 +116,6 @@ void main() {
   gl_FragColor = vec4(0.008, 0.027, 0.039, a); // 午夜冷黑
 }`;
 
-/* ----------------------------------------------------------------- maths */
-
-const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
-const easeInOut = (x: number) => {
-  x = clamp01(x);
-  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-};
-const phase = (p: number, a: number, b: number) => clamp01((p - a) / (b - a));
-const stagger = (t: number, s: number, spread = 0.45) => easeInOut((t - s * spread) / (1 - spread));
-
-function rng(seed: number) {
-  return () => {
-    seed |= 0;
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 /** Trail tint from 珊瑚橘 (nearest the card) to 电光蓝 (the far end), softened toward white. */
 const CORAL: [number, number, number] = [0.988, 0.451, 0.302];
 const BLUE: [number, number, number] = [0.008, 0.592, 0.871];
@@ -149,14 +124,15 @@ function trailTint(t: number): [number, number, number] {
 }
 
 const GHOSTS = 6;
-const RING_FAN = 0.96; // radians off the tangent
+/** How far the pointer may push a card in the air: less than the room each card keeps around itself. */
+const STIR_MOST = 0.12;
 
 type Card = {
   mesh: Mesh<PlaneGeometry, ShaderMaterial>;
   ghosts: Mesh<PlaneGeometry, ShaderMaterial>[];
   shadow: Mesh<PlaneGeometry, ShaderMaterial>;
   item: Item;
-  s: Record<"fx" | "fy" | "fz" | "rx" | "ry" | "rz" | "wx" | "wy" | "wz" | "fs" | "ph" | "sg" | "su", number>;
+  ph: number;
   prev: Vector3;
   vel: Vector3;
   fresh: boolean;
@@ -164,6 +140,9 @@ type Card = {
   offVel: Vector2;
   alpha: number;
   hover: number;
+  /** where the card is before the hover lifts it: what the pointer is tested against */
+  rest: Vector3;
+  restSize: number;
 };
 
 /* ----------------------------------------------------------------- scene */
@@ -185,7 +164,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     lens = l;
     const fov = WIDE + (LONG - WIDE) * l;
     camera.fov = fov;
-    camera.position.z = (viewH / 2) / Math.tan((fov * Math.PI) / 360);
+    camera.position.z = viewH / 2 / Math.tan((fov * Math.PI) / 360);
     camera.updateProjectionMatrix();
   };
 
@@ -194,10 +173,10 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
   // enough cards for the wall to cover half the screen at any aspect from 4:3 to 2:1
   const N = mobile ? 42 : 64;
   const COLS = mobile ? 7 : 8;
+  const choreo = createChoreo({ n: N, cols: COLS, mobile });
   const geometry = new PlaneGeometry(0.75, 1, 24, 1);
 
   const shared = {
-    uTime: { value: 0 },
     uClip: { value: new Vector4(0, 0, 1e5, 1e5) },
     uPaper: { value: new Vector3(0.957, 0.969, 0.976) },
   };
@@ -209,7 +188,6 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       defines: ghost ? { GHOST: "" } : {},
       transparent: true,
       depthWrite: !ghost,
-      depthTest: !ghost,
       side: 2, // DoubleSide
       uniforms: {
         ...shared,
@@ -223,17 +201,18 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       },
     });
 
-  // Featured first, then newest; repeat to fill every card.
+  // Featured first, then newest. Pictures follow the card's cell on the wall, so neighbours differ.
   const pool = [...items.filter((i) => i.featured), ...items.filter((i) => !i.featured)];
-  const rand = rng(7);
+  const rand = rng(11);
   const cards: Card[] = [];
   for (let k = 0; k < N; k++) {
-    const item = pool[(k * 5) % Math.max(1, pool.length)];
+    const { row, col } = choreo.cellOf(k);
+    const item = pool[((row * COLS + col) * 5) % Math.max(1, pool.length)];
     const mesh = new Mesh(geometry, material(false));
     mesh.renderOrder = 1;
     const ghosts = Array.from({ length: GHOSTS }, (_, g) => {
       const m = new Mesh(geometry, material(true));
-      m.renderOrder = 2;
+      m.renderOrder = 3;
       const [r, gg, b] = trailTint(g / (GHOSTS - 1));
       m.material.uniforms.uTint.value.set(r, gg, b);
       m.visible = false;
@@ -254,17 +233,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     shadow.renderOrder = 0;
     shadow.visible = false;
     scene.add(shadow);
-    const r = () => rand();
-    const s = {
-      fx: r(), fy: r(), fz: r(),
-      rx: r() * 6.28, ry: r() * 6.28, rz: r() * 6.28,
-      wx: (r() - 0.5) * 0.5, wy: (r() - 0.5) * 0.6, wz: (r() - 0.5) * 0.4,
-      fs: 0.8 + r() * 0.5, ph: r() * 6.28, sg: r(), su: 0,
-    };
-    // the wall unrolls column by column, with a little noise
-    s.su = clamp01(((k % COLS) / (COLS - 1)) * 0.8 + r() * 0.2);
-    mesh.material.uniforms.uPhase.value = s.ph;
-    cards.push({ mesh, ghosts, shadow, item, s, prev: new Vector3(), vel: new Vector3(), fresh: true, off: new Vector2(), offVel: new Vector2(), alpha: 0, hover: 0 });
+    cards.push({ mesh, ghosts, shadow, item, ph: rand() * Math.PI * 2, prev: new Vector3(), vel: new Vector3(), fresh: true, off: new Vector2(), offVel: new Vector2(), alpha: 0, hover: 0, rest: new Vector3(), restSize: 1 });
   }
 
   // Textures: one per distinct item, shared by every card that shows it.
@@ -290,9 +259,8 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     }
   })();
 
-  /* ---------------------------------------------------------- layout */
+  /* ----------------------------------------------------------- frame */
 
-  let marks: SceneMarks = { gather: [0.6, 2.2], unroll: [2.9, 4.2], exit: [5, 5.8] };
   let progress = 0;
   let hovered = -1;
   let viewW = 1;
@@ -301,57 +269,10 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
   let pxH = 1;
 
   const pointer = { x: 0, y: 0, vx: 0, vy: 0, inside: false };
-  const tmpQ2 = new Quaternion();
-  const tmpE = new Euler();
-  const qTilt = new Quaternion().setFromEuler(new Euler(0.3, 0, 0));
-  // Turned 23° in its own plane, then laid back 46°: on screen the rows rise ~17° and the
-  // columns fall ~60°, as on premotio's wall.
-  const qWall = new Quaternion().setFromEuler(new Euler(-0.8, 0, 0)).multiply(new Quaternion().setFromEuler(new Euler(0, 0, 0.41)));
+  const P = newPose();
   const v = new Vector3();
+  const axis = new Vector3();
   const proj = new Vector3();
-
-  function floatPose(c: Card, t: number, out: { p: Vector3; q: Quaternion; s: number }) {
-    const { s } = c;
-    const y = (((s.fy + t * 0.012) % 1) - 0.5) * viewH * 1.35;
-    out.p.set(
-      (s.fx - 0.5) * viewW * 1.15 + Math.sin(t * 0.11 + s.ph) * viewW * 0.02,
-      y + Math.cos(t * 0.09 + s.ph * 1.3) * viewH * 0.03,
-      -5 + s.fz * 7.5,
-    );
-    out.q.setFromEuler(tmpE.set(s.rx + t * s.wx, s.ry + t * s.wy, s.rz + t * s.wz));
-    out.s = viewH * 0.15 * s.fs;
-  }
-
-  function ringPose(k: number, t: number, p: number, out: { p: Vector3; q: Quaternion; s: number }) {
-    const a = (k / N) * Math.PI * 2 + t * 0.16 + p * 0.8;
-    const R = mobile ? viewW * 0.36 : Math.min(viewH * 0.5, viewW * 0.27);
-    out.p.set(Math.sin(a) * R, 0, Math.cos(a) * R).applyQuaternion(qTilt);
-    out.p.y += mobile ? viewH * 0.06 : -viewH * 0.04;
-    // Cards fanned 55° off the tangent, like a spread deck. Tangent cards wider than their spacing
-    // would cut through their neighbours; past ~30° the sheets only overlap, never intersect.
-    out.q.copy(qTilt).multiply(tmpQ2.setFromEuler(tmpE.set(0, a + RING_FAN, 0)));
-    out.s = viewH * (mobile ? 0.15 : 0.215);
-  }
-
-  function wallPose(k: number, p: number, out: { p: Vector3; q: Quaternion; s: number }) {
-    const rows = Math.ceil(N / COLS);
-    const size = viewH * (mobile ? 0.2 : 0.28);
-    const cellX = size * 0.75 * 1.08;
-    const cellY = size * 1.1;
-    const c = k % COLS;
-    const r = Math.floor(k / COLS);
-    const drift = Math.max(-0.45, Math.min(0.45, (p - marks.unroll[1]) * 0.35)) * cellX;
-    out.p.set((c - (COLS - 1) / 2) * cellX + drift, ((rows - 1) / 2 - r) * cellY, 0).applyQuaternion(qWall);
-    if (mobile) out.p.add(v.set(0, viewH * 0.26, 0));
-    else out.p.add(v.set(-viewW * 0.25, 0, 0));
-    out.q.copy(qWall);
-    out.s = size;
-  }
-
-  const A = { p: new Vector3(), q: new Quaternion(), s: 1 };
-  const B = { p: new Vector3(), q: new Quaternion(), s: 1 };
-
-  /* ----------------------------------------------------------- frame */
 
   let last = performance.now();
   let raf = 0;
@@ -362,16 +283,10 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     const elapsed = Math.min(0.5, Math.max(1e-3, (now - last) / 1000));
     const dt = Math.min(0.05, elapsed);
     last = now;
-    const t = still ? 0 : now / 1000;
-    shared.uTime.value = t;
     const p = progress;
+    const marks = choreo.marks;
 
-    const g = phase(p, ...marks.gather);
-    const u = phase(p, ...marks.unroll);
-    const x = phase(p, ...marks.exit);
-
-    const anyVisible = x < 1;
-    if (!anyVisible) {
+    if (phase(p, ...marks.exit) >= 1) {
       if (wasVisible) {
         renderer.clear();
         wasVisible = false;
@@ -380,51 +295,24 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     }
     wasVisible = true;
 
-    setLens(easeInOut(phase(p, marks.unroll[0] + (marks.unroll[1] - marks.unroll[0]) * 0.25, marks.unroll[1])));
+    // the wall settles: the lens narrows and the picture is clipped to the left half (top on phones)
+    const settle = easeInOut(phase(p, ...marks.settle));
+    setLens(settle);
+    if (mobile) shared.uClip.value.set(0, pxH * 0.5 * settle, 1e5, 1e5);
+    else shared.uClip.value.set(0, 0, pxW - pxW * 0.5 * settle, 1e5);
 
-    // clip the settled wall to the left half (or the top on phones)
-    const settle = easeInOut(phase(p, marks.unroll[0] + (marks.unroll[1] - marks.unroll[0]) * 0.55, marks.unroll[1]));
-    const clipOn = settle > 0 ? settle : 0;
-    if (mobile) shared.uClip.value.set(0, pxH * 0.5 * clipOn, 1e5, 1e5);
-    else shared.uClip.value.set(0, 0, pxW - (pxW * 0.5) * clipOn, 1e5);
-
-    const stir = u < 0.5;
+    const restingRing = p < marks.unroll[0];
+    const gathered = phase(p, ...marks.gather);
     for (let k = 0; k < N; k++) {
       const c = cards[k];
-      let alpha = 1;
-      let wave = 0;
-      let landed = 0;
-      {
-        const gk = stagger(g, c.s.sg);
-        floatPose(c, t, A);
-        if (gk > 0) {
-          ringPose(k, t, p, B);
-          A.p.lerp(B.p, gk);
-          A.p.z += Math.sin(gk * Math.PI) * 2.2;
-          A.q.slerp(B.q, gk);
-          A.s += (B.s - A.s) * gk;
-        }
-        const uk = stagger(u, c.s.su, 0.5);
-        if (uk > 0) {
-          wallPose(k, p, B);
-          A.p.lerp(B.p, uk);
-          A.p.z += Math.sin(uk * Math.PI) * 1.6;
-          A.q.slerp(B.q, uk);
-          A.s += (B.s - A.s) * uk;
-        }
-        landed = uk * uk;
-        const xk = stagger(x, c.s.sg, 0.3);
-        if (xk > 0) {
-          A.p.y += viewH * 1.3 * xk;
-          A.p.z -= 3 * xk;
-          alpha = 1 - xk;
-        }
-        wave = (1 - gk) * 0.5 + gk * (1 - uk) * 0.18;
-      }
+      choreo.pose(k, p, P);
 
-      // pointer stir: a spring that the cursor's motion kicks
-      if (stir && pointer.inside) {
-        proj.copy(A.p).project(camera);
+      // The pointer's stir, a spring the cursor's motion kicks. Cards in the air are pushed across the
+      // screen, never further than the room they keep; cards on the ring only up or down their slot.
+      const air = P.mode === FLOAT;
+      const onRing = P.mode === RING && P.layer === SOLID && restingRing;
+      if ((air || onRing) && pointer.inside && !still) {
+        proj.copy(P.pos).project(camera);
         const dx = (proj.x - pointer.x) * (pxW / pxH);
         const dy = proj.y - pointer.y;
         const dist = Math.hypot(dx, dy);
@@ -436,53 +324,74 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       }
       c.offVel.multiplyScalar(Math.exp(-dt * 3.2)).addScaledVector(c.off, -dt * 9);
       c.off.addScaledVector(c.offVel, dt);
-      A.p.x += c.off.x * viewW * 0.5;
-      A.p.y += c.off.y * viewH * 0.5;
-
-      // hover: the card under the pointer rises toward the viewer and grows a little
-      c.hover += ((k === hovered ? 1 : 0) - c.hover) * (1 - Math.exp(-dt / 0.09));
-      if (c.hover > 0.001) {
-        A.p.add(v.set(0, 0, 0.12 * A.s * c.hover).applyQuaternion(A.q));
-        A.s *= 1 + 0.06 * c.hover;
+      if (air) {
+        v.set(c.off.x * viewW * 0.5, c.off.y * viewH * 0.5, 0);
+        if (v.length() > STIR_MOST) v.setLength(STIR_MOST);
+        P.pos.add(v);
+      } else if (onRing) {
+        choreo.freeAxis(k, p, RING, axis);
+        P.pos.addScaledVector(axis, Math.max(-0.4, Math.min(0.4, c.off.y * viewH * 0.5)));
       }
 
-      c.mesh.position.copy(A.p);
-      c.mesh.quaternion.copy(A.q);
-      c.mesh.scale.setScalar(A.s);
+      // Hover: the card under the pointer rises toward the viewer. On the ring it rises along its slot;
+      // in the air and on the wall it lifts off its own face (on the wall it grows into the gap).
+      c.rest.copy(P.pos);
+      c.restSize = P.size;
+      const canHover = air || onRing || P.mode === WALL;
+      c.hover += ((k === hovered && canHover ? 1 : 0) - c.hover) * (1 - Math.exp(-dt / 0.09));
+      if (c.hover > 0.001) {
+        if (P.mode === RING) choreo.freeAxis(k, p, RING, axis);
+        else axis.set(0, 0, 1).applyQuaternion(P.quat);
+        P.pos.addScaledVector(axis, 0.12 * P.size * c.hover);
+        if (P.mode !== RING) P.size *= 1 + 0.06 * c.hover;
+      }
+
+      c.mesh.position.copy(P.pos);
+      c.mesh.quaternion.copy(P.quat);
+      c.mesh.scale.setScalar(P.size);
+      // cards at rest share the depth buffer; moving ones are drawn after them, farthest first
+      const solid = P.layer === SOLID;
+      c.mesh.material.depthWrite = solid;
+      c.mesh.renderOrder = solid ? 1 : 2;
 
       // shadow: a little below and behind the card, light from the upper right
-      c.shadow.visible = landed > 0.01 && alpha > 0.01;
+      const alpha = P.alpha;
+      c.shadow.visible = P.landed > 0.01 && alpha > 0.01;
       if (c.shadow.visible) {
         const lift = 1 + c.hover * 1.6;
-        c.shadow.position.copy(A.p).add(v.set(-0.02 * A.s * lift, -0.045 * A.s * lift, -0.03 * A.s - 0.12 * A.s * c.hover).applyQuaternion(A.q));
-        c.shadow.quaternion.copy(A.q);
-        c.shadow.scale.setScalar(A.s * (SHADOW_SCALE + 0.05 * c.hover));
-        c.shadow.material.uniforms.uAlpha.value = (0.2 + 0.08 * c.hover) * landed * alpha;
+        c.shadow.position.copy(P.pos).add(v.set(-0.02 * P.size * lift, -0.045 * P.size * lift, -0.03 * P.size - 0.12 * P.size * c.hover).applyQuaternion(P.quat));
+        c.shadow.quaternion.copy(P.quat);
+        c.shadow.scale.setScalar(P.size * (SHADOW_SCALE + 0.05 * c.hover));
+        c.shadow.material.uniforms.uAlpha.value = (0.2 + 0.08 * c.hover) * P.landed * alpha;
       }
       c.mesh.visible = alpha > 0.002;
       c.alpha = alpha;
 
       // velocity in world units per second, smoothed over ~80 ms so slow frames don't exaggerate it
       if (c.fresh || alpha < 0.01) {
-        c.prev.copy(A.p);
+        c.prev.copy(P.pos);
         c.vel.set(0, 0, 0);
         c.fresh = false;
       }
-      v.copy(A.p).sub(c.prev).divideScalar(elapsed);
+      v.copy(P.pos).sub(c.prev).divideScalar(elapsed);
       c.vel.lerp(v, 1 - Math.exp(-elapsed / 0.08));
-      c.prev.copy(A.p);
+      c.prev.copy(P.pos);
       const speed = c.vel.length();
 
+      // Paper curl from speed, only where it cannot reach a neighbour: in the air, and in flight once
+      // clear of the ring. Cards on the ring stay flat; cards on the wall keep a slight curl.
       const u0 = c.mesh.material.uniforms;
+      const curl = Math.min(1.2, speed / (viewH * 2.2));
       u0.uAlpha.value = alpha;
-      u0.uBend.value = Math.min(1.2, speed / (viewH * 2.2)) + 0.12;
-      u0.uWave.value = wave;
+      u0.uBend.value = air ? 0.12 + Math.min(0.35, curl) : P.mode === FLIGHT && P.flight > 0.12 ? curl : P.mode === WALL ? 0.12 : 0;
+      u0.uWave.value = air ? 0.5 : 0;
+      u0.uPhase.value = c.ph + p * 2.4;
 
       // ghosts: spectral copies trailing along the motion
-      const boost = 1 + (1 - g) * 1.6;
+      const boost = 1 + (1 - gathered) * 1.6;
       const trail = Math.min(viewH * 0.16, speed * 0.028 * boost);
       const dir = v.copy(c.vel).normalize();
-      const strength = clamp01((trail - viewH * 0.004) / (viewH * 0.05));
+      const strength = still || !(air || P.layer === LOOSE) ? 0 : clamp01((trail - viewH * 0.004) / (viewH * 0.05));
       for (let gi = 0; gi < GHOSTS; gi++) {
         const m = c.ghosts[gi];
         if (strength < 0.04 || !c.mesh.visible) {
@@ -491,9 +400,9 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
         }
         const f = (gi + 1) / GHOSTS;
         m.visible = true;
-        m.position.copy(A.p).addScaledVector(dir, -trail * f);
-        m.quaternion.copy(A.q);
-        m.scale.setScalar(A.s * (1 + f * 0.04));
+        m.position.copy(P.pos).addScaledVector(dir, -trail * f);
+        m.quaternion.copy(P.quat);
+        m.scale.setScalar(P.size * (1 + f * 0.04));
         const gu = m.material.uniforms;
         gu.uAlpha.value = alpha * strength * 0.2 * (1 - f * 0.8);
         gu.uBend.value = u0.uBend.value;
@@ -518,6 +427,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     camera.updateProjectionMatrix();
     viewH = 2 * Math.tan((WIDE * Math.PI) / 360) * BASE_Z;
     viewW = viewH * camera.aspect;
+    choreo.layout(viewW, viewH);
     const l = lens;
     lens = -1;
     setLens(l);
@@ -552,7 +462,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       progress = p;
     },
     setMarks(m) {
-      marks = m;
+      choreo.setMarks(m);
     },
     pick(clientX, clientY) {
       ndc.set((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1);
@@ -562,10 +472,24 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       const fy = (window.innerHeight - clientY) * dpr;
       if (fx < clip.x || fy < clip.y || fx > clip.z || fy > clip.w) return null;
       raycaster.setFromCamera(ndc, camera);
+      // Test the hovered card where it rests, not where the hover has lifted it: otherwise a pointer
+      // near its edge would lose it as it rises, and it would bob up and down.
+      const lifted = hovered >= 0 ? cards[hovered].mesh : null;
+      const keep = lifted && { pos: lifted.position.clone(), size: lifted.scale.x };
+      if (lifted) {
+        lifted.position.copy(cards[hovered].rest);
+        lifted.scale.setScalar(cards[hovered].restSize);
+        lifted.updateMatrixWorld();
+      }
       const hits = raycaster.intersectObjects(
         cards.filter((c) => c.mesh.visible && c.alpha > 0.6).map((c) => c.mesh),
         false,
       );
+      if (lifted && keep) {
+        lifted.position.copy(keep.pos);
+        lifted.scale.setScalar(keep.size);
+        lifted.updateMatrixWorld();
+      }
       const hit = hits[0]?.object;
       const index = hit ? cards.findIndex((c) => c.mesh === hit) : -1;
       return index >= 0 ? { id: cards[index].item.id, index } : null;

@@ -10,13 +10,14 @@ Jankin 的灵感集合网站：收藏图片、带动效的 UI，以及生成它�
 npm run dev        # 本地开发，http://localhost:3000；MCP 接口在 /api/mcp（本地不需要密钥）
 npm run build      # 生产构建，提交前必须通过
 npm run typecheck  # 类型检查
+npm run check:scene  # 检查首页卡片场景：任何屏幕比例下卡片都不会互相穿插
 ```
 
 ## 目录
 
 - `content/site.json`、`content/items.json`：站点配置和所有条目。内容改动走 MCP 或直接改这两个文件，不要在组件里写死内容。
 - `public/media/`：媒体文件，文件名由 MCP 生成，不要手动改名。
-- `components/story/`：首页的滚动故事。`timeline.ts` 定义每一幕占多少屏，`scene.ts` 是 three.js 卡片场景，`screens/` 里是每一幕的 DOM。
+- `components/story/`：首页的滚动故事。`timeline.ts` 定义每一幕占多少屏和卡片场景各阶段的起止，`choreo.ts` 算出每张卡片在任一滚动位置的位置，`scene.ts` 用 three.js 把它们画出来（悬停、指针扰动、拖尾），`screens/` 里是每一幕的 DOM。
 - `lib/`：存储（GitHub / 本地）、媒体处理、MCP 工具、鉴权。
 - `app/globals.css`：顶部是颜色、字体、间距、缓动等设计变量，新样式一律使用这些变量。
 
@@ -50,4 +51,5 @@ npm run typecheck  # 类型检查
 - 界面文字用中文，大标题用英文展示字体（Inter Tight），与现有风格保持一致。
 - 毛玻璃只写标准的 `backdrop-filter`，不要再手写 `-webkit-backdrop-filter`：构建时两条会被合并成只剩带前缀的那条，Chrome 和 Edge 认不出，模糊就会失效。Safari 需要的前缀构建工具会自动补上。
 - 不要把 `MCP_SECRET`、`GITHUB_TOKEN` 等密钥写进仓库，这个仓库是公开的。
-- 改动 `scene.ts` 的卡片排布后，要确认卡片之间不会互相穿插，并且卡片墙在 4:3 到 2:1 的屏幕上都能铺满。
+- 卡片场景只跟着滚动走：卡片的位置、角度只能由滚动进度算出来，不要用时间驱动漂浮、旋转或波动，页面停下时卡片必须静止。指针扰动和悬停是例外，但只能沿不会碰到邻居的方向移动（空中卡片在自己的空间内，圆环上的卡片沿圆环的轴上下，墙上的卡片沿墙面法线）。
+- 改动 `choreo.ts` 或 `timeline.ts` 里场景的阶段后，运行 `npm run check:scene`，确认卡片之间不会互相穿插；并截图确认卡片墙在 4:3 到 2:1 的屏幕上都能铺满左半屏。静止的卡片（空中、圆环上、墙上）共用深度缓冲，运动中的卡片在它们之后由远及近叠画，所以运动中的卡片之间可以交错，但不能穿过静止的卡片。

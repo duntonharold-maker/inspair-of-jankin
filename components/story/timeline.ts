@@ -26,8 +26,12 @@ export const local = (p: number, id: ScreenId) => (p - START[id]) / LEN[id];
 
 /** Where in the story the scene changes pose (in viewport heights). */
 export const MARKS = {
+  /** the cards leave the air and drop into the ring */
   gather: [START.library - 0.4, START.library + 1.2] as [number, number],
-  unroll: [START.library + 1.7, START.library + 3.0] as [number, number],
+  /** they leave the ring, back first, for the wall above it */
+  unroll: [START.library + 1.5, START.library + 2.55] as [number, number],
+  /** the finished wall moves to the left half and the lens narrows */
+  settle: [START.library + 2.45, START.library + 3.0] as [number, number],
   exit: [START.categories - 0.5, START.categories + 0.3] as [number, number],
 };
 
