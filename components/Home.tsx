@@ -27,16 +27,22 @@ export default function Home({ items, site, repoUrl }: { items: Item[]; site: Si
     return () => window.removeEventListener("popstate", sync);
   }, []);
 
+  /** Mirrors the open item in ?i=… so links can be shared. Returns false where history is locked (embedded previews). */
   const setUrl = (id: string | null, mode: "push" | "replace") => {
-    const url = new URL(location.href);
-    if (id) url.searchParams.set("i", id);
-    else url.searchParams.delete("i");
-    history[mode === "push" ? "pushState" : "replaceState"](history.state, "", url);
+    try {
+      const url = new URL(location.href);
+      if (id) url.searchParams.set("i", id);
+      else url.searchParams.delete("i");
+      history[mode === "push" ? "pushState" : "replaceState"](history.state, "", url);
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const open = useCallback((id: string) => {
-    setUrl(id, pushed.current ? "replace" : "push");
-    pushed.current = true;
+    if (pushed.current) setUrl(id, "replace");
+    else pushed.current = setUrl(id, "push");
     setOpenId(id);
   }, []);
 
