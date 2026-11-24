@@ -32,7 +32,7 @@ function loadImage(src: string) {
 
 function background(item: Item) {
   // Icons and Lottie files carry their own artwork on a transparent ground.
-  return item.media.type === "svg" || item.media.type === "lottie" ? "#ffffff" : item.color || "#e8e8eb";
+  return item.media.type === "svg" || item.media.type === "lottie" ? "#ffffff" : item.color || "#e4eaee";
 }
 
 export async function cardTexture(item: Item, renderer: WebGLRenderer): Promise<CardTexture> {

@@ -118,7 +118,7 @@ void main() {
   if (gl_FragCoord.x < uClip.x || gl_FragCoord.y < uClip.y || gl_FragCoord.x > uClip.z || gl_FragCoord.y > uClip.w) discard;
   float a = (1.0 - smoothstep(-0.02, 0.075, roundedBox(vUv))) * uAlpha;
   if (a <= 0.002) discard;
-  gl_FragColor = vec4(0.05, 0.05, 0.08, a);
+  gl_FragColor = vec4(0.008, 0.027, 0.039, a); // 午夜冷黑
 }`;
 
 /* ----------------------------------------------------------------- maths */
@@ -141,10 +141,11 @@ function rng(seed: number) {
   };
 }
 
-/** Spectrum from red through green to blue, softened toward white. */
-function spectrum(t: number): [number, number, number] {
-  const c = [0, 4, 2].map((o) => clamp01(Math.abs(((t * 4 + o) % 6) - 3) - 1));
-  return [c[0] * 0.8 + 0.2, c[1] * 0.8 + 0.2, c[2] * 0.8 + 0.2];
+/** Trail tint from 珊瑚橘 (nearest the card) to 电光蓝 (the far end), softened toward white. */
+const CORAL: [number, number, number] = [0.988, 0.451, 0.302];
+const BLUE: [number, number, number] = [0.008, 0.592, 0.871];
+function trailTint(t: number): [number, number, number] {
+  return [0, 1, 2].map((i) => 0.3 + 0.7 * (CORAL[i] + (BLUE[i] - CORAL[i]) * t)) as [number, number, number];
 }
 
 const GHOSTS = 6;
@@ -198,7 +199,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
   const shared = {
     uTime: { value: 0 },
     uClip: { value: new Vector4(0, 0, 1e5, 1e5) },
-    uPaper: { value: new Vector3(0.97, 0.965, 0.955) },
+    uPaper: { value: new Vector3(0.957, 0.969, 0.976) },
   };
 
   const material = (ghost: boolean) =>
@@ -233,7 +234,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     const ghosts = Array.from({ length: GHOSTS }, (_, g) => {
       const m = new Mesh(geometry, material(true));
       m.renderOrder = 2;
-      const [r, gg, b] = spectrum(g / (GHOSTS - 1));
+      const [r, gg, b] = trailTint(g / (GHOSTS - 1));
       m.material.uniforms.uTint.value.set(r, gg, b);
       m.visible = false;
       scene.add(m);

@@ -109,7 +109,8 @@ export default function McpGuide({ siteUrl }: { siteUrl: string | null }) {
   const client = list.find((c) => c.id === active) ?? list[0];
 
   return (
-    <section id="mcp" className="guide" aria-labelledby="guide-title">
+    <section id="mcp" className="guide band-dark" aria-labelledby="guide-title">
+      <div className="guide-inner">
       <header className="guide-head">
         <p className="eyebrow">MCP 连接指南</p>
         <h2 id="guide-title" className="h-display">
@@ -198,6 +199,7 @@ export default function McpGuide({ siteUrl }: { siteUrl: string | null }) {
             </div>
           </div>
         </section>
+      </div>
       </div>
     </section>
   );
