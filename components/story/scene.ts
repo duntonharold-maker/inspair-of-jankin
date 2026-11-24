@@ -130,6 +130,7 @@ function spectrum(t: number): [number, number, number] {
 }
 
 const GHOSTS = 6;
+const RING_FAN = 0.96; // radians off the tangent
 
 type Card = {
   mesh: Mesh<PlaneGeometry, ShaderMaterial>;
@@ -278,7 +279,9 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     const R = mobile ? viewW * 0.36 : Math.min(viewH * 0.5, viewW * 0.27);
     out.p.set(Math.sin(a) * R, 0, Math.cos(a) * R).applyQuaternion(qTilt);
     out.p.y += mobile ? viewH * 0.06 : -viewH * 0.04;
-    out.q.copy(qTilt).multiply(tmpQ2.setFromEuler(tmpE.set(0, a, 0)));
+    // Cards fanned 55° off the tangent, like a spread deck. Tangent cards wider than their spacing
+    // would cut through their neighbours; past ~30° the sheets only overlap, never intersect.
+    out.q.copy(qTilt).multiply(tmpQ2.setFromEuler(tmpE.set(0, a + RING_FAN, 0)));
     out.s = viewH * (mobile ? 0.15 : 0.215);
   }
 
