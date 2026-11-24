@@ -103,6 +103,31 @@ void main() {
   #include <colorspace_fragment>
 }`;
 
+const SHADOW_SCALE = 1.18;
+
+/** A soft shadow under each card on the wall, so white cards still read against the page. */
+const shadowVertex = /* glsl */ `
+varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`;
+
+const shadowFragment = /* glsl */ `
+uniform float uAlpha;
+uniform vec4 uClip;
+varying vec2 vUv;
+float roundedBox(vec2 uv) {
+  vec2 q = abs((uv - 0.5) * vec2(0.75, 1.0) * ${SHADOW_SCALE.toFixed(2)}) - (vec2(0.375, 0.5) - 0.03);
+  return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - 0.03;
+}
+void main() {
+  if (gl_FragCoord.x < uClip.x || gl_FragCoord.y < uClip.y || gl_FragCoord.x > uClip.z || gl_FragCoord.y > uClip.w) discard;
+  float a = (1.0 - smoothstep(-0.02, 0.075, roundedBox(vUv))) * uAlpha;
+  if (a <= 0.002) discard;
+  gl_FragColor = vec4(0.05, 0.05, 0.08, a);
+}`;
+
 /* ----------------------------------------------------------------- maths */
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
@@ -135,6 +160,7 @@ const RING_FAN = 0.96; // radians off the tangent
 type Card = {
   mesh: Mesh<PlaneGeometry, ShaderMaterial>;
   ghosts: Mesh<PlaneGeometry, ShaderMaterial>[];
+  shadow: Mesh<PlaneGeometry, ShaderMaterial>;
   item: Item;
   s: Record<"fx" | "fy" | "fz" | "rx" | "ry" | "rz" | "wx" | "wy" | "wz" | "fs" | "ph" | "sg" | "su", number>;
   prev: Vector3;
@@ -151,13 +177,28 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
   const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "high-performance" });
   renderer.setClearColor(0x000000, 0);
   const scene = new Scene();
-  const camera = new PerspectiveCamera(30, 1, 0.1, 100);
-  camera.position.set(0, 0, 14);
+  // Wide lens for the cards in the air, long lens for the wall. Moving the camera back as the lens
+  // narrows keeps everything at z = 0 the same size; only the perspective flattens.
+  const WIDE = 30;
+  const LONG = 7;
+  const BASE_Z = 14;
+  const camera = new PerspectiveCamera(WIDE, 1, 0.1, 200);
+  camera.position.set(0, 0, BASE_Z);
+  let lens = 0;
+  const setLens = (l: number) => {
+    if (Math.abs(l - lens) < 1e-4) return;
+    lens = l;
+    const fov = WIDE + (LONG - WIDE) * l;
+    camera.fov = fov;
+    camera.position.z = (viewH / 2) / Math.tan((fov * Math.PI) / 360);
+    camera.updateProjectionMatrix();
+  };
 
   const mobile = window.matchMedia("(max-width: 760px)").matches;
   const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const N = mobile ? 30 : 48;
-  const COLS = mobile ? 5 : 8;
+  // enough cards for the wall to cover half the screen at any aspect from 4:3 to 2:1
+  const N = mobile ? 42 : 64;
+  const COLS = mobile ? 7 : 8;
   const geometry = new PlaneGeometry(0.75, 1, 24, 1);
 
   const shared = {
@@ -206,6 +247,19 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       return m;
     });
     scene.add(mesh);
+    const shadow = new Mesh(
+      geometry,
+      new ShaderMaterial({
+        vertexShader: shadowVertex,
+        fragmentShader: shadowFragment,
+        transparent: true,
+        depthWrite: false,
+        uniforms: { uAlpha: { value: 0 }, uClip: shared.uClip },
+      }),
+    );
+    shadow.renderOrder = 0;
+    shadow.visible = false;
+    scene.add(shadow);
     const r = () => rand();
     const s = {
       fx: r(), fy: r(), fz: r(),
@@ -216,7 +270,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     // the wall unrolls column by column, with a little noise
     s.su = clamp01(((k % COLS) / (COLS - 1)) * 0.8 + r() * 0.2);
     mesh.material.uniforms.uPhase.value = s.ph;
-    cards.push({ mesh, ghosts, item, s, prev: new Vector3(), vel: new Vector3(), fresh: true, off: new Vector2(), offVel: new Vector2(), alpha: 0 });
+    cards.push({ mesh, ghosts, shadow, item, s, prev: new Vector3(), vel: new Vector3(), fresh: true, off: new Vector2(), offVel: new Vector2(), alpha: 0 });
   }
 
   // Textures: one per distinct item, shared by every card that shows it.
@@ -257,7 +311,9 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
   const tmpQ2 = new Quaternion();
   const tmpE = new Euler();
   const qTilt = new Quaternion().setFromEuler(new Euler(0.3, 0, 0));
-  const qWall = new Quaternion().setFromEuler(new Euler(-0.95, 0, 0)).multiply(new Quaternion().setFromEuler(new Euler(0, 0, 0.55)));
+  // Turned 23° in its own plane, then laid back 46°: on screen the rows rise ~17° and the
+  // columns fall ~60°, as on premotio's wall.
+  const qWall = new Quaternion().setFromEuler(new Euler(-0.8, 0, 0)).multiply(new Quaternion().setFromEuler(new Euler(0, 0, 0.41)));
   const qCarousel = new Quaternion().setFromEuler(new Euler(0.12, 0, 0));
   const v = new Vector3();
   const proj = new Vector3();
@@ -287,15 +343,15 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
 
   function wallPose(k: number, p: number, out: { p: Vector3; q: Quaternion; s: number }) {
     const rows = Math.ceil(N / COLS);
-    const size = viewH * (mobile ? 0.2 : 0.26);
-    const cellX = size * 0.75 * 1.14;
-    const cellY = size * 1.12;
+    const size = viewH * (mobile ? 0.2 : 0.28);
+    const cellX = size * 0.75 * 1.08;
+    const cellY = size * 1.1;
     const c = k % COLS;
     const r = Math.floor(k / COLS);
-    const drift = (p - marks.unroll[1]) * cellX * 0.35;
+    const drift = Math.max(-0.45, Math.min(0.45, (p - marks.unroll[1]) * 0.35)) * cellX;
     out.p.set((c - (COLS - 1) / 2) * cellX + drift, ((rows - 1) / 2 - r) * cellY, 0).applyQuaternion(qWall);
-    if (mobile) out.p.add(v.set(0, viewH * 0.2, 0));
-    else out.p.add(v.set(-viewW * 0.25, viewH * 0.02, 0));
+    if (mobile) out.p.add(v.set(0, viewH * 0.26, 0));
+    else out.p.add(v.set(-viewW * 0.25, 0, 0));
     out.q.copy(qWall);
     out.s = size;
   }
@@ -350,6 +406,8 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     }
     wasVisible = true;
 
+    setLens(inDistort ? 0 : easeInOut(phase(p, marks.unroll[0] + (marks.unroll[1] - marks.unroll[0]) * 0.25, marks.unroll[1])));
+
     // clip the settled wall to the left half (or the top on phones)
     const settle = easeInOut(phase(p, marks.unroll[0] + (marks.unroll[1] - marks.unroll[0]) * 0.55, marks.unroll[1]));
     const clipOn = !inDistort && settle > 0 ? settle : 0;
@@ -367,6 +425,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       const c = cards[k];
       let alpha = 1;
       let wave = 0;
+      let landed = 0;
       if (!inDistort) {
         const gk = stagger(g, c.s.sg);
         floatPose(c, t, A);
@@ -385,6 +444,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
           A.q.slerp(B.q, uk);
           A.s += (B.s - A.s) * uk;
         }
+        landed = uk * uk;
         const xk = stagger(x, c.s.sg, 0.3);
         if (xk > 0) {
           A.p.y += viewH * 1.3 * xk;
@@ -421,6 +481,15 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       c.mesh.position.copy(A.p);
       c.mesh.quaternion.copy(A.q);
       c.mesh.scale.setScalar(A.s);
+
+      // shadow: a little below and behind the card, light from the upper right
+      c.shadow.visible = landed > 0.01 && alpha > 0.01;
+      if (c.shadow.visible) {
+        c.shadow.position.copy(A.p).add(v.set(-0.02 * A.s, -0.045 * A.s, -0.03 * A.s).applyQuaternion(A.q));
+        c.shadow.quaternion.copy(A.q);
+        c.shadow.scale.setScalar(A.s * SHADOW_SCALE);
+        c.shadow.material.uniforms.uAlpha.value = 0.2 * landed * alpha;
+      }
       c.mesh.visible = alpha > 0.002;
       c.alpha = alpha;
 
@@ -482,8 +551,11 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    viewH = 2 * Math.tan((camera.fov * Math.PI) / 360) * camera.position.z;
+    viewH = 2 * Math.tan((WIDE * Math.PI) / 360) * BASE_Z;
     viewW = viewH * camera.aspect;
+    const l = lens;
+    lens = -1;
+    setLens(l);
     pxW = w * dpr;
     pxH = h * dpr;
   }
@@ -546,6 +618,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       for (const t of textures.values()) t.dispose();
       for (const c of cards) {
         c.mesh.material.dispose();
+        c.shadow.material.dispose();
         for (const g of c.ghosts) g.material.dispose();
       }
       geometry.dispose();
