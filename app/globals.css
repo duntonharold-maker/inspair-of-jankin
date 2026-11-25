@@ -43,6 +43,9 @@
   --spring-copy-roll: 260 20;
   --spring-copy-icon: 420 18;
   --spring-copy-width: 300 24;
+  /* the categories' arrow and rows gliding to the chosen one: critically damped, easing in and out */
+  --spring-cats: 90 19;
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 @media (max-width: 1040px) {
@@ -286,24 +289,33 @@ input { font: inherit; color: inherit; }
   column-gap: 1.5rem;
 }
 .cats-ruler { align-self: center; }
-.cats-list { font-size: clamp(2.75rem, 6vw, 5.75rem); line-height: 1; letter-spacing: -0.045em; font-weight: 500; }
+.cats-list { position: relative; font-size: clamp(2.75rem, 6vw, 5.75rem); line-height: 1; letter-spacing: -0.045em; font-weight: 500; }
 .cats-list li {
   --e: clamp(0, var(--t) * 16 - var(--k) * 0.55, 1);
   opacity: var(--e);
   transform: translateY(calc((1 - var(--e)) * 0.6em));
 }
-.cats-item { --d: 0; display: inline-flex; align-items: baseline; text-align: left; transform-origin: left center; opacity: max(0.16, calc(0.55 - var(--d) * 0.08)); transition: opacity 0.45s var(--ease), transform var(--dur-hover) var(--ease); }
-.cats-item.is-active { opacity: 1; }
-.cats-arrow { display: inline-block; width: 0; overflow: hidden; font-weight: 400; color: var(--coral); transition: width 0.5s var(--ease); }
-.cats-item.is-active .cats-arrow { width: 1.12em; }
-.cats-count { margin-left: 0.6rem; font-size: 0.875rem; font-weight: 500; letter-spacing: 0; position: relative; top: -0.4em; opacity: 0; transition: opacity 0.4s; color: var(--muted); }
+/* The rows read their look from one place that glides to the chosen row (Categories.tsx): opacity by
+   distance, the word sliding right to make room for the single arrow riding between the rows. Only
+   opacity and transforms change, so nothing around them is laid out again while they move. */
+.cats-item { display: inline-flex; align-items: baseline; text-align: left; transform-origin: left center; transition: transform var(--dur-hover) var(--ease); will-change: opacity; }
+.cats-item:not(.is-active) { opacity: 0.45; }
+.cats-word { display: inline-block; will-change: transform; }
+.cats-arrow { position: absolute; left: 0; top: 0; padding-right: 0.12em; font-weight: 400; color: var(--coral); pointer-events: none; will-change: transform; }
+.cats-count { margin-left: 0.6rem; font-size: 0.875rem; font-weight: 500; letter-spacing: 0; position: relative; top: -0.4em; opacity: 0; color: var(--muted); }
 .cats-item.is-active .cats-count { opacity: 1; }
 .cats-thumbs { position: relative; height: min(72vh, 44rem); }
-.cats-thumb { position: absolute; overflow: hidden; border-radius: var(--radius-card); background: var(--surface); box-shadow: 0 1rem 2rem -1rem rgba(2, 7, 10, 0.25); animation: pop 0.7s var(--ease) both; }
+.cats-set { position: absolute; inset: 0; }
+.cats-thumb { position: absolute; overflow: hidden; border-radius: var(--radius-card); background: var(--surface); box-shadow: 0 1.25rem 2.5rem -1.25rem rgba(2, 7, 10, 0.3); animation: pop 0.65s var(--ease-in-out) both; }
+.cats-set.is-leaving .cats-thumb { animation: leave 0.42s var(--ease-in-out) both; }
 .cats-thumb .media { position: absolute; inset: 0; }
 @keyframes pop {
-  from { opacity: 0; transform: translateY(1.5rem) scale(0.92); }
+  from { opacity: 0; transform: translateY(1.5rem) scale(0.94); }
   to { opacity: 1; transform: none; }
+}
+@keyframes leave {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-0.75rem) scale(0.97); }
 }
 .cats-empty { position: absolute; top: 45%; left: 30%; color: var(--muted); }
 
