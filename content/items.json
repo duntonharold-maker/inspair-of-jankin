@@ -1,6 +1,33 @@
 [
   {
+    "id": "20261125-2eu91c",
+    "tags": [
+      "APP导航",
+      "胶囊导航",
+      "底部导航栏",
+      "移动端UI",
+      "极简设计",
+      "组件设计",
+      "加密钱包",
+      "黑白极简"
+    ],
+    "title": "Crypto App 黑白极简胶囊底部导航",
+    "category": "interface",
+    "source": "https://www.xiaohongshu.com/discovery/item/6aaa7b28000000000b0039bd?source=webshare&xhsshare=pc_web&xsec_token=ABNbReIHWhfBE0cbBoFyh8Zs5yjvMdjYu32b4Ad62yfM4=&xsec_source=pc_share",
+    "note": "加密钱包类 APP（Crypto App）极简胶囊底部导航设计（来源：小红书 圆点DESIGN）。五项等距线性图标+文字布局（Home / Chart / Swap / Wallet / Security），克制的纯黑白灰配色与细腻柔和投影，将核心高频动作「Swap」置中以深黑高亮，专业克制、视觉无干扰。",
+    "color": "#1A1A1A",
+    "media": {
+      "src": "/media/20261125-2eu91c.jpg",
+      "type": "image",
+      "width": 768,
+      "height": 1024
+    },
+    "createdAt": "2026-11-25T08:24:52.562Z"
+  },
+  {
     "id": "20261125-nx0y4z",
+    "title": "Finance App 分离式胶囊底部导航",
+    "category": "interface",
     "tags": [
       "APP导航",
       "胶囊导航",
@@ -11,17 +38,15 @@
       "金融应用",
       "分离式FAB"
     ],
-    "title": "Finance App 分离式胶囊底部导航",
-    "category": "interface",
-    "source": "https://www.xiaohongshu.com/discovery/item/6aaa7b28000000000b0039bd?source=webshare&xhsshare=pc_web&xsec_token=ABNbReIHWhfBE0cbBoFyh8Zs5yjvMdjYu32b4Ad62yfM4=&xsec_source=pc_share",
-    "note": "金融类 APP（Finance App）创意分离式胶囊底部导航设计（来源：小红书 圆点DESIGN）。左侧为半透明悬浮胶囊栏，当前选中项展开显示「图标+文字」纯白内胶囊，右侧独立分离出一颗亮紫色圆形「+」快捷操作按钮，兼顾导航清晰度与高频核心动作触发。",
-    "color": "#5B3DF5",
     "media": {
       "src": "/media/20261125-nx0y4z.jpg",
       "type": "image",
       "width": 768,
       "height": 1024
     },
+    "source": "https://www.xiaohongshu.com/discovery/item/6aaa7b28000000000b0039bd?source=webshare&xhsshare=pc_web&xsec_token=ABNbReIHWhfBE0cbBoFyh8Zs5yjvMdjYu32b4Ad62yfM4=&xsec_source=pc_share",
+    "note": "金融类 APP（Finance App）创意分离式胶囊底部导航设计（来源：小红书 圆点DESIGN）。左侧为半透明悬浮胶囊栏，当前选中项展开显示「图标+文字」纯白内胶囊，右侧独立分离出一颗亮紫色圆形「+」快捷操作按钮，兼顾导航清晰度与高频核心动作触发。",
+    "color": "#5B3DF5",
     "createdAt": "2026-11-25T08:24:48.181Z"
   },
   {
