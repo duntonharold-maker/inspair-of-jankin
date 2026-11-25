@@ -26,9 +26,9 @@ function clients(base: string): Client[] {
       id: "claude-app",
       name: "Claude 网页版 / 桌面版",
       steps: [
-        "打开「设置 → 连接器」，点「添加自定义连接器」，名称填 inspair。",
-        `网址填下面这一行，把 ${SECRET} 换成你的密钥，保存。`,
-        "在对话框的工具菜单里确认 inspair 已经打开。",
+        "打开「自定义 → 连接器」，点「添加 → 添加自定义连接器」，名称填 inspair。",
+        `网址填下面这一行，把 ${SECRET} 换成你的密钥；登录方式选「不需要登录」，请求头和 OAuth 留空，保存。`,
+        "在对话框左下角「+ → 连接器」里打开 inspair。",
       ],
       code: withSecret,
       lang: "连接器网址",
