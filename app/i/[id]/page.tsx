@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Footer from "@/components/Footer";
@@ -36,7 +37,8 @@ export default async function ItemPage({ params }: Props) {
       <Nav site={site} />
       <main className="item-page">
         <a className="back" href="/#all">
-          ← 返回全部
+          <ArrowLeft className="ic-back" />
+          返回全部
         </a>
         <ItemDetail item={item} site={site} />
       </main>

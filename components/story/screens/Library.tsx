@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import { Fragment } from "react";
 import { scrollToId } from "@/lib/scroll";
 
@@ -38,7 +39,7 @@ export default function LibraryScreen() {
           </p>
         </div>
         <button className="btn btn--dark rv" style={{ ["--a" as string]: 0.77 }} onClick={() => scrollToId("all")}>
-          浏览全部 <span aria-hidden="true">→</span>
+          浏览全部 <ArrowRight className="ic-go" />
         </button>
       </div>
     </section>

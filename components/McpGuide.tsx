@@ -1,4 +1,5 @@
 "use client";
+import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { useCopy } from "@/lib/hooks";
 import CopyButton from "./CopyButton";
@@ -109,7 +110,7 @@ export default function McpGuide({ siteUrl }: { siteUrl: string | null }) {
         <h2 id="guide-title" className="h-display">
           Connect any
           <br />
-          agent <span className="arrow">→</span> MCP
+          agent <ArrowRight className="arrow" /> MCP
         </h2>
         <p className="guide-sub">
           用任何支持 MCP 的智能体管理这个网站：收藏图片和动效、记提示词、改分类、批量整理。改动会提交到 GitHub，1–2 分钟后网站更新。

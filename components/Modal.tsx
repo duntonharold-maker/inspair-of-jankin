@@ -1,4 +1,5 @@
 "use client";
+import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import ItemDetail from "./ItemDetail";
 import { lockScroll } from "@/lib/scroll";
@@ -45,13 +46,13 @@ export default function Modal({
       <div className="modal-panel">
         <div className="modal-bar">
           <button className="icon-btn" onClick={onPrev} disabled={!onPrev} aria-label="上一张">
-            ←
+            <ArrowLeft />
           </button>
           <button className="icon-btn" onClick={onNext} disabled={!onNext} aria-label="下一张">
-            →
+            <ArrowRight />
           </button>
           <button ref={closeRef} className="icon-btn" onClick={onClose} aria-label="关闭">
-            ×
+            <X />
           </button>
         </div>
         <ItemDetail key={item.id} item={item} site={site} />

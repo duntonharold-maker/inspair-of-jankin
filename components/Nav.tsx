@@ -1,4 +1,5 @@
 "use client";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import Mark from "./Mark";
 import type { Site } from "@/lib/types";
@@ -41,11 +42,11 @@ export default function Nav({ site, onRandom }: { site: Site; onRandom?: () => v
       </nav>
       {onRandom ? (
         <button className="btn btn--dark nav-cta" onClick={onRandom}>
-          随便看看 <span aria-hidden="true">→</span>
+          随便看看 <ArrowRight className="ic-go" />
         </button>
       ) : (
         <a className="btn btn--dark nav-cta" href="/#all">
-          全部灵感 <span aria-hidden="true">→</span>
+          全部灵感 <ArrowRight className="ic-go" />
         </a>
       )}
     </header>

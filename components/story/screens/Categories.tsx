@@ -1,4 +1,5 @@
 "use client";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import MediaView from "@/components/MediaView";
 import { animate, settled, spring, springToken, step, tune, type Spring } from "@/lib/spring";
@@ -146,7 +147,7 @@ export default function CategoriesScreen({ site, items, onPick }: { site: Site; 
         <TickRuler className="cats-ruler" at={n > 1 ? active / (n - 1) : 0} />
         <div ref={list} className="cats-list" onMouseLeave={() => setHover(null)}>
           <span ref={arrow} className="cats-arrow" aria-hidden="true">
-            →
+            <ArrowRight className="arrow" />
           </span>
           <ul>
           {cats.map((c, k) => (

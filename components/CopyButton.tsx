@@ -1,4 +1,5 @@
 "use client";
+import { Check, Copy } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { animate, settled, spring, springToken, step, tune, type Spring } from "@/lib/spring";
 import { writeClipboard } from "@/lib/hooks";
@@ -93,13 +94,8 @@ export default function CopyButton({ text, label = "复制", done = "已复制",
   return (
     <button ref={button} type="button" className="copy-btn" onClick={press} aria-label={`${label}：${what ?? text}`}>
       <span className="copy-ic" aria-hidden="true">
-        <svg ref={iconCopy} viewBox="0 0 24 24">
-          <rect x="8.5" y="8.5" width="11" height="11" rx="3" />
-          <path d="M15.5 8.5V7a2.5 2.5 0 0 0-2.5-2.5H7A2.5 2.5 0 0 0 4.5 7v6A2.5 2.5 0 0 0 7 15.5h1.5" />
-        </svg>
-        <svg ref={iconDone} className="copy-done" viewBox="0 0 24 24">
-          <path d="M5 12.5l4.5 4.5L19 7.5" />
-        </svg>
+        <Copy ref={iconCopy} />
+        <Check ref={iconDone} className="copy-done" strokeWidth={2.5} />
       </span>
       <span ref={roll} className="copy-roll" aria-hidden="true">
         <span ref={words} className="copy-words">

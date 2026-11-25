@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import MediaView from "@/components/MediaView";
 import type { Item, Site } from "@/lib/types";
 
@@ -8,13 +9,15 @@ export default function DevicesScreen({ items, site }: { items: Item[]; site: Si
       <h2 id="devices-title" className="h-display devices-title">
         On every
         <br />
-        <span className="arrow">→</span> device
+        <ArrowRight className="arrow" /> device
       </h2>
       <div className="phone" aria-hidden="true">
         <div className="phone-screen">
           <div className="phone-nav">
             <b>{site.name}</b>
-            <span>随便看看 →</span>
+            <span>
+              随便看看 <ArrowRight />
+            </span>
           </div>
           <div className="phone-feed">
             {[0, 1].map((col) => (

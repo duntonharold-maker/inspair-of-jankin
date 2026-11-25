@@ -1,3 +1,4 @@
+import { ArrowUpRight } from "lucide-react";
 import Mark from "./Mark";
 import type { Site } from "@/lib/types";
 
@@ -24,7 +25,8 @@ export default function Footer({ site, repoUrl }: { site: Site; repoUrl?: string
             <h4>更多</h4>
             {repoUrl && (
               <a href={repoUrl} target="_blank" rel="noopener noreferrer">
-                GitHub ↗
+                GitHub
+                <ArrowUpRight className="ic-out" />
               </a>
             )}
           </div>

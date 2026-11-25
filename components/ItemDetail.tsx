@@ -1,4 +1,5 @@
 "use client";
+import { ArrowUpRight, ChevronRight } from "lucide-react";
 import MediaView from "./MediaView";
 import { useCopy } from "@/lib/hooks";
 import type { Item, Site } from "@/lib/types";
@@ -50,7 +51,10 @@ export default function ItemDetail({ item, site }: { item: Item; site: Site }) {
             {item.params && <code className="prompt-params">{item.params}</code>}
             {item.negativePrompt && (
               <details className="prompt-neg">
-                <summary>Negative prompt</summary>
+                <summary>
+                  <ChevronRight className="ic-fold" />
+                  Negative prompt
+                </summary>
                 <p>{item.negativePrompt}</p>
               </details>
             )}
@@ -90,7 +94,8 @@ export default function ItemDetail({ item, site }: { item: Item; site: Site }) {
               <dd>
                 {isUrl ? (
                   <a href={item.source} target="_blank" rel="noopener noreferrer">
-                    {host} ↗
+                    {host}
+                    <ArrowUpRight className="ic-out" />
                   </a>
                 ) : (
                   item.source
@@ -109,7 +114,7 @@ export default function ItemDetail({ item, site }: { item: Item; site: Site }) {
             {copied === "link" ? "已复制链接" : "复制链接"}
           </button>
           <a className="btn btn--line" href={item.media.src} target="_blank" rel="noopener">
-            原文件 ↗
+            原文件 <ArrowUpRight className="ic-out" />
           </a>
         </div>
       </aside>

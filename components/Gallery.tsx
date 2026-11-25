@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { Search, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Card, { ratioOf } from "./Card";
 import TabPill from "./TabPill";
 import type { Item, Site } from "@/lib/types";
@@ -46,6 +47,7 @@ export default function Gallery({
   onListChange: (list: Item[]) => void;
 }) {
   const [query, setQuery] = useState("");
+  const field = useRef<HTMLInputElement>(null);
   const [oldest, setOldest] = useState(false);
   const [limit, setLimit] = useState(PAGE);
   const cols = useColumnCount();
@@ -93,17 +95,28 @@ export default function Gallery({
         </h2>
         <div className="toolbar">
           <label className="search">
-            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-              <circle cx="7" cy="7" r="5.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
-              <path d="m11 11 3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <Search />
             <input
+              ref={field}
               type="search"
               placeholder="搜索标题、提示词、标签…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label="搜索"
             />
+            {query && (
+              <button
+                type="button"
+                className="search-clear"
+                aria-label="清空搜索"
+                onClick={() => {
+                  setQuery("");
+                  field.current?.focus();
+                }}
+              >
+                <X />
+              </button>
+            )}
           </label>
           <div className="seg seg--line tabs-track" role="radiogroup" aria-label="类型">
             <TabPill watch={kind} />
