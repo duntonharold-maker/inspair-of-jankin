@@ -35,6 +35,10 @@
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --dur-hover: 0.22s;
   --dur-press: 0.1s;
+  /* springs, as "stiffness damping": the tab pill's edges (components/TabPill.tsx). The edge facing
+     the move is stiff, the other soft, so the pill stretches toward the new tab and pulls its tail in. */
+  --spring-tab-lead: 620 40;
+  --spring-tab-trail: 170 19;
 }
 
 @media (max-width: 1040px) {
@@ -433,6 +437,42 @@ input { font: inherit; color: inherit; }
 .chip-btn[aria-selected="true"] { background: var(--ink); color: var(--inverse-fg); }
 .chip-btn[aria-selected="true"] span { color: var(--inverse-muted); }
 
+/* Tab pill (components/TabPill.tsx): the selected item's dark fill is one pill that slides to the
+   item chosen next. Until the pill is placed (.is-live), the selected item keeps its own fill. */
+.tabs-track { position: relative; }
+.tabs-track > button { position: relative; z-index: 1; }
+.tabs-track > button:focus-visible { outline-offset: -2px; border-radius: 999px; }
+.tab-pill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  pointer-events: none;
+  will-change: transform, width;
+  transition: background-color var(--dur-hover) var(--ease);
+}
+.tabs-track.is-live > button.is-on,
+.tabs-track.is-live > button[aria-selected="true"],
+.tabs-track.is-live > button.is-on:hover,
+.tabs-track.is-live > button[aria-selected="true"]:hover { background: transparent; }
+/* the categories sit on one track, like the type switch, so the pill has a ground to slide over */
+.chips.tabs-track {
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--track);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.chips.tabs-track::-webkit-scrollbar { display: none; }
+.chips.tabs-track .chip-btn { flex: none; }
+.chips.tabs-track .chip-btn[aria-selected="false"] { background: transparent; }
+
 .masonry { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
 .masonry-col { display: flex; flex-direction: column; gap: 1.75rem; min-width: 0; }
 
@@ -583,6 +623,8 @@ a, button, summary, label, [role="button"], [role="radio"], [role="tab"] { -webk
   .icon-btn:not(:disabled):hover { background: var(--surface); border-color: var(--blue); transform: scale(1.06); }
   .chip-btn:hover { background: var(--border); }
   .chip-btn[aria-selected="true"]:hover { background: var(--ink-2); }
+  .chips.tabs-track .chip-btn[aria-selected="false"]:hover { background: var(--border); }
+  .tabs-track:has(> button.is-on:hover, > button[aria-selected="true"]:hover) > .tab-pill { background: var(--ink-2); }
   .toggle:hover { border-color: var(--blue); }
   .seg button:not(.is-on):hover { color: var(--fg); background: var(--track); }
   .seg button.is-on:hover { background: var(--ink-2); }

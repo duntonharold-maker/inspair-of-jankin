@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Card, { ratioOf } from "./Card";
+import TabPill from "./TabPill";
 import type { Item, Site } from "@/lib/types";
 
 export type Kind = "all" | "image" | "motion";
@@ -104,7 +105,8 @@ export default function Gallery({
               aria-label="搜索"
             />
           </label>
-          <div className="seg seg--line" role="radiogroup" aria-label="类型">
+          <div className="seg seg--line tabs-track" role="radiogroup" aria-label="类型">
+            <TabPill watch={kind} />
             {(
               [
                 ["all", "全部类型"],
@@ -124,7 +126,8 @@ export default function Gallery({
             {oldest ? "最早在前" : "最新在前"}
           </button>
         </div>
-        <div className="chips" role="tablist" aria-label="分类筛选">
+        <div className="chips tabs-track" role="tablist" aria-label="分类筛选">
+          <TabPill watch={category} />
           <button role="tab" aria-selected={category === "all"} className="chip-btn" onClick={() => setCategory("all")}>
             全部 <span>{items.length}</span>
           </button>
