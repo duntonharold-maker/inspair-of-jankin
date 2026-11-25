@@ -1,6 +1,32 @@
 [
   {
+    "id": "20261125-o3tuzk",
+    "tags": [
+      "移动端UI",
+      "登录页",
+      "引导页",
+      "旅行应用",
+      "插画风格",
+      "暗黑模式",
+      "蓝橙撞色",
+      "胶囊按钮"
+    ],
+    "title": "Travel App 蓝橙插画暗黑登录引导页",
+    "category": "interface",
+    "note": "旅行类 APP 引导登录页设计（Travel, simplified.）。上半部分采用大圆角天空蓝卡片承载醒目白色无衬线大标题与扁平矢量旅行插画（橙红行李箱、草帽、起飞客机与云层剪影）及轮播指示点；下半部分切换为沉稳暗黑模式登录表单，搭配深灰胶囊输入框、高对比纯白胶囊主按钮「Continue」与第三方 Google 登录按钮，蓝橙撞色与明暗分区层次鲜明。",
+    "color": "#156EC9",
+    "media": {
+      "src": "/media/20261125-o3tuzk.jpg",
+      "type": "image",
+      "width": 800,
+      "height": 900
+    },
+    "createdAt": "2026-11-25T08:26:36.629Z"
+  },
+  {
     "id": "20261125-2eu91c",
+    "title": "Crypto App 黑白极简胶囊底部导航",
+    "category": "interface",
     "tags": [
       "APP导航",
       "胶囊导航",
@@ -11,17 +37,15 @@
       "加密钱包",
       "黑白极简"
     ],
-    "title": "Crypto App 黑白极简胶囊底部导航",
-    "category": "interface",
-    "source": "https://www.xiaohongshu.com/discovery/item/6aaa7b28000000000b0039bd?source=webshare&xhsshare=pc_web&xsec_token=ABNbReIHWhfBE0cbBoFyh8Zs5yjvMdjYu32b4Ad62yfM4=&xsec_source=pc_share",
-    "note": "加密钱包类 APP（Crypto App）极简胶囊底部导航设计（来源：小红书 圆点DESIGN）。五项等距线性图标+文字布局（Home / Chart / Swap / Wallet / Security），克制的纯黑白灰配色与细腻柔和投影，将核心高频动作「Swap」置中以深黑高亮，专业克制、视觉无干扰。",
-    "color": "#1A1A1A",
     "media": {
       "src": "/media/20261125-2eu91c.jpg",
       "type": "image",
       "width": 768,
       "height": 1024
     },
+    "source": "https://www.xiaohongshu.com/discovery/item/6aaa7b28000000000b0039bd?source=webshare&xhsshare=pc_web&xsec_token=ABNbReIHWhfBE0cbBoFyh8Zs5yjvMdjYu32b4Ad62yfM4=&xsec_source=pc_share",
+    "note": "加密钱包类 APP（Crypto App）极简胶囊底部导航设计（来源：小红书 圆点DESIGN）。五项等距线性图标+文字布局（Home / Chart / Swap / Wallet / Security），克制的纯黑白灰配色与细腻柔和投影，将核心高频动作「Swap」置中以深黑高亮，专业克制、视觉无干扰。",
+    "color": "#1A1A1A",
     "createdAt": "2026-11-25T08:24:52.562Z"
   },
   {
