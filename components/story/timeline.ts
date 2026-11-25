@@ -28,10 +28,10 @@ export const local = (p: number, id: ScreenId) => (p - START[id]) / LEN[id];
 export const MARKS = {
   /** the cards leave the air and drop into the ring */
   gather: [START.library - 0.4, START.library + 1.2] as [number, number],
-  /** they leave the ring, back first, for the wall above it */
-  unroll: [START.library + 1.5, START.library + 2.55] as [number, number],
-  /** the finished wall moves to the left half and the lens narrows */
-  settle: [START.library + 2.45, START.library + 3.0] as [number, number],
+  /** the ring turns once round as they leave it, from the back, for the wall at the upper left */
+  unroll: [START.library + 1.5, START.library + 2.65] as [number, number],
+  /** the wall's lens narrows and the picture is cut to the left half */
+  settle: [START.library + 2.55, START.library + 3.05] as [number, number],
   exit: [START.categories - 0.5, START.categories + 0.3] as [number, number],
 };
 

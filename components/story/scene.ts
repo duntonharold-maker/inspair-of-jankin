@@ -1,14 +1,13 @@
 /**
- * The cards behind the story: they hang in the air in the hero, drop into a ring, leave it for a
- * tilted wall that settles on the left half, then go. Where each card is comes from `choreo.ts` and
- * depends on the scroll position alone, so the cards hold still whenever the page does; this file
- * draws them, and adds the pointer's stir, hover and the motion trails.
+ * The cards behind the story: they drift in the air on the first screen, drop into a ring, leave it
+ * counterclockwise for a tilted wall at the upper left, then go. Where each card is comes from
+ * `choreo.ts`; this file draws them, each through its own lens, and adds the pointer's stir, hover and
+ * the motion trails.
  */
 import {
   Mesh,
   PerspectiveCamera,
   PlaneGeometry,
-  Raycaster,
   Scene,
   ShaderMaterial,
   Vector2,
@@ -18,7 +17,24 @@ import {
   type Texture,
 } from "three";
 import { cardTexture, type CardTexture } from "./textures";
-import { FLIGHT, FLOAT, LOOSE, RING, SOLID, WALL, clamp01, createChoreo, easeInOut, newPose, phase, rng, type Marks } from "./choreo";
+import {
+  FLIGHT,
+  FLOAT,
+  LONG_FOV,
+  LOOSE,
+  RING,
+  SOLID,
+  WALL,
+  clamp01,
+  createChoreo,
+  distanceFor,
+  easeInOut,
+  newPose,
+  phase,
+  rng,
+  toShared,
+  type Marks,
+} from "./choreo";
 import type { Item } from "@/lib/types";
 
 export type SceneMarks = Marks;
@@ -36,12 +52,28 @@ export type StoryScene = {
 
 /* --------------------------------------------------------------- shaders */
 
+/**
+ * Every card is seen through its own lens (uLens: how far its camera stands from z = 0) and drawn
+ * uDepth further back; the shared camera stands uBase away. Same sum as `toShared` in choreo.ts.
+ */
+const lensChunk = /* glsl */ `
+uniform float uLens;
+uniform float uDepth;
+uniform float uBase;
+vec4 throughLens(vec3 local) {
+  vec4 w = modelMatrix * vec4(local, 1.0);
+  float za = w.z - uDepth;
+  float s = uLens * (uBase - za) / (uBase * max(uLens - w.z, 0.05));
+  return projectionMatrix * viewMatrix * vec4(w.xy * s, za, 1.0);
+}`;
+
 const vertex = /* glsl */ `
 uniform float uBend;
 uniform float uWave;
 uniform float uPhase;
 varying vec2 vUv;
 varying float vShade;
+${lensChunk}
 void main() {
   vUv = uv;
   vec3 p = position;
@@ -49,7 +81,7 @@ void main() {
   p.z += uBend * (x * x - 0.4) * 0.16;        // curl like a sheet of paper
   p.z += uWave * sin(x * 2.4 + uPhase) * 0.05;
   vShade = 1.0 - 0.22 * clamp(abs(uBend), 0.0, 1.5) * abs(x);
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+  gl_Position = throughLens(p);
 }`;
 
 const fragment = /* glsl */ `
@@ -96,9 +128,10 @@ const SHADOW_SCALE = 1.18;
 /** A soft shadow under each card on the wall, so white cards still read against the page. */
 const shadowVertex = /* glsl */ `
 varying vec2 vUv;
+${lensChunk}
 void main() {
   vUv = uv;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  gl_Position = throughLens(position);
 }`;
 
 const shadowFragment = /* glsl */ `
@@ -124,8 +157,8 @@ function trailTint(t: number): [number, number, number] {
 }
 
 const GHOSTS = 6;
-/** How far the pointer may push a card in the air: less than the room each card keeps around itself. */
-const STIR_MOST = 0.12;
+/** How far the pointer may push a card in the air. */
+const STIR_MOST = 0.25;
 
 type Card = {
   mesh: Mesh<PlaneGeometry, ShaderMaterial>;
@@ -143,6 +176,11 @@ type Card = {
   /** where the card is before the hover lifts it: what the pointer is tested against */
   rest: Vector3;
   restSize: number;
+  lens: number;
+  depth: number;
+  /** its depth as drawn, for ordering the moving cards */
+  drawnZ: number;
+  loose: boolean;
 };
 
 /* ----------------------------------------------------------------- scene */
@@ -151,22 +189,8 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
   const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "high-performance" });
   renderer.setClearColor(0x000000, 0);
   const scene = new Scene();
-  // Wide lens for the cards in the air, long lens for the wall. Moving the camera back as the lens
-  // narrows keeps everything at z = 0 the same size; only the perspective flattens.
-  const WIDE = 30;
-  const LONG = 7;
-  const BASE_Z = 14;
-  const camera = new PerspectiveCamera(WIDE, 1, 0.1, 200);
-  camera.position.set(0, 0, BASE_Z);
-  let lens = 0;
-  const setLens = (l: number) => {
-    if (Math.abs(l - lens) < 1e-4) return;
-    lens = l;
-    const fov = WIDE + (LONG - WIDE) * l;
-    camera.fov = fov;
-    camera.position.z = viewH / 2 / Math.tan((fov * Math.PI) / 360);
-    camera.updateProjectionMatrix();
-  };
+  // One shared camera with the long lens; each card brings its own lens through its shader.
+  const camera = new PerspectiveCamera(LONG_FOV, 1, 0.5, 400);
 
   const mobile = window.matchMedia("(max-width: 760px)").matches;
   const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -179,7 +203,9 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
   const shared = {
     uClip: { value: new Vector4(0, 0, 1e5, 1e5) },
     uPaper: { value: new Vector3(0.957, 0.969, 0.976) },
+    uBase: { value: 60 },
   };
+  const lensUniforms = () => ({ uLens: { value: 14 }, uDepth: { value: 0 } });
 
   const material = (ghost: boolean) =>
     new ShaderMaterial({
@@ -191,6 +217,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       side: 2, // DoubleSide
       uniforms: {
         ...shared,
+        ...lensUniforms(),
         uMap: { value: null as Texture | null },
         uHasMap: { value: 0 },
         uAlpha: { value: 1 },
@@ -210,9 +237,11 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     const item = pool[((row * COLS + col) * 5) % Math.max(1, pool.length)];
     const mesh = new Mesh(geometry, material(false));
     mesh.renderOrder = 1;
+    mesh.frustumCulled = false; // its lens moves it on screen, so three cannot tell where it is
     const ghosts = Array.from({ length: GHOSTS }, (_, g) => {
       const m = new Mesh(geometry, material(true));
-      m.renderOrder = 3;
+      m.renderOrder = 1000;
+      m.frustumCulled = false;
       const [r, gg, b] = trailTint(g / (GHOSTS - 1));
       m.material.uniforms.uTint.value.set(r, gg, b);
       m.visible = false;
@@ -227,13 +256,33 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
         fragmentShader: shadowFragment,
         transparent: true,
         depthWrite: false,
-        uniforms: { uAlpha: { value: 0 }, uClip: shared.uClip },
+        uniforms: { uAlpha: { value: 0 }, uClip: shared.uClip, uBase: shared.uBase, ...lensUniforms() },
       }),
     );
     shadow.renderOrder = 0;
     shadow.visible = false;
+    shadow.frustumCulled = false;
     scene.add(shadow);
-    cards.push({ mesh, ghosts, shadow, item, ph: rand() * Math.PI * 2, prev: new Vector3(), vel: new Vector3(), fresh: true, off: new Vector2(), offVel: new Vector2(), alpha: 0, hover: 0, rest: new Vector3(), restSize: 1 });
+    cards.push({
+      mesh,
+      ghosts,
+      shadow,
+      item,
+      ph: rand() * Math.PI * 2,
+      prev: new Vector3(),
+      vel: new Vector3(),
+      fresh: true,
+      off: new Vector2(),
+      offVel: new Vector2(),
+      alpha: 0,
+      hover: 0,
+      rest: new Vector3(),
+      restSize: 1,
+      lens: 14,
+      depth: 0,
+      drawnZ: 0,
+      loose: false,
+    });
   }
 
   // Textures: one per distinct item, shared by every card that shows it.
@@ -267,16 +316,24 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
   let viewH = 1;
   let pxW = 1;
   let pxH = 1;
+  let base = 60;
+  // the drift's own clock: it runs on the first screen and stops as the page scrolls into the ring
+  let clock = 0;
 
   const pointer = { x: 0, y: 0, vx: 0, vy: 0, inside: false };
   const P = newPose();
   const v = new Vector3();
   const axis = new Vector3();
-  const proj = new Vector3();
+  const onScreen = new Vector3();
+
+  /** Where a point of a card (seen through its lens) shows on screen, in normalised device coordinates. */
+  const screenOf = (point: Vector3, lens: number, depth: number, out: Vector3) =>
+    toShared(point.x, point.y, point.z, lens, depth, base, out).project(camera);
 
   let last = performance.now();
   let raf = 0;
   let wasVisible = true;
+  const loose: Card[] = [];
 
   function frame(now: number) {
     raf = requestAnimationFrame(frame);
@@ -295,26 +352,29 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     }
     wasVisible = true;
 
-    // the wall settles: the lens narrows and the picture is clipped to the left half (top on phones)
+    const drifting = still ? 0 : 1 - phase(p, marks.gather[0] - 0.35, marks.gather[0]);
+    clock += dt * drifting;
+
+    // the wall settles: the picture is cut to the left half (top on phones)
     const settle = easeInOut(phase(p, ...marks.settle));
-    setLens(settle);
     if (mobile) shared.uClip.value.set(0, pxH * 0.5 * settle, 1e5, 1e5);
     else shared.uClip.value.set(0, 0, pxW - pxW * 0.5 * settle, 1e5);
 
     const restingRing = p < marks.unroll[0];
     const gathered = phase(p, ...marks.gather);
+    loose.length = 0;
     for (let k = 0; k < N; k++) {
       const c = cards[k];
-      choreo.pose(k, p, P);
+      choreo.pose(k, p, P, clock);
 
-      // The pointer's stir, a spring the cursor's motion kicks. Cards in the air are pushed across the
-      // screen, never further than the room they keep; cards on the ring only up or down their slot.
-      const air = P.mode === FLOAT;
+      // The pointer's stir, a spring the cursor's motion kicks: cards in the air are pushed across the
+      // screen, cards on the ring only up or down their slot.
+      const air = P.mode === FLOAT && p < marks.gather[0];
       const onRing = P.mode === RING && P.layer === SOLID && restingRing;
       if ((air || onRing) && pointer.inside && !still) {
-        proj.copy(P.pos).project(camera);
-        const dx = (proj.x - pointer.x) * (pxW / pxH);
-        const dy = proj.y - pointer.y;
+        screenOf(P.pos, P.lens, P.depth, onScreen);
+        const dx = (onScreen.x - pointer.x) * (pxW / pxH);
+        const dy = onScreen.y - pointer.y;
         const dist = Math.hypot(dx, dy);
         if (dist < 0.35) {
           const f = (1 - dist / 0.35) * 18;
@@ -329,7 +389,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
         if (v.length() > STIR_MOST) v.setLength(STIR_MOST);
         P.pos.add(v);
       } else if (onRing) {
-        choreo.freeAxis(k, p, RING, axis);
+        choreo.freeAxis(RING, P.quat, axis);
         P.pos.addScaledVector(axis, Math.max(-0.4, Math.min(0.4, c.off.y * viewH * 0.5)));
       }
 
@@ -340,8 +400,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       const canHover = air || onRing || P.mode === WALL;
       c.hover += ((k === hovered && canHover ? 1 : 0) - c.hover) * (1 - Math.exp(-dt / 0.09));
       if (c.hover > 0.001) {
-        if (P.mode === RING) choreo.freeAxis(k, p, RING, axis);
-        else axis.set(0, 0, 1).applyQuaternion(P.quat);
+        choreo.freeAxis(P.mode, P.quat, axis);
         P.pos.addScaledVector(axis, 0.12 * P.size * c.hover);
         if (P.mode !== RING) P.size *= 1 + 0.06 * c.hover;
       }
@@ -349,10 +408,17 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       c.mesh.position.copy(P.pos);
       c.mesh.quaternion.copy(P.quat);
       c.mesh.scale.setScalar(P.size);
+      c.lens = P.lens;
+      c.depth = P.depth;
+      c.drawnZ = P.pos.z - P.depth;
+      const u0 = c.mesh.material.uniforms;
+      u0.uLens.value = P.lens;
+      u0.uDepth.value = P.depth;
       // cards at rest share the depth buffer; moving ones are drawn after them, farthest first
-      const solid = P.layer === SOLID;
-      c.mesh.material.depthWrite = solid;
-      c.mesh.renderOrder = solid ? 1 : 2;
+      c.loose = P.layer === LOOSE;
+      c.mesh.material.depthWrite = !c.loose;
+      if (c.loose) loose.push(c);
+      else c.mesh.renderOrder = 1;
 
       // shadow: a little below and behind the card, light from the upper right
       const alpha = P.alpha;
@@ -362,7 +428,10 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
         c.shadow.position.copy(P.pos).add(v.set(-0.02 * P.size * lift, -0.045 * P.size * lift, -0.03 * P.size - 0.12 * P.size * c.hover).applyQuaternion(P.quat));
         c.shadow.quaternion.copy(P.quat);
         c.shadow.scale.setScalar(P.size * (SHADOW_SCALE + 0.05 * c.hover));
-        c.shadow.material.uniforms.uAlpha.value = (0.2 + 0.08 * c.hover) * P.landed * alpha;
+        const su = c.shadow.material.uniforms;
+        su.uAlpha.value = (0.2 + 0.08 * c.hover) * P.landed * alpha;
+        su.uLens.value = P.lens;
+        su.uDepth.value = P.depth;
       }
       c.mesh.visible = alpha > 0.002;
       c.alpha = alpha;
@@ -380,18 +449,18 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
 
       // Paper curl from speed, only where it cannot reach a neighbour: in the air, and in flight once
       // clear of the ring. Cards on the ring stay flat; cards on the wall keep a slight curl.
-      const u0 = c.mesh.material.uniforms;
+      const inAir = P.mode === FLOAT;
       const curl = Math.min(1.2, speed / (viewH * 2.2));
       u0.uAlpha.value = alpha;
-      u0.uBend.value = air ? 0.12 + Math.min(0.35, curl) : P.mode === FLIGHT && P.flight > 0.12 ? curl : P.mode === WALL ? 0.12 : 0;
-      u0.uWave.value = air ? 0.5 : 0;
-      u0.uPhase.value = c.ph + p * 2.4;
+      u0.uBend.value = inAir ? 0.12 + Math.min(0.35, curl) : P.mode === FLIGHT && P.flight > 0.12 ? curl : P.mode === WALL ? 0.12 : 0;
+      u0.uWave.value = inAir ? 0.5 : 0;
+      u0.uPhase.value = c.ph + clock * 1.7 + p * 2.4;
 
       // ghosts: spectral copies trailing along the motion
       const boost = 1 + (1 - gathered) * 1.6;
       const trail = Math.min(viewH * 0.16, speed * 0.028 * boost);
       const dir = v.copy(c.vel).normalize();
-      const strength = still || !(air || P.layer === LOOSE) ? 0 : clamp01((trail - viewH * 0.004) / (viewH * 0.05));
+      const strength = still || !c.loose ? 0 : clamp01((trail - viewH * 0.004) / (viewH * 0.05));
       for (let gi = 0; gi < GHOSTS; gi++) {
         const m = c.ghosts[gi];
         if (strength < 0.04 || !c.mesh.visible) {
@@ -408,8 +477,14 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
         gu.uBend.value = u0.uBend.value;
         gu.uWave.value = u0.uWave.value;
         gu.uPhase.value = u0.uPhase.value;
+        gu.uLens.value = P.lens;
+        gu.uDepth.value = P.depth;
       }
     }
+
+    // the moving cards, farthest first
+    loose.sort((a, b) => a.drawnZ - b.drawnZ);
+    loose.forEach((c, i) => (c.mesh.renderOrder = 2 + i));
 
     pointer.vx *= 0.8;
     pointer.vy *= 0.8;
@@ -424,13 +499,13 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     renderer.setPixelRatio(dpr);
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    viewH = 2 * Math.tan((WIDE * Math.PI) / 360) * BASE_Z;
+    viewH = 7.5;
     viewW = viewH * camera.aspect;
+    base = distanceFor(LONG_FOV, viewH);
+    shared.uBase.value = base;
+    camera.position.set(0, 0, base);
+    camera.updateProjectionMatrix();
     choreo.layout(viewW, viewH);
-    const l = lens;
-    lens = -1;
-    setLens(l);
     pxW = w * dpr;
     pxH = h * dpr;
   }
@@ -454,8 +529,28 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
   document.addEventListener("pointerleave", onLeave);
   raf = requestAnimationFrame(frame);
 
-  const raycaster = new Raycaster();
-  const ndc = new Vector2();
+  // Picking by hand: three's raycaster cannot see the lens each card is drawn through.
+  const corner = new Vector3();
+  const quad = [new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+  const CORNERS: [number, number][] = [
+    [-0.375, -0.5],
+    [0.375, -0.5],
+    [0.375, 0.5],
+    [-0.375, 0.5],
+  ];
+  const inside = (x: number, y: number) => {
+    let sign = 0;
+    for (let i = 0; i < 4; i++) {
+      const a = quad[i];
+      const b = quad[(i + 1) % 4];
+      const cross = (b.x - a.x) * (y - a.y) - (b.y - a.y) * (x - a.x);
+      if (Math.abs(cross) < 1e-12) continue;
+      const s = Math.sign(cross);
+      if (sign && s !== sign) return false;
+      sign = s;
+    }
+    return true;
+  };
 
   return {
     setProgress(p) {
@@ -465,34 +560,34 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       choreo.setMarks(m);
     },
     pick(clientX, clientY) {
-      ndc.set((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1);
+      const x = (clientX / window.innerWidth) * 2 - 1;
+      const y = -(clientY / window.innerHeight) * 2 + 1;
       const clip = shared.uClip.value;
       const dpr = renderer.getPixelRatio();
       const fx = clientX * dpr;
       const fy = (window.innerHeight - clientY) * dpr;
       if (fx < clip.x || fy < clip.y || fx > clip.z || fy > clip.w) return null;
-      raycaster.setFromCamera(ndc, camera);
-      // Test the hovered card where it rests, not where the hover has lifted it: otherwise a pointer
-      // near its edge would lose it as it rises, and it would bob up and down.
-      const lifted = hovered >= 0 ? cards[hovered].mesh : null;
-      const keep = lifted && { pos: lifted.position.clone(), size: lifted.scale.x };
-      if (lifted) {
-        lifted.position.copy(cards[hovered].rest);
-        lifted.scale.setScalar(cards[hovered].restSize);
-        lifted.updateMatrixWorld();
+      // the hovered card is tested where it rests, not where the hover has lifted it: otherwise a
+      // pointer near its edge would lose it as it rises, and it would bob up and down
+      let best = -1;
+      let bestZ = -Infinity;
+      for (let k = 0; k < N; k++) {
+        const c = cards[k];
+        if (!c.mesh.visible || c.alpha <= 0.6) continue;
+        const pos = k === hovered ? c.rest : c.mesh.position;
+        const size = k === hovered ? c.restSize : c.mesh.scale.x;
+        CORNERS.forEach(([cx, cy], i) => {
+          corner.set(cx * size, cy * size, 0).applyQuaternion(c.mesh.quaternion).add(pos);
+          screenOf(corner, c.lens, c.depth, quad[i]);
+        });
+        if (!inside(x, y)) continue;
+        const z = pos.z - c.depth + (c.loose ? 1e-3 : 0);
+        if (z > bestZ) {
+          bestZ = z;
+          best = k;
+        }
       }
-      const hits = raycaster.intersectObjects(
-        cards.filter((c) => c.mesh.visible && c.alpha > 0.6).map((c) => c.mesh),
-        false,
-      );
-      if (lifted && keep) {
-        lifted.position.copy(keep.pos);
-        lifted.scale.setScalar(keep.size);
-        lifted.updateMatrixWorld();
-      }
-      const hit = hits[0]?.object;
-      const index = hit ? cards.findIndex((c) => c.mesh === hit) : -1;
-      return index >= 0 ? { id: cards[index].item.id, index } : null;
+      return best >= 0 ? { id: cards[best].item.id, index: best } : null;
     },
     setHover(index) {
       hovered = index;

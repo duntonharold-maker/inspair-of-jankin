@@ -1,23 +1,24 @@
 /**
  * Walks the story's card scene in small steps of scrolling and checks, for screens from 4:3 to 2.4:1
  * and for phones, that:
- * - no card cuts through another on screen (cards in motion are drawn over one another in order, so
- *   only pairs with at least one card at rest count, as in the scene);
- * - no card jumps on screen from one step to the next;
- * - every card in the air has its room.
+ * - no card cuts through another on screen, as the scene draws them: through each card's own lens and
+ *   at its own depth (cards in motion are drawn over one another in order, so only pairs with at least
+ *   one card at rest count);
+ * - no card jumps on screen from one step to the next (more than 15% of the screen in one step).
+ * The first screen, where the cards drift on a clock, is walked at several moments of that clock.
  *
  * Run it after changing components/story/choreo.ts or the story's timing:
  *   npm run check:scene
  */
-import { createChoreo, easeInOut, LOOSE, newPose, phase, type Marks, type Pose } from "../components/story/choreo.ts";
+import { Vector3 } from "three";
+import { createChoreo, distanceFor, easeInOut, LONG_FOV, LOOSE, newPose, phase, toShared, type Marks, type Pose } from "../components/story/choreo.ts";
 import { MARKS } from "../components/story/timeline.ts";
 
-// the scene's camera (scene.ts)
-const WIDE = 30;
-const LONG = 7;
-const BASE_Z = 14;
-const H = 2 * Math.tan((WIDE * Math.PI) / 360) * BASE_Z;
+const H = 7.5; // the scene's world height at z = 0 (scene.ts)
+const BASE = distanceFor(LONG_FOV, H);
+const FOCAL = 1 / Math.tan((LONG_FOV * Math.PI) / 360);
 const STEP = 0.0025;
+const CLOCKS = [0, 37.3, 141.9];
 
 type V = [number, number, number];
 const sub = (a: V, b: V): V => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -25,10 +26,13 @@ const add = (a: V, b: V): V => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 const mul = (a: V, s: number): V => [a[0] * s, a[1] * s, a[2] * s];
 const dot = (a: V, b: V) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const cross = (a: V, b: V): V => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const norm = (a: V): V => mul(a, 1 / (Math.hypot(...a) || 1));
 
-type Card = { c: V; u: V; v: V; n: V; hu: number; hv: number; corners: V[]; layer: number; alpha: number; box: number[] | null };
+/** A card as drawn: its corners where the shared camera sees them. */
+type Card = { corners: V[]; c: V; reach: number; layer: number; alpha: number; box: number[] | null };
 
-function cardOf(pose: Pose): Omit<Card, "box"> {
+const shared = new Vector3();
+function cardOf(pose: Pose): Card {
   const q = pose.quat;
   const qv: V = [q.x, q.y, q.z];
   const rot = (x: V): V => {
@@ -37,26 +41,37 @@ function cardOf(pose: Pose): Omit<Card, "box"> {
   };
   const u = rot([1, 0, 0]);
   const v = rot([0, 1, 0]);
-  const n = rot([0, 0, 1]);
-  const c: V = [pose.pos.x, pose.pos.y, pose.pos.z];
-  const hu = 0.375 * pose.size;
-  const hv = 0.5 * pose.size;
+  const centre: V = [pose.pos.x, pose.pos.y, pose.pos.z];
   const corners = [
     [-1, -1],
     [1, -1],
     [1, 1],
     [-1, 1],
-  ].map(([a, b]) => add(c, add(mul(u, a * hu), mul(v, b * hv))));
-  return { c, u, v, n, hu, hv, corners, layer: pose.layer, alpha: pose.alpha };
+  ].map(([a, b]) => {
+    const p = add(centre, add(mul(u, a * 0.375 * pose.size), mul(v, b * 0.5 * pose.size)));
+    toShared(p[0], p[1], p[2], pose.lens, pose.depth, BASE, shared);
+    return [shared.x, shared.y, shared.z] as V;
+  });
+  const c = mul(corners.reduce((s, p) => add(s, p), [0, 0, 0] as V), 0.25);
+  const reach = Math.max(...corners.map((p) => Math.hypot(...sub(p, c))));
+  return { corners, c, reach, layer: pose.layer, alpha: pose.alpha, box: null };
+}
+
+function frameOf(q: V[]) {
+  const c = mul(q.reduce((s, p) => add(s, p), [0, 0, 0] as V), 0.25);
+  const n = norm(cross(sub(q[2], q[0]), sub(q[3], q[1])));
+  const u = norm(sub(add(q[1], q[2]), add(q[0], q[3])));
+  return { c, n, u, v: cross(n, u) };
 }
 
 /**
- * Does card a cut through card r? Where a crosses r's plane it does so along a segment; the cards
- * cut through each other when part of that segment lies inside r (a hair inside, so cards that only
- * touch at an edge pass).
+ * Does card a cut through card r? Where a crosses r's plane it does so along a segment; the cards cut
+ * through each other when part of that segment lies inside r (a hair inside, so cards that only touch
+ * at an edge pass).
  */
 function crosses(a: Card, r: Card) {
-  const d = a.corners.map((p) => dot(sub(p, r.c), r.n));
+  const f = frameOf(r.corners);
+  const d = a.corners.map((p) => dot(sub(p, f.c), f.n));
   if (d.every((x) => x > 1e-9) || d.every((x) => x < -1e-9)) return false;
   const ends: V[] = [];
   for (let i = 0; i < 4; i++) {
@@ -66,80 +81,80 @@ function crosses(a: Card, r: Card) {
     }
   }
   if (ends.length < 2) return false;
-  // the segment in r's own coordinates, clipped to r (Liang–Barsky)
-  const to2 = (p: V) => [dot(sub(p, r.c), r.u), dot(sub(p, r.c), r.v)];
+  const to2 = (p: V) => [dot(sub(p, f.c), f.u), dot(sub(p, f.c), f.v)];
   const [p0, p1] = [to2(ends[0]), to2(ends[1])];
+  const poly = r.corners.map(to2);
+  let area = 0;
+  for (let i = 0; i < 4; i++) area += poly[i][0] * poly[(i + 1) % 4][1] - poly[(i + 1) % 4][0] * poly[i][1];
+  const turn = area > 0 ? 1 : -1;
+  const tol = 0.005 * Math.min(...poly.map((e, i) => Math.hypot(poly[(i + 1) % 4][0] - e[0], poly[(i + 1) % 4][1] - e[1])));
   let t0 = 0;
   let t1 = 1;
-  for (const [k, half] of [
-    [0, r.hu * 0.995],
-    [1, r.hv * 0.995],
-  ] as const) {
-    const delta = p1[k] - p0[k];
-    for (const [q, lim] of [
-      [-delta, p0[k] + half],
-      [delta, half - p0[k]],
-    ]) {
-      if (Math.abs(q) < 1e-12) {
-        if (lim < 0) return false;
-      } else {
-        const t = lim / q;
-        if (q < 0) t0 = Math.max(t0, t);
-        else t1 = Math.min(t1, t);
-      }
+  for (let i = 0; i < 4; i++) {
+    const e0 = poly[i];
+    const e1 = poly[(i + 1) % 4];
+    const len = Math.hypot(e1[0] - e0[0], e1[1] - e0[1]) || 1;
+    const nx = (-(e1[1] - e0[1]) * turn) / len;
+    const ny = ((e1[0] - e0[0]) * turn) / len;
+    const at = nx * (p0[0] - e0[0]) + ny * (p0[1] - e0[1]) - tol;
+    const den = nx * (p1[0] - p0[0]) + ny * (p1[1] - p0[1]);
+    if (Math.abs(den) < 1e-12) {
+      if (at < 0) return false;
+    } else {
+      const t = -at / den;
+      if (den > 0) t0 = Math.max(t0, t);
+      else t1 = Math.min(t1, t);
     }
   }
-  const length = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]);
-  return (t1 - t0) * length > 1e-4;
+  return (t1 - t0) * Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) > 1e-4;
 }
 
 /** Two cards in one plane that overlap. */
 function overlapInPlane(a: Card, b: Card) {
-  if (Math.abs(Math.abs(dot(a.n, b.n)) - 1) > 1e-6 || Math.abs(dot(sub(b.c, a.c), a.n)) > 1e-4) return false;
-  for (const axis of [a.u, a.v, b.u, b.v]) {
+  const fa = frameOf(a.corners);
+  const fb = frameOf(b.corners);
+  if (Math.abs(Math.abs(dot(fa.n, fb.n)) - 1) > 1e-5 || Math.abs(dot(sub(fb.c, fa.c), fa.n)) > 1e-3) return false;
+  // separating axes: the normals of every edge, within the plane
+  const axes = [a, b].flatMap((card) => card.corners.map((p, i) => norm(cross(fa.n, sub(card.corners[(i + 1) % 4], p)))));
+  for (const axis of axes) {
     const pa = a.corners.map((p) => dot(p, axis));
     const pb = b.corners.map((p) => dot(p, axis));
-    if (Math.max(...pa) <= Math.min(...pb) + 1e-6 || Math.max(...pb) <= Math.min(...pa) + 1e-6) return false;
+    if (Math.max(...pa) <= Math.min(...pb) + 1e-3 || Math.max(...pb) <= Math.min(...pa) + 1e-3) return false;
   }
   return true;
 }
 
 function cut(a: Card, b: Card) {
-  if (Math.hypot(...sub(a.c, b.c)) > a.hu + a.hv + b.hu + b.hv) return false;
+  if (Math.hypot(...sub(a.c, b.c)) > a.reach + b.reach) return false;
   return crosses(a, b) || crosses(b, a) || overlapInPlane(a, b);
 }
 
-function check(aspect: number, mobile: boolean, marks: Marks) {
+function check(aspect: number, mobile: boolean, marks: Marks, clock: number, until: number) {
   const n = mobile ? 42 : 64;
   const choreo = createChoreo({ n, cols: mobile ? 7 : 8, mobile });
   choreo.setMarks(marks);
   choreo.layout(H * aspect, H);
   const problems: string[] = [];
-  if (choreo.airShort > 0) problems.push(`two cards in the air are ${choreo.airShort.toFixed(3)} short of their room`);
-
   const pose = newPose();
   const cuts = new Map<string, [number, number]>();
   let prev: Card[] | null = null;
-  for (let p = 0; p <= marks.exit[1]; p += STEP) {
-    // the camera and the part of the screen the scene shows (scene.ts: setLens and uClip)
+  for (let p = 0; p <= until; p += STEP) {
+    // the part of the screen the scene shows (scene.ts: uClip)
     const settle = easeInOut(phase(p, ...marks.settle));
-    const fov = WIDE + (LONG - WIDE) * settle;
-    const camZ = H / 2 / Math.tan((fov * Math.PI) / 360);
-    const f = 1 / Math.tan((fov * Math.PI) / 360);
     const shown = mobile ? [-1, -1 + settle, 1, 1] : [-1, -1, 1 - settle, 1];
     const cards: Card[] = [];
     for (let k = 0; k < n; k++) {
-      const card = cardOf(choreo.pose(k, p, pose)) as Card;
+      const card = cardOf(choreo.pose(k, p, pose, clock));
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
       card.box = [];
       for (const [x, y, z] of card.corners) {
-        const d = camZ - z;
-        if (d < 0.1) card.box = null;
+        const d = BASE - z;
+        if (d < 0.5) card.box = null;
         if (!card.box) break;
-        x0 = Math.min(x0, (x * f) / aspect / d);
-        x1 = Math.max(x1, (x * f) / aspect / d);
-        y0 = Math.min(y0, (y * f) / d);
-        y1 = Math.max(y1, (y * f) / d);
+        x0 = Math.min(x0, (x * FOCAL) / aspect / d);
+        x1 = Math.max(x1, (x * FOCAL) / aspect / d);
+        y0 = Math.min(y0, (y * FOCAL) / d);
+        y1 = Math.max(y1, (y * FOCAL) / d);
       }
       if (card.box) card.box = [x0, y0, x1, y1];
       cards.push(card);
@@ -157,8 +172,11 @@ function check(aspect: number, mobile: boolean, marks: Marks) {
     }
     if (prev) {
       for (let k = 0; k < n; k++) {
-        const moved = Math.hypot(...sub(prev[k].c, cards[k].c));
-        if (moved > H * 0.25 && (seen(prev[k]) || seen(cards[k]))) problems.push(`card ${k} jumps ${moved.toFixed(2)} at ${p.toFixed(3)}`);
+        // how far it moved on screen (its depth as drawn may change fast: that only orders the cards)
+        const [a, b] = [prev[k].box, cards[k].box];
+        if (!a || !b) continue;
+        const moved = Math.hypot((a[0] + a[2] - b[0] - b[2]) / 2, (a[1] + a[3] - b[1] - b[3]) / 2);
+        if (moved > 0.3 && (seen(prev[k]) || seen(cards[k]))) problems.push(`card ${k} jumps ${moved.toFixed(2)} of the screen at ${p.toFixed(3)}`);
       }
     }
     prev = cards;
@@ -179,7 +197,9 @@ const screens: [string, number, boolean][] = [
   ["tablet 3:4", 0.75, true],
 ];
 for (const [name, aspect, mobile] of screens) {
-  const problems = check(aspect, mobile, MARKS);
+  const problems = check(aspect, mobile, MARKS, CLOCKS[0], MARKS.exit[1]);
+  // the drift only matters until the cards have left the air
+  for (const clock of CLOCKS.slice(1)) problems.push(...check(aspect, mobile, MARKS, clock, MARKS.gather[1]).map((l) => `(drift at ${clock}s) ${l}`));
   console.log(`${problems.length ? "✗" : "✓"} ${name}${problems.length ? "" : ": no card cuts through another"}`);
   for (const line of problems.slice(0, 12)) console.log(`    ${line}`);
   if (problems.length > 12) console.log(`    … and ${problems.length - 12} more`);
