@@ -158,13 +158,16 @@ const RING_TILT = 0.28;
 /** Where on the ring the cards leave: the back right, where their faces show. */
 const LEAVE_AT = Math.PI - 0.9;
 /** One card's trip from the ring to the wall, in screen heights of scrolling: rising out of its slot,
- * lying down as the ring carries it on, riding on above the ring (the cards there make a band that
- * follows the ring round, as on premotio), flying to its cell. */
+ * lying down as the ring carries it on, sliding on round above the ring along a lane every card
+ * shares (so the cards there make one band that follows the ring round, as on premotio), flying from
+ * the lane's end to its cell. */
 const RISE_TAKES = 0.035;
 const TURN_TAKES = 0.03;
-const RIDE_TAKES = 0.04;
-const FLY_TAKES = 0.13;
-export const TRIP = RISE_TAKES + TURN_TAKES + RIDE_TAKES + FLY_TAKES;
+const LANE_TAKES = 0.07;
+const FLY_TAKES = 0.12;
+export const TRIP = RISE_TAKES + TURN_TAKES + LANE_TAKES + FLY_TAKES;
+/** Where the shared lane ends: the ring's back left, mirroring where the cards leave it. */
+const LANE_ENDS = Math.PI + 0.9;
 /** How far in front of its cell a landing card starts its final approach (in card heights). */
 const APPROACH = 0.9;
 /** The wall: turned in its own plane, then laid back (as on premotio). */
@@ -403,6 +406,34 @@ export function createChoreo({ n, cols, mobile }: { n: number; cols: number; mob
     return a;
   }
 
+  const inRing = new Vector3();
+  const untilt = new Quaternion();
+  /**
+   * Card k on the lane every card shares, share s along it. It starts where the card lay down (moving
+   * on at the ring's pace) and ends at LANE_ENDS a little further out and higher, the same point for
+   * every card, so the cards on it make one band.
+   */
+  function lanePose(k: number, climb: number, s: number, out: Pose) {
+    const start = route[k].departs + RISE_TAKES + TURN_TAKES;
+    lieBack(k, climb, 1, start, out);
+    untilt.copy(ring.tilt).invert();
+    inRing.copy(out.pos).sub(ring.c).applyQuaternion(untilt);
+    const r0 = Math.hypot(inRing.x, inRing.z);
+    const a0 = Math.atan2(inRing.x, inRing.z);
+    const y0 = inRing.y;
+    // round to the lane's end, starting at the ring's own pace and gathering speed
+    const paced = ((spin(start + 0.001) - spin(start)) / 0.001) * LANE_TAKES;
+    const sweep = (((LANE_ENDS - a0) % TAU) + TAU) % TAU;
+    const a = a0 + paced * s + (Math.max(sweep, paced) - paced) * s * s;
+    const r = r0 * (1 + 0.35 * s);
+    inRing.set(Math.sin(a) * r, y0 + ring.size * 0.08 * s * s, Math.cos(a) * r);
+    out.pos.copy(inRing).applyQuaternion(ring.tilt).add(ring.c);
+    out.quat.copy(wall.q);
+    out.mode = FLIGHT;
+    out.layer = LOOSE;
+    out.flight = 0;
+  }
+
   function tripPose(k: number, p: number, out: Pose) {
     const r = route[k];
     const d = p - r.departs;
@@ -413,20 +444,27 @@ export function createChoreo({ n, cols, mobile }: { n: number; cols: number; mob
       out.flight = 0;
       return;
     }
-    if (d < RISE_TAKES + TURN_TAKES + RIDE_TAKES) {
+    if (d < RISE_TAKES + TURN_TAKES) {
       // still riding the ring, lying back into the wall's plane like a door falling open, hinged at
-      // its foot, which stays clear of the ring's top; then riding on, lying down
+      // its foot, which stays clear of the ring's top
       lieBack(k, climb, easeInOut((d - RISE_TAKES) / TURN_TAKES), p, out);
       out.flight = 0;
       return;
     }
-    // flying from where the ring let it go to its cell, which it reaches from straight in front
-    const start = r.departs + RISE_TAKES + TURN_TAKES + RIDE_TAKES;
+    if (d < RISE_TAKES + TURN_TAKES + LANE_TAKES) {
+      // sliding on round above the ring along the shared lane
+      lanePose(k, climb, (d - RISE_TAKES - TURN_TAKES) / LANE_TAKES, out);
+      return;
+    }
+    // flying from the lane's end to its cell, which it reaches from straight in front
+    const start = r.departs + RISE_TAKES + TURN_TAKES + LANE_TAKES;
     const u = clamp01((p - start) / FLY_TAKES);
-    const a = lieBack(k, climb, 1, start, A);
-    tangent.set(Math.cos(a), 0, -Math.sin(a)).applyQuaternion(ring.tilt);
+    lanePose(k, climb, 0.98, B);
+    lanePose(k, climb, 1, A);
+    tangent.copy(A.pos).sub(B.pos).divideScalar(0.02 * LANE_TAKES); // the lane's pace at its end, per screen height
     cellPose(k, p, B);
-    b1.copy(A.pos).addScaledVector(tangent, ring.R * 0.45).addScaledVector(ring.axis, ring.size * 0.3);
+    // leaving at the lane's pace (the easing below starts 2.2 times faster than an even pace)
+    b1.copy(A.pos).addScaledVector(tangent, FLY_TAKES / (3 * 2.2));
     b2.copy(B.pos).addScaledVector(wall.normal, APPROACH * B.size);
     const t = 1 - (1 - u) ** 2.2; // leaves at the ring's pace, settles gently
     const w0 = (1 - t) ** 3;
