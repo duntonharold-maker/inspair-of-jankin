@@ -85,10 +85,12 @@ export default function CategoriesScreen({ site, items, onPick }: { site: Site; 
     const room = arrow.current?.offsetWidth ?? 0;
     rows.forEach((row, k) => {
       const d = Math.abs(k - x);
-      const near = smooth(1 - Math.min(1, d));
+      // the word keeps out of the arrow's way for as long as the arrow overlaps its row (within three
+      // quarters of a row), and only then slides back, so the arrow never lies over a letter
+      const aside = 1 - smooth((d - 0.75) / 0.25);
       row.style.opacity = shows(d).toFixed(3);
       const word = row.querySelector<HTMLElement>(".cats-word");
-      if (word) word.style.transform = near > 0.001 ? `translateX(${(room * near).toFixed(2)}px)` : "";
+      if (word) word.style.transform = aside > 0.001 ? `translateX(${(room * aside).toFixed(2)}px)` : "";
       const count = row.querySelector<HTMLElement>(".cats-count");
       if (count) count.style.opacity = smooth(1 - Math.min(1, d * 1.6)).toFixed(3);
     });
