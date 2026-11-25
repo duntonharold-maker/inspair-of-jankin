@@ -52,8 +52,13 @@ const smooth = (x: number) => {
   const t = Math.min(1, Math.max(0, x));
   return t * t * (3 - 2 * t);
 };
-/** How strongly a row shows at distance d (in rows) from the chosen one: full there, dimming with distance. */
-const shows = (d: number) => (d < 1 ? 1 - 0.45 * smooth(d) : Math.max(0.16, 0.55 - 0.08 * (d - 1)));
+/** How strongly a row shows at distance d (in rows) from the arrow: full there, dimming with distance
+ * (as measured on premotio's list: 0.62 a row away, then a tenth less per row). */
+const shows = (d: number) => (d < 1 ? 1 - 0.38 * smooth(d) : Math.max(0.16, 0.62 - 0.1 * (d - 1)));
+/** How far a row's word stands aside for the arrow at distance d (0…1 of the arrow's room). The word the
+ * arrow leaves eases back while the one it heads for eases out, across the whole move, so the two hand
+ * over in step with the arrow (fitted to premotio's list; half way, each stands about 57% aside). */
+const aside = (d: number) => 1 - smooth((d - 0.1) / 0.85);
 
 export default function CategoriesScreen({ site, items, onPick }: { site: Site; items: Item[]; onPick: (id: string) => void }) {
   const cats = site.categories;
@@ -86,12 +91,10 @@ export default function CategoriesScreen({ site, items, onPick }: { site: Site; 
     const room = arrow.current?.offsetWidth ?? 0;
     rows.forEach((row, k) => {
       const d = Math.abs(k - x);
-      // the word keeps out of the arrow's way for as long as the arrow overlaps its row (within three
-      // quarters of a row), and only then slides back, so the arrow never lies over a letter
-      const aside = 1 - smooth((d - 0.75) / 0.25);
+      const out = aside(d);
       row.style.opacity = shows(d).toFixed(3);
       const word = row.querySelector<HTMLElement>(".cats-word");
-      if (word) word.style.transform = aside > 0.001 ? `translateX(${(room * aside).toFixed(2)}px)` : "";
+      if (word) word.style.transform = out > 0.001 ? `translateX(${(room * out).toFixed(2)}px)` : "";
       const count = row.querySelector<HTMLElement>(".cats-count");
       if (count) count.style.opacity = smooth(1 - Math.min(1, d * 1.6)).toFixed(3);
     });
@@ -118,12 +121,13 @@ export default function CategoriesScreen({ site, items, onPick }: { site: Site; 
     // (the place itself follows `active` below)
   }, [draw]);
 
-  // a new row chosen: glide there, easing in and out without overshooting
+  // a new row chosen: glide there, easing in and out without overshooting (a critically damped spring,
+  // as fast as premotio's: half way in 0.19 s, nine tenths in 0.45 s)
   useEffect(() => {
     const g = glide.current;
     const ul = list.current;
     if (!g || !ul || g.place.t === active) return;
-    tune(g.place, springToken(ul, "--spring-cats", [90, 19]));
+    tune(g.place, springToken(ul, "--spring-cats", [74, 17.2]));
     g.place.t = active;
     g.stop?.();
     g.stop = animate({ frame: (dt) => step(g.place, dt), render: draw, done: () => settled(g.place) });

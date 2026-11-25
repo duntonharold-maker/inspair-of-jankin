@@ -44,7 +44,7 @@
   --spring-copy-icon: 420 18;
   --spring-copy-width: 300 24;
   /* the categories' arrow and rows gliding to the chosen one: critically damped, easing in and out */
-  --spring-cats: 90 19;
+  --spring-cats: 74 17.2;
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
@@ -190,7 +190,7 @@ input { font: inherit; color: inherit; }
    about as heavy as them, its negative margins keeping the line as tall as the text alone */
 .arrow { width: 1.1em; height: 1.1em; margin: -0.3em -0.12em; vertical-align: middle; color: var(--coral); stroke-width: 1.75; }
 /* at the start of a line the arrow lines up with the letters below it */
-.devices-title .arrow, .cats-arrow .arrow { margin-left: -0.18em; }
+.devices-title .arrow { margin-left: -0.18em; }
 /* a button's ↗ sits closer to its word than the flex gap would put it */
 .btn > .ic-out { margin-left: -0.3rem; }
 .paren { font-weight: 400; }
@@ -311,8 +311,10 @@ input { font: inherit; color: inherit; }
    opacity and transforms change, so nothing around them is laid out again while they move. */
 .cats-item { display: inline-flex; align-items: baseline; text-align: left; transform-origin: left center; transition: transform var(--dur-hover) var(--ease); will-change: opacity; }
 .cats-item:not(.is-active) { opacity: 0.45; }
-.cats-word { display: inline-block; will-change: transform; }
-.cats-arrow { position: absolute; left: 0; top: 0; padding-right: 0.07em; pointer-events: none; will-change: transform; }
+.cats-word { display: inline-block; white-space: nowrap; will-change: transform; }
+.cats-arrow { position: absolute; left: 0; top: 0; padding-right: 0.25em; pointer-events: none; will-change: transform; }
+/* in proportion with premotio's: about 0.73em long, the word waiting 0.4em past its tip */
+.cats-arrow .arrow { width: 1.25em; height: 1.25em; margin: -0.35em -0.12em -0.35em -0.2em; stroke-width: 1.85; }
 .cats-count { margin-left: 0.6rem; font-size: 0.875rem; font-weight: 500; letter-spacing: 0; position: relative; top: -0.4em; opacity: 0; color: var(--muted); }
 .cats-item.is-active .cats-count { opacity: 1; }
 .cats-thumbs { position: relative; height: min(72vh, 44rem); }
@@ -772,7 +774,7 @@ html.is-locked .ruler { opacity: 0; }
 
   .cats-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); padding-top: 6rem; row-gap: 1rem; }
   .cats-ruler { display: none; }
-  .cats-list { font-size: clamp(2.25rem, 10vw, 3.25rem); }
+  .cats-list { font-size: clamp(2rem, 10vw, 3.25rem); }
   .cats-thumbs { height: 100%; }
 
 
