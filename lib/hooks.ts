@@ -48,19 +48,24 @@ export function useInView<T extends Element>(rootMargin = "200px", once = false)
   return [ref, inView] as const;
 }
 
+/** Put text on the clipboard, falling back to a hidden text area where the clipboard API is refused. */
+export async function writeClipboard(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  }
+}
+
 export function useCopy() {
   const [copied, setCopied] = useState<string | null>(null);
   const copy = async (text: string, key = "default") => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
-    }
+    await writeClipboard(text);
     setCopied(key);
     setTimeout(() => setCopied((c) => (c === key ? null : c)), 1600);
   };

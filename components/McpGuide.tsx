@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useCopy } from "@/lib/hooks";
+import CopyButton from "./CopyButton";
 
 /** Shown instead of the real secret: the repo and the site are public. */
 const SECRET = "<MCP_SECRET>";
@@ -93,14 +94,6 @@ const TOOLS = [
   "upsert_category",
 ];
 
-function CopyButton({ text, label = "复制", id, copied, copy }: { text: string; label?: string; id: string; copied: string | null; copy: (t: string, k: string) => void }) {
-  return (
-    <button className="copy-btn" onClick={() => copy(text, id)} aria-label={`${label}：${text}`}>
-      {copied === id ? "已复制" : label}
-    </button>
-  );
-}
-
 export default function McpGuide({ siteUrl }: { siteUrl: string | null }) {
   const base = siteUrl ?? "https://你的域名";
   const list = clients(base);
@@ -131,14 +124,14 @@ export default function McpGuide({ siteUrl }: { siteUrl: string | null }) {
             <div className="guide-field">
               <span className="guide-label">带密钥的网址</span>
               <code className="guide-code guide-code--line">{`${base}/api/mcp/${SECRET}`}</code>
-              <CopyButton text={`${base}/api/mcp/${SECRET}`} id="url-secret" copied={copied} copy={copy} />
+              <CopyButton text={`${base}/api/mcp/${SECRET}`} what="带密钥的网址" />
             </div>
             <div className="guide-field">
               <span className="guide-label">网址 + 请求头</span>
               <code className="guide-code guide-code--line">{`${base}/api/mcp`}</code>
-              <CopyButton text={`${base}/api/mcp`} id="url-plain" copied={copied} copy={copy} />
+              <CopyButton text={`${base}/api/mcp`} what="网址" />
               <code className="guide-code guide-code--line">{`Authorization: Bearer ${SECRET}`}</code>
-              <CopyButton text={`Authorization: Bearer ${SECRET}`} id="header" copied={copied} copy={copy} />
+              <CopyButton text={`Authorization: Bearer ${SECRET}`} what="请求头" />
             </div>
             <p className="guide-note">
               密钥是你在 Vercel 项目「Settings → Environment Variables」里设置的 <code>MCP_SECRET</code>。带密钥的网址相当于密码，不要发给别人；泄露了就在 Vercel 里换一个，再重新部署。
@@ -193,7 +186,7 @@ export default function McpGuide({ siteUrl }: { siteUrl: string | null }) {
             <div className="guide-block">
               <div className="guide-block-bar">
                 <span>{client.lang}</span>
-                <CopyButton text={client.code} id={`code-${client.id}`} copied={copied} copy={copy} />
+                <CopyButton key={client.id} text={client.code} what={client.lang} />
               </div>
               <pre className="guide-code guide-code--block">{client.code}</pre>
             </div>
