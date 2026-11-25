@@ -66,10 +66,11 @@ export default function Gallery({
       if (kind === "motion" && i.media.type === "image") return false;
       if (onlyPrompt && !i.prompt) return false;
       if (!q) return true;
-      return [i.title, i.prompt, i.note, i.model, ...i.tags].some((s) => s?.toLowerCase().includes(q));
+      const cat = site.categories.find((c) => c.id === i.category);
+      return [i.title, i.prompt, i.note, i.model, cat?.name, cat?.label, ...i.tags].some((s) => s?.toLowerCase().includes(q));
     });
     return oldest ? list.reverse() : list;
-  }, [items, category, kind, onlyPrompt, query, oldest]);
+  }, [items, site, category, kind, onlyPrompt, query, oldest]);
 
   useEffect(() => onListChange(filtered), [filtered, onListChange]);
   useEffect(() => setLimit(PAGE), [category, kind, onlyPrompt, query, oldest]);
@@ -99,7 +100,7 @@ export default function Gallery({
             <input
               ref={field}
               type="search"
-              placeholder="搜索标题、提示词、标签…"
+              placeholder="搜索标题、分类、提示词、标签…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label="搜索"

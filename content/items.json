@@ -182,7 +182,8 @@
       "src": "/media/20261124-85iirh.png",
       "type": "image",
       "width": 1600,
-      "height": 1000
+      "height": 1000,
+      "thumb": "/media/20261124-85iirh.thumb.webp"
     },
     "prompt": "neon wireframe tunnel receding into darkness, nested rounded rectangles, purple to cyan glow, synthwave, symmetrical, black background",
     "model": "Flux 1.1 Pro",
@@ -196,16 +197,17 @@
     "category": "poster",
     "tags": [
       "示例",
-      "瑞士风格",
-      "网格",
-      "红黑",
-      "排版"
+      "复古",
+      "日落",
+      "条纹",
+      "渐变"
     ],
     "media": {
       "src": "/media/20261124-abf4zr.webp",
       "type": "image",
       "width": 1200,
-      "height": 1600
+      "height": 1600,
+      "thumb": "/media/20261124-abf4zr.thumb.webp"
     },
     "prompt": "retro 80s sunset poster, striped sun with gradient bands yellow to violet, deep navy background, bold condensed title GOLDEN HOUR CLUB, print grain",
     "model": "Midjourney v7",
@@ -229,7 +231,8 @@
       "src": "/media/20261124-pcq8kn.webp",
       "type": "image",
       "width": 1600,
-      "height": 1600
+      "height": 1600,
+      "thumb": "/media/20261124-pcq8kn.thumb.webp"
     },
     "model": "Blender",
     "note": "等距视角的高低方块，三个面用三档蓝色区分明暗。\n示例数据（由代码生成，提示词仅用来演示格式），可以让智能体删除所有带「示例」标签的条目。",
@@ -250,7 +253,8 @@
       "src": "/media/20261124-b7gj05.png",
       "type": "image",
       "width": 1600,
-      "height": 1200
+      "height": 1200,
+      "thumb": "/media/20261124-b7gj05.thumb.webp"
     },
     "prompt": "glassmorphism weather widget UI, frosted glass card, big 23° temperature, five day forecast pills, vivid purple pink orange gradient background, dribbble shot",
     "model": "Midjourney v7",
@@ -274,7 +278,8 @@
       "src": "/media/20261124-qy9v4u.webp",
       "type": "image",
       "width": 1600,
-      "height": 1100
+      "height": 1100,
+      "thumb": "/media/20261124-qy9v4u.thumb.webp"
     },
     "source": "示例",
     "note": "可以学习：用 4 层明度递减的山脊做出空气透视。\n示例数据（由代码生成，提示词仅用来演示格式），可以让智能体删除所有带「示例」标签的条目。",
@@ -295,7 +300,8 @@
       "src": "/media/20261124-iuh0bh.webp",
       "type": "image",
       "width": 2000,
-      "height": 1400
+      "height": 1400,
+      "thumb": "/media/20261124-iuh0bh.thumb.webp"
     },
     "prompt": "flat layered desert dunes at sunset, warm coral sky, pale sun, magenta and plum dune layers, risograph grain, wide composition",
     "model": "即梦 3.0",
@@ -318,7 +324,8 @@
       "src": "/media/20261124-gpthl0.webp",
       "type": "image",
       "width": 1600,
-      "height": 2000
+      "height": 2000,
+      "thumb": "/media/20261124-gpthl0.thumb.webp"
     },
     "prompt": "soft blurred gradient orbs floating on pale lavender background, iridescent purple, aqua and orange, film grain, calm, minimal wallpaper",
     "negativePrompt": "text, hard edges, people",
@@ -341,7 +348,8 @@
       "src": "/media/20261124-cf09jk.webp",
       "type": "image",
       "width": 1200,
-      "height": 1600
+      "height": 1600,
+      "thumb": "/media/20261124-cf09jk.thumb.webp"
     },
     "prompt": "bauhaus poster, primary colors red blue yellow, circle square triangle composition, cream paper with subtle grain, bold sans serif word FORM at the bottom",
     "model": "GPT Image",
@@ -364,7 +372,8 @@
       "src": "/media/20261124-s1jinn.webp",
       "type": "image",
       "width": 1200,
-      "height": 1600
+      "height": 1600,
+      "thumb": "/media/20261124-s1jinn.thumb.webp"
     },
     "prompt": "swiss style typographic poster, strict 12 column grid, huge bold grotesk headline \"Raster System\", red square block, off-white paper, minimal, editorial",
     "model": "Midjourney v7",

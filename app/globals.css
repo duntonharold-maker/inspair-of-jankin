@@ -430,7 +430,7 @@ input { font: inherit; color: inherit; }
 .footer-mail { font-size: 0.875rem; color: var(--inverse-muted); max-width: 22rem; }
 .footer-links { display: flex; gap: clamp(2rem, 6vw, 5.5rem); }
 .footer-links div { display: flex; flex-direction: column; gap: 0.375rem; font-size: 0.9375rem; }
-.footer-links h4 { font-size: 0.8125rem; font-weight: 500; color: var(--inverse-muted); margin-bottom: 0.25rem; }
+.footer-links h2 { font-size: 0.8125rem; font-weight: 500; color: var(--inverse-muted); margin-bottom: 0.25rem; }
 .footer-links a { opacity: 0.88; }
 .footer-sign { max-width: var(--max); margin: 4.5rem auto 0; }
 .footer-mark { display: flex; align-items: center; gap: 0.12em; font-size: clamp(4.5rem, 17vw, 16rem); font-weight: 600; letter-spacing: -0.06em; line-height: 0.82; padding-bottom: 0.12em; }
@@ -646,7 +646,7 @@ input { font: inherit; color: inherit; }
 .prompt-neg[open] > summary .ic-fold { transform: rotate(90deg); }
 .prompt-neg p { margin-top: 0.375rem; white-space: pre-wrap; }
 
-.detail-note h3 { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.375rem; }
+.detail-note :is(h2, h3) { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.375rem; }
 .detail-note p { font-size: 0.9375rem; white-space: pre-wrap; }
 .facts { display: grid; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.875rem; }
 .facts div { display: grid; grid-template-columns: 3.5rem minmax(0, 1fr); gap: 0.75rem; }
@@ -728,6 +728,8 @@ a, button, summary, label, [role="button"], [role="radio"], [role="tab"] { -webk
 .search-clear:active { transform: scale(0.96); background: var(--border); transition-duration: var(--dur-press); }
 .prompt-neg summary:active { opacity: 0.6; }
 .card .card-media:active { transform: scale(0.985); box-shadow: 0 0 0 1px rgba(2, 7, 10, 0.06); transition-duration: var(--dur-press); }
+/* the copy button is shown by its card's hover, whose `transform: none` would otherwise win over the press */
+.card:hover .card-copy:active, .card .card-copy:active { transform: scale(0.97); transition-duration: var(--dur-press); }
 .cats-item:active { transform: scale(0.985); transition-duration: var(--dur-press); }
 .link:active, .nav-links a:active, .footer-links a:active, .back:active, .facts a:active { opacity: 0.55; }
 .icon-btn:disabled { cursor: default; }

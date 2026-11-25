@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import { createUploadToken } from "./auth";
 import { preview } from "./media";
-import { ItemFields, MediaInput, OrganizeInput, addItem, deleteItems, loadMedia, organizeItems, search, updateItem, upsertCategory } from "./ops";
+import { ItemFields, MediaInput, OrganizeInput, addItem, deleteItems, loadMedia, newId, organizeItems, search, updateItem, upsertCategory } from "./ops";
 import { getStore } from "./store";
 import type { Item } from "./types";
 
@@ -69,7 +69,7 @@ export function registerTools(server: McpServer, ctx: Ctx) {
     {
       title: "List categories and tags",
       description: "Lists the valid category ids (with Chinese labels and item counts) and the most used tags.",
-      inputSchema: z.object({}),
+      inputSchema: z.object({}).strict(),
       annotations: { readOnlyHint: true },
     },
     () =>
@@ -89,7 +89,7 @@ export function registerTools(server: McpServer, ctx: Ctx) {
     "search_items",
     {
       title: "Search the library",
-      description: "Searches items by text (title, prompt, tags, notes, model), category, tag or whether a prompt exists. Newest first.",
+      description: "Searches items by text (title, prompt, tags, notes, model, category name), category id, tag or whether a prompt exists. Newest first.",
       inputSchema: z.object({
         query: z.string().optional(),
         category: z.string().optional(),
@@ -97,7 +97,7 @@ export function registerTools(server: McpServer, ctx: Ctx) {
         has_prompt: z.boolean().optional(),
         limit: z.number().int().min(1).max(100).optional(),
         offset: z.number().int().min(0).optional(),
-      }),
+      }).strict(),
       annotations: { readOnlyHint: true },
     },
     (args) =>
@@ -112,7 +112,7 @@ export function registerTools(server: McpServer, ctx: Ctx) {
     {
       title: "Get one item",
       description: "Returns every field of one item, including the full prompt.",
-      inputSchema: z.object({ id: z.string() }),
+      inputSchema: z.object({ id: z.string() }).strict(),
       annotations: { readOnlyHint: true },
     },
     ({ id }) =>
@@ -129,7 +129,7 @@ export function registerTools(server: McpServer, ctx: Ctx) {
       title: "Add an item",
       description:
         "Adds an image or animated UI piece. Provide exactly one media source: media_url (direct file URL), media_text (SVG markup / Lottie JSON) or media_base64 (small files only). For a file on local disk use prepare_upload instead.",
-      inputSchema: ItemFields.extend(MediaInput.shape),
+      inputSchema: ItemFields.extend(MediaInput.shape).strict(),
       annotations: { readOnlyHint: false, destructiveHint: false },
     },
     (args) =>
@@ -147,7 +147,7 @@ export function registerTools(server: McpServer, ctx: Ctx) {
       title: "Update an item",
       description:
         "Changes fields of an existing item. Only the fields you pass are changed; pass an empty string to clear a text field. Passing a media source replaces the media file.",
-      inputSchema: z.object({ id: z.string() }).extend(ItemFields.partial().shape).extend(MediaInput.shape),
+      inputSchema: z.object({ id: z.string() }).extend(ItemFields.partial().shape).extend(MediaInput.shape).strict(),
       annotations: { readOnlyHint: false, destructiveHint: false },
     },
     ({ id, ...args }) =>
@@ -163,7 +163,7 @@ export function registerTools(server: McpServer, ctx: Ctx) {
     {
       title: "Delete items",
       description: "Permanently removes items and their media files. Confirm with the user before calling.",
-      inputSchema: z.object({ ids: z.array(z.string()).min(1).max(200) }),
+      inputSchema: z.object({ ids: z.array(z.string()).min(1).max(200) }).strict(),
       annotations: { readOnlyHint: false, destructiveHint: true },
     },
     ({ ids }) =>
@@ -178,13 +178,13 @@ export function registerTools(server: McpServer, ctx: Ctx) {
     {
       title: "Upload a local file",
       description:
-        "For files on the user's disk. Returns a one-time curl command (valid 30 minutes) that uploads the file and creates the item with these fields in one step. Run it in a shell. To replace the media of an existing item, pass item_id instead of the item fields.",
+        "For files on the user's disk. Returns a curl command (valid 30 minutes) that uploads the file and creates the item with these fields in one step. Run it in a shell; running it again is safe, as it returns the item already made instead of adding another. To replace the media of an existing item, pass item_id instead of the item fields.",
       inputSchema: z
         .object({
           file_path: z.string().optional().describe("Local path of the file, used to fill in the command"),
           item_id: z.string().optional().describe("Existing item whose media should be replaced"),
         })
-        .extend(ItemFields.partial().shape),
+        .extend(ItemFields.partial().shape).strict(),
       annotations: { readOnlyHint: true },
     },
     ({ file_path, item_id, ...fields }) =>
@@ -195,7 +195,8 @@ export function registerTools(server: McpServer, ctx: Ctx) {
           if (!site.categories.some((c) => c.id === fields.category))
             throw new Error(`Unknown category "${fields.category}". Call list_categories.`);
         }
-        const token = createUploadToken({ item_id, fields });
+        // a new item's id is fixed now, so a repeated upload finds the item it already made
+        const token = createUploadToken({ item_id, fields, new_id: item_id ? undefined : newId() });
         const file = file_path ? file_path.replace(/'/g, `'\\''`) : "/path/to/file";
         return {
           command: `curl -sS -F 'token=${token}' -F 'file=@${file}' ${ctx.origin}/api/upload`,
@@ -214,7 +215,7 @@ export function registerTools(server: McpServer, ctx: Ctx) {
       inputSchema: z.object({
         ids: z.array(z.string()).min(1).max(10),
         size: z.number().int().min(128).max(1024).optional().describe("Longest side of the picture in px (default 512)"),
-      }),
+      }).strict(),
       annotations: { readOnlyHint: true },
     },
     async ({ ids, size }) => {
@@ -253,7 +254,7 @@ export function registerTools(server: McpServer, ctx: Ctx) {
       title: "Organize many items at once",
       description:
         "Batch edits: change category, title, tags (replace / add / remove), note, colour or featured on many items, rename or merge tags across the whole library, and create categories — all in ONE commit. Defaults to dry_run=true, which only returns the plan (before → after for every item) and changes nothing. Show the plan to the user and call again with dry_run=false once they agree.",
-      inputSchema: OrganizeInput,
+      inputSchema: OrganizeInput.strict(),
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
     },
     (spec) =>
@@ -274,7 +275,7 @@ export function registerTools(server: McpServer, ctx: Ctx) {
         id: z.string().regex(/^[a-z0-9-]+$/).describe("Lowercase id, e.g. \"loader\""),
         name: z.string().min(1).max(30).describe("English display name for the big type list, e.g. \"Loaders\""),
         label: z.string().min(1).max(12).describe("Chinese label, e.g. \"加载动画\""),
-      }),
+      }).strict(),
       annotations: { readOnlyHint: false, destructiveHint: false },
     },
     (cat) =>

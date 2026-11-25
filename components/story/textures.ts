@@ -64,7 +64,8 @@ export async function cardTexture(item: Item, renderer: WebGLRenderer): Promise<
 
   if (type === "image" || type === "svg") {
     try {
-      const img = await loadImage(src);
+      // cards are 480×640: the picture's smaller copy is plenty, and far less to fetch and decode
+      const img = await loadImage(item.media.thumb ?? src);
       const iw = img.naturalWidth || item.media.width || W;
       const ih = img.naturalHeight || item.media.height || H;
       place(item, ctx, img, iw, ih);

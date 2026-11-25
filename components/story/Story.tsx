@@ -140,18 +140,31 @@ export default function Story({
       last = null;
       schedule();
     };
+    // A click opens the card only when it was pressed on that same card and the pointer barely moved:
+    // pressing a button or starting a text selection and letting go over a card must not open it (the
+    // browser then sends the click to their common parent, which this listener would otherwise take).
+    let down: { x: number; y: number; id: string } | null = null;
+    const onDown = (e: PointerEvent) => {
+      const hit = e.isPrimary && pickable() && !interactive(e.target) ? sceneRef.current?.pick(e.clientX, e.clientY) : null;
+      down = hit ? { x: e.clientX, y: e.clientY, id: hit.id } : null;
+    };
     const onClick = (e: MouseEvent) => {
-      if (!pickable() || interactive(e.target)) return;
+      const pressed = down;
+      down = null;
+      if (!pressed || !pickable() || interactive(e.target)) return;
+      if (Math.hypot(e.clientX - pressed.x, e.clientY - pressed.y) > 6) return;
       const hit = sceneRef.current?.pick(e.clientX, e.clientY);
-      if (hit) onOpen(hit.id);
+      if (hit && hit.id === pressed.id) onOpen(hit.id);
     };
     window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerdown", onDown, { passive: true });
     window.addEventListener("click", onClick);
     document.addEventListener("pointerleave", onLeave);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("click", onClick);
       document.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("scroll", onScroll);

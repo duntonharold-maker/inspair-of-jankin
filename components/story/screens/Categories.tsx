@@ -196,7 +196,7 @@ export default function CategoriesScreen({ site, items, onPick }: { site: Site; 
                           animationDelay: leaving ? "0ms" : `${k * 60}ms`,
                         }}
                       >
-                        <MediaView item={item} fit={item.media.cutout ? "contain" : "cover"} />
+                        <MediaView item={item} fit={item.media.cutout ? "contain" : "cover"} small />
                       </div>
                     );
                   })

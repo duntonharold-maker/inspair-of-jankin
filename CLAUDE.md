@@ -16,7 +16,7 @@ npm run check:scene  # 检查首页卡片场景：任何屏幕比例下卡片都
 ## 目录
 
 - `content/site.json`、`content/items.json`：站点配置和所有条目。内容改动走 MCP 或直接改这两个文件，不要在组件里写死内容。
-- `public/media/`：媒体文件，文件名由 MCP 生成，不要手动改名。
+- `public/media/`：媒体文件，文件名由 MCP 生成，不要手动改名。宽于 800 px 的静态图片收录时会另存一张 `<文件名>.thumb.webp`（`media.thumb`），卡片、分类缩略图和场景贴图用它，详情里看原图。
 - `components/story/`：首页的滚动故事。`timeline.ts` 定义每一幕占多少屏和卡片场景各阶段的起止，`choreo.ts` 算出每张卡片在任一滚动位置的位置，`scene.ts` 用 three.js 把它们画出来（悬停、指针扰动、拖尾），`rays.ts` 把画好的场景沿放射方向拉出分光的拖影（屏幕边缘、圆环周围、鼠标划过的地方），`screens/` 里是每一幕的 DOM。
 - `lib/`：存储（GitHub / 本地）、媒体处理、MCP 工具、鉴权。
 - `app/globals.css`：顶部是颜色、字体、间距、缓动等设计变量，新样式一律使用这些变量。

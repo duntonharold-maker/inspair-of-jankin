@@ -6,8 +6,10 @@ import type { Item, Site } from "@/lib/types";
 
 const TYPE_LABEL = { image: "图片", video: "视频", svg: "SVG", lottie: "Lottie" } as const;
 
-export default function ItemDetail({ item, site }: { item: Item; site: Site }) {
+/** `heading` is the title's level: h1 on the item's own page, h2 inside the modal over the home page. */
+export default function ItemDetail({ item, site, heading: Title = "h2" }: { item: Item; site: Site; heading?: "h1" | "h2" }) {
   const { copied, copy } = useCopy();
+  const Sub = Title === "h1" ? "h2" : "h3";
   // in a frame (the artifact viewer) a link to the file can't be opened and nothing can be downloaded
   const inFrame = useFramed();
   const cat = site.categories.find((c) => c.id === item.category);
@@ -31,7 +33,7 @@ export default function ItemDetail({ item, site }: { item: Item; site: Site }) {
         <p className="eyebrow">
           {cat ? `${cat.name} · ${cat.label}` : item.category} · {date}
         </p>
-        <h2 className="detail-title">{item.title}</h2>
+        <Title className="detail-title">{item.title}</Title>
         {item.tags.length > 0 && (
           <ul className="tags">
             {item.tags.map((t) => (
@@ -67,7 +69,7 @@ export default function ItemDetail({ item, site }: { item: Item; site: Site }) {
 
         {item.note && (
           <section className="detail-note">
-            <h3>笔记</h3>
+            <Sub>笔记</Sub>
             <p>{item.note}</p>
           </section>
         )}

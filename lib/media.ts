@@ -7,7 +7,10 @@ import type { Media, MediaType } from "./types";
 
 export const MAX_FETCH_BYTES = 20 * 1024 * 1024;
 
-export type Ingested = { buffer: Buffer; ext: string; media: Omit<Media, "src"> };
+export type Ingested = { buffer: Buffer; ext: string; media: Omit<Media, "src" | "thumb">; thumb?: Buffer };
+
+/** Width of the copy cards show (enough for the widest card on a 2x screen). */
+export const THUMB_WIDTH = 800;
 
 type Detected = { type: MediaType; ext: string; animated?: boolean };
 
@@ -109,6 +112,18 @@ function lottieCoversFrame(json: { w?: number; h?: number; layers?: unknown }) {
   return layers.some((l) => l.ty === 1 && (l.sw ?? 0) >= (json.w ?? 1) && (l.sh ?? 0) >= (json.h ?? 1));
 }
 
+/** A smaller copy of a still picture for cards and the scene; none for animations or pictures already small. */
+async function thumbnail(buffer: Buffer, width?: number) {
+  if (!width || width <= THUMB_WIDTH) return undefined;
+  try {
+    const { default: sharp } = await import("sharp");
+    if (((await sharp(buffer, { animated: true }).metadata()).pages ?? 1) > 1) return undefined;
+    return await sharp(buffer).rotate().resize({ width: THUMB_WIDTH, withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
+  } catch {
+    return undefined;
+  }
+}
+
 export async function ingest(
   input: Buffer,
   opts: { filename?: string; width?: number; height?: number } = {},
@@ -120,6 +135,7 @@ export async function ingest(
   let width = opts.width;
   let height = opts.height;
   let cutout = false;
+  let thumb: Buffer | undefined;
 
   if (kind.type === "image") {
     try {
@@ -141,6 +157,7 @@ export async function ingest(
       }
     }
     cutout = !(await coversFrame(buffer, "image"));
+    thumb = await thumbnail(buffer, width);
   } else if (kind.type === "svg") {
     const clean = sanitizeSvg(buffer.toString("utf8"));
     buffer = Buffer.from(clean, "utf8");
@@ -167,7 +184,7 @@ export async function ingest(
   }
 
   const round = (n?: number) => (n && n > 0 ? Math.round(n) : undefined);
-  return { buffer, ext, media: { type: kind.type, width: round(width), height: round(height), ...(cutout && { cutout }) } };
+  return { buffer, ext, thumb, media: { type: kind.type, width: round(width), height: round(height), ...(cutout && { cutout }) } };
 }
 
 export async function fetchMedia(url: string): Promise<{ buffer: Buffer; filename: string }> {

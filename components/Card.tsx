@@ -27,7 +27,7 @@ export default function Card({
           onClick={() => onOpen(item.id)}
           aria-label={`查看「${item.title}」`}
         >
-          <MediaView item={item} fit={item.media.cutout ? "contain" : "cover"} />
+          <MediaView item={item} fit={item.media.cutout ? "contain" : "cover"} small />
         </button>
         {item.prompt && (
           <button className="card-copy" onClick={() => copy(item.prompt!)}>

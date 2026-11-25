@@ -40,7 +40,7 @@ export default async function ItemPage({ params }: Props) {
           <ArrowLeft className="ic-back" />
           返回全部
         </a>
-        <ItemDetail item={item} site={site} />
+        <ItemDetail item={item} site={site} heading="h1" />
       </main>
       <Footer site={site} repoUrl={repoUrl()} />
     </>

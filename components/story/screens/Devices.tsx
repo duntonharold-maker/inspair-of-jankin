@@ -26,7 +26,7 @@ export default function DevicesScreen({ items, site }: { items: Item[]; site: Si
                   .filter((_, k) => k % 2 === col)
                   .map((item) => (
                     <div key={item.id} className={`phone-card${item.media.cutout ? " is-cutout" : ""}`}>
-                      <MediaView item={item} fit={item.media.cutout ? "contain" : "cover"} />
+                      <MediaView item={item} fit={item.media.cutout ? "contain" : "cover"} small />
                     </div>
                   ))}
               </div>

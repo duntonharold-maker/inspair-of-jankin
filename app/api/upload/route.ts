@@ -6,7 +6,7 @@
  */
 import { isAuthorized, readUploadToken } from "@/lib/auth";
 import { ingest } from "@/lib/media";
-import { ItemFields, addItem, updateItem } from "@/lib/ops";
+import { AlreadyAdded, ItemFields, addItem, updateItem } from "@/lib/ops";
 import { originOf } from "@/lib/origin";
 import { getStore } from "@/lib/store";
 
@@ -14,7 +14,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-type Payload = { item_id?: string; fields?: Record<string, unknown> };
+type Payload = { item_id?: string; new_id?: string; fields?: Record<string, unknown> };
 
 export async function POST(req: Request) {
   try {
@@ -40,11 +40,25 @@ export async function POST(req: Request) {
       width: fields.width,
       height: fields.height,
     });
-    const { result } = payload.item_id
-      ? await updateItem(payload.item_id, fields, media)
-      : await addItem(ItemFields.parse(fields), media);
-
     const origin = originOf(req);
+    let result;
+    try {
+      ({ result } = payload.item_id
+        ? await updateItem(payload.item_id, fields, media)
+        : await addItem(ItemFields.parse(fields), media, typeof payload.new_id === "string" ? payload.new_id : undefined));
+    } catch (e) {
+      // the same upload command run twice: answer with the item it made the first time
+      if (!(e instanceof AlreadyAdded)) throw e;
+      return Response.json({
+        ok: true,
+        id: e.item.id,
+        title: e.item.title,
+        url: `${origin}/i/${e.item.id}`,
+        media_url: `${origin}${e.item.media.src}`,
+        note: "This upload was done already; nothing new was added.",
+      });
+    }
+
     return Response.json({
       ok: true,
       id: result.id,

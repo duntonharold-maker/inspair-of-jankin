@@ -3,10 +3,11 @@ import { useEffect, useRef } from "react";
 import { useInView } from "@/lib/hooks";
 import type { Item } from "@/lib/types";
 
-type Props = { item: Item; fit?: "cover" | "contain"; eager?: boolean; controls?: boolean };
+/** `small`: a card-sized view, which shows a still picture's smaller copy (media.thumb) when it has one. */
+type Props = { item: Item; fit?: "cover" | "contain"; eager?: boolean; controls?: boolean; small?: boolean };
 
 /** Renders any media type; videos and Lottie only play while on screen. */
-export default function MediaView({ item, fit = "cover", eager, controls }: Props) {
+export default function MediaView({ item, fit = "cover", eager, controls, small }: Props) {
   const { media, title } = item;
   const [ref, inView] = useInView<HTMLDivElement>("100px");
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -64,7 +65,7 @@ export default function MediaView({ item, fit = "cover", eager, controls }: Prop
       ) : media.type === "lottie" ? (
         <div ref={lottieRef} className="media-lottie" role="img" aria-label={title} />
       ) : (
-        <img src={media.src} alt={title} loading={eager ? "eager" : "lazy"} decoding="async" draggable={false} />
+        <img src={small && media.thumb ? media.thumb : media.src} alt={title} loading={eager ? "eager" : "lazy"} decoding="async" draggable={false} />
       )}
     </div>
   );

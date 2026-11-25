@@ -16,13 +16,13 @@ export default function Footer({ site, repoUrl }: { site: Site; repoUrl?: string
         </div>
         <nav className="footer-links" aria-label="页脚">
           <div>
-            <h4>浏览</h4>
+            <h2>浏览</h2>
             <a href="/#fresh">最新</a>
             <a href="/#categories">分类</a>
             <a href="/#all">全部</a>
           </div>
           <div>
-            <h4>更多</h4>
+            <h2>更多</h2>
             {repoUrl && (
               <a href={repoUrl} target="_blank" rel="noopener noreferrer">
                 GitHub

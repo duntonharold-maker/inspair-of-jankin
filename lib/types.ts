@@ -14,6 +14,9 @@ export const MediaSchema = z.object({
    * is shown whole, with room around it on a plain stage, so its own outline stays as it was designed;
    * anything else fills its card. */
   cutout: z.boolean().optional(),
+  /** Public path of a smaller copy of a still picture (800px wide WebP), made when it is added. Cards and
+   * the scene show it; the detail view shows the full file. */
+  thumb: z.string().optional(),
 });
 export type Media = z.infer<typeof MediaSchema>;
 

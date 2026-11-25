@@ -85,6 +85,24 @@ function mediaPath(id: string, ext: string, version?: string) {
 
 const repoPathOf = (src: string) => `public${src}`;
 
+/** Where a media file's smaller copy goes: next to it, as <name>.thumb.webp. */
+function thumbPath(p: { repoPath: string; src: string }) {
+  const swap = (s: string) => s.replace(/\.[a-z0-9]+$/i, ".thumb.webp");
+  return { repoPath: swap(p.repoPath), src: swap(p.src) };
+}
+
+/** A media file and its smaller copy, if it has one, to write. */
+function mediaFiles(at: { repoPath: string; src: string }, media: Ingested) {
+  const thumb = media.thumb ? thumbPath(at) : null;
+  return {
+    media: { src: at.src, ...media.media, ...(thumb && { thumb: thumb.src }) },
+    files: [{ path: at.repoPath, content: media.buffer }, ...(thumb ? [{ path: thumb.repoPath, content: media.thumb! }] : [])],
+  };
+}
+
+/** Every file of an item's media, to delete. */
+const filesOf = (m: Item["media"]) => [repoPathOf(m.src), ...(m.thumb ? [repoPathOf(m.thumb)] : [])];
+
 function applyFields(base: Partial<Item>, f: Partial<ItemFieldsInput>): Partial<Item> {
   const out: Partial<Item> = { ...base };
   const set = <K extends keyof Item>(k: K, v: Item[K] | undefined) => {
@@ -108,23 +126,33 @@ function applyFields(base: Partial<Item>, f: Partial<ItemFieldsInput>): Partial<
 
 /* --------------------------------------------------------------- operations */
 
-export async function addItem(fields: ItemFieldsInput, media: Ingested) {
+/** Thrown when an item with the id given to addItem exists already (a repeated upload). */
+export class AlreadyAdded extends Error {
+  constructor(public item: Item) {
+    super(`Item ${item.id} was already added.`);
+  }
+}
+
+/** Adds an item. `fixedId` (from an upload token) makes a repeated upload find the item it made. */
+export async function addItem(fields: ItemFieldsInput, media: Ingested, fixedId?: string) {
   const store = getStore();
   const now = new Date();
   return store.mutate((snap) => {
     assertCategory(snap.site, fields.category);
-    let id = newId(now);
-    while (snap.items.some((i) => i.id === id)) id = newId(now);
-    const { repoPath, src } = mediaPath(id, media.ext);
+    const made = fixedId ? snap.items.find((i) => i.id === fixedId) : undefined;
+    if (made) throw new AlreadyAdded(made);
+    let id = fixedId ?? newId(now);
+    while (!fixedId && snap.items.some((i) => i.id === id)) id = newId(now);
+    const stored = mediaFiles(mediaPath(id, media.ext), media);
     const item = {
       id,
       ...applyFields({ tags: [] }, fields),
-      media: { src, ...media.media },
+      media: stored.media,
       createdAt: now.toISOString(),
     } as Item;
     return {
       items: [item, ...snap.items],
-      addFiles: [{ path: repoPath, content: media.buffer }],
+      addFiles: stored.files,
       message: `inspair: add "${item.title}" (${id})`,
       result: item,
     };
@@ -142,10 +170,10 @@ export async function updateItem(id: string, fields: Partial<ItemFieldsInput>, m
     const addFiles = [];
     const deleteFiles = [];
     if (media) {
-      const { repoPath, src } = mediaPath(id, media.ext, randomBytes(2).toString("hex"));
-      next.media = { src, ...media.media };
-      addFiles.push({ path: repoPath, content: media.buffer });
-      deleteFiles.push(repoPathOf(old.media.src));
+      const stored = mediaFiles(mediaPath(id, media.ext, randomBytes(2).toString("hex")), media);
+      next.media = stored.media;
+      addFiles.push(...stored.files);
+      deleteFiles.push(...filesOf(old.media));
     } else if (fields.width || fields.height) {
       next.media = { ...old.media, width: fields.width ?? old.media.width, height: fields.height ?? old.media.height };
     }
@@ -163,7 +191,7 @@ export async function deleteItems(ids: string[]) {
     if (!gone.length) throw new Error(`No items found for: ${ids.join(", ")}`);
     return {
       items: snap.items.filter((i) => !ids.includes(i.id)),
-      deleteFiles: gone.map((i) => repoPathOf(i.media.src)),
+      deleteFiles: gone.flatMap((i) => filesOf(i.media)),
       message: `inspair: delete ${gone.length} item(s)`,
       result: { deleted: gone.map((i) => i.id), missing },
     };
@@ -189,13 +217,15 @@ export function search(
   snap: Snapshot,
   q: { query?: string; category?: string; tag?: string; has_prompt?: boolean; limit?: number; offset?: number },
 ) {
+  if (q.category) assertCategory(snap.site, q.category);
   const needle = q.query?.trim().toLowerCase();
+  const names = new Map(snap.site.categories.map((c) => [c.id, `${c.name}\n${c.label}`]));
   const hits = snap.items.filter((i) => {
     if (q.category && i.category !== q.category) return false;
     if (q.tag && !i.tags.includes(q.tag)) return false;
     if (q.has_prompt && !i.prompt) return false;
     if (needle) {
-      const hay = [i.title, i.prompt, i.negativePrompt, i.note, i.model, i.source, i.id, ...i.tags]
+      const hay = [i.title, i.prompt, i.negativePrompt, i.note, i.model, i.source, i.id, names.get(i.category), ...i.tags]
         .filter(Boolean)
         .join("\n")
         .toLowerCase();
@@ -228,13 +258,13 @@ export const OrganizeInput = z.object({
         note: text(4000).optional().describe("Replaces the note; empty string clears it"),
         color: hex.optional(),
         featured: z.boolean().optional(),
-      }),
+      }).strict(),
     )
     .max(300)
     .default([])
     .describe("Per-item edits"),
   rename_tags: z
-    .array(z.object({ from: text(40).min(1), to: text(40).describe('New name; "" removes the tag everywhere') }))
+    .array(z.object({ from: text(40).min(1), to: text(40).describe('New name; "" removes the tag everywhere') }).strict())
     .max(100)
     .default([])
     .describe("Rename or merge a tag on every item that has it"),
@@ -244,7 +274,7 @@ export const OrganizeInput = z.object({
         id: z.string().regex(/^[a-z0-9-]+$/),
         name: z.string().min(1).max(30),
         label: z.string().min(1).max(12),
-      }),
+      }).strict(),
     )
     .max(20)
     .default([])
@@ -338,6 +368,8 @@ export function planOrganize(snap: Snapshot, spec: OrganizeSpec) {
 
 /** Plans the request; unless it is a dry run, writes every change in a single commit. */
 export async function organizeItems(spec: OrganizeSpec) {
+  if (!spec.changes.length && !spec.rename_tags.length && !spec.new_categories.length)
+    throw new Error("Nothing to do: pass changes: [{ id, …fields }], rename_tags: [{ from, to }] or new_categories.");
   const store = getStore();
   if (spec.dry_run) {
     const plan = planOrganize(await store.read(), spec);
