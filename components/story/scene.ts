@@ -17,6 +17,7 @@ import {
   type Texture,
 } from "three";
 import { cardTexture, type CardTexture } from "./textures";
+import { createRays } from "./rays";
 import {
   FLIGHT,
   FLOAT,
@@ -186,7 +187,8 @@ type Card = {
 /* ----------------------------------------------------------------- scene */
 
 export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): StoryScene {
-  const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "high-performance" });
+  // The scene is drawn into a picture (with its own antialiasing) and then through the rays onto the canvas.
+  const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: "high-performance" });
   renderer.setClearColor(0x000000, 0);
   const scene = new Scene();
   // One shared camera with the long lens; each card brings its own lens through its shader.
@@ -198,6 +200,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
   const N = mobile ? 42 : 64;
   const COLS = mobile ? 7 : 8;
   const choreo = createChoreo({ n: N, cols: COLS, mobile });
+  const rays = createRays(renderer, { mobile });
   const geometry = new PlaneGeometry(0.75, 1, 24, 1);
 
   const shared = {
@@ -334,6 +337,9 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
   let raf = 0;
   let wasVisible = true;
   const loose: Card[] = [];
+  let lastP = 0;
+  let rush = 0;
+  const raysAt = { centre: new Vector2(), ring: new Vector2(), prism: 0, edges: 1, rush: 0 };
 
   function frame(now: number) {
     raf = requestAnimationFrame(frame);
@@ -345,6 +351,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
 
     if (phase(p, ...marks.exit) >= 1) {
       if (wasVisible) {
+        renderer.setRenderTarget(null);
         renderer.clear();
         wasVisible = false;
       }
@@ -489,7 +496,22 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     pointer.vx *= 0.8;
     pointer.vy *= 0.8;
     for (const tex of textures.values()) tex.tick?.();
-    renderer.render(scene, camera);
+
+    // The rays: always towards the frame's edges, around the ring while it stands, longer while the
+    // page scrolls fast.
+    const rate = Math.abs(p - lastP) / elapsed; // screen heights a second
+    lastP = p;
+    rush += (Math.min(1, rate * 0.6) - rush) * (1 - Math.exp(-elapsed / 0.15));
+    const perUnit = pxH / viewH;
+    const ring = choreo.ring;
+    raysAt.centre.set(pxW / 2 + ring.centre.x * perUnit, pxH / 2 + ring.centre.y * perUnit);
+    raysAt.ring.set((ring.radius + ring.size * 0.375) * perUnit, ring.radius * 0.8 * perUnit);
+    raysAt.prism = phase(p, marks.gather[0] + 0.6, marks.gather[1]) * (1 - phase(p, marks.unroll[0] + 0.15, marks.unroll[1] - 0.25));
+    // strong in the air, as on premotio's first screen; gentler on the ring; slight on the settled wall
+    raysAt.edges = 1 - 0.5 * phase(p, marks.gather[0], marks.gather[1]) - 0.2 * settle;
+    raysAt.rush = still ? 0 : rush;
+    rays.set(raysAt);
+    rays.render(scene, camera, now, still);
   }
 
   function resize() {
@@ -506,13 +528,28 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     camera.position.set(0, 0, base);
     camera.updateProjectionMatrix();
     choreo.layout(viewW, viewH);
-    pxW = w * dpr;
-    pxH = h * dpr;
+    const size = renderer.getDrawingBufferSize(new Vector2());
+    pxW = size.x;
+    pxH = size.y;
+    rays.resize(pxW, pxH, dpr);
   }
 
+  let lastMove: { x: number; y: number; at: number } | null = null;
   const onMove = (e: PointerEvent) => {
     const nx = (e.clientX / window.innerWidth) * 2 - 1;
     const ny = -(e.clientY / window.innerHeight) * 2 + 1;
+    // the wake, in the drawing's pixels (y up)
+    const dpr = renderer.getPixelRatio();
+    const at = performance.now();
+    const x = e.clientX * dpr;
+    const y = (window.innerHeight - e.clientY) * dpr;
+    if (lastMove && at > lastMove.at) {
+      const s = 1000 / (at - lastMove.at);
+      const vx = (x - lastMove.x) * s;
+      const vy = (y - lastMove.y) * s;
+      if (Math.hypot(vx, vy) > 12 * dpr) rays.stir(x, y, vx, vy, at);
+    }
+    lastMove = { x, y, at };
     if (pointer.inside) {
       pointer.vx = pointer.vx * 0.5 + (nx - pointer.x) * 30;
       pointer.vy = pointer.vy * 0.5 + (ny - pointer.y) * 30;
@@ -600,6 +637,7 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       window.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerleave", onLeave);
       for (const t of textures.values()) t.dispose();
+      rays.dispose();
       for (const c of cards) {
         c.mesh.material.dispose();
         c.shadow.material.dispose();

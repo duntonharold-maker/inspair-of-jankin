@@ -486,6 +486,8 @@ export function createChoreo({ n, cols, mobile }: { n: number; cols: number; mob
     freeAxis,
     /** The wall cell (row, column) card k ends up on. */
     cellOf: (k: number) => ({ row: route[k].row, col: route[k].col }),
+    /** The ring: its centre, radius and card size in world units (it stands at z = 0, seen through the wide lens). */
+    ring: { centre: ring.c, get radius() { return ring.R; }, get size() { return ring.size; } },
     debug: { ring, wall, route, drops, leaves },
   };
 }
