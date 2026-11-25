@@ -1,6 +1,34 @@
 [
   {
+    "id": "20261125-s41t51",
+    "tags": [
+      "PPT设计",
+      "商业提案",
+      "版式设计",
+      "极简现代",
+      "黄黑白配色",
+      "卡片布局",
+      "无衬线字体",
+      "抽象质感"
+    ],
+    "title": "黑黄极简风商业提案 PPT 版式设计",
+    "category": "poster",
+    "source": "https://www.pinterest.com/pin/871798440386120779/",
+    "note": "现代极简风格的商业提案（Business Proposal）PPT 全套版式参考，包含封面、目录（01–04 竖卡）、公司介绍、执行摘要、解决方案、愿景目标、市场分析与产品总览 8 页。采用高对比亮黄 + 纯黑 + 浅灰白配色，搭配紧凑的无衬线大标题、圆角模块化卡片、黑白抽象质感配图及黄色星号视觉符号，网格规范、节奏利落。",
+    "color": "#EFEA00",
+    "media": {
+      "src": "/media/20261125-s41t51.webp",
+      "type": "image",
+      "width": 1080,
+      "height": 1440,
+      "thumb": "/media/20261125-s41t51.thumb.webp"
+    },
+    "createdAt": "2026-11-25T08:00:46.488Z"
+  },
+  {
     "id": "20261125-ir9qu0",
+    "title": "Court Reserve 网球俱乐部官网落地页",
+    "category": "interface",
     "tags": [
       "网页设计",
       "落地页",
@@ -12,11 +40,6 @@
       "数据展示",
       "玻璃拟态"
     ],
-    "title": "Court Reserve 网球俱乐部官网落地页",
-    "category": "interface",
-    "source": "https://www.pinterest.com/pin/896568238372520377/",
-    "note": "网球/板式网球俱乐部官网设计（设计师：official.irad）。大圆角天空蓝实景 Hero Banner 搭配黑色胶囊 CTA 与头像叠层；下方采用深色文字开关卡 + 实景毛玻璃标签卡 + 圆点进度数据卡的三列 Bento 组合，底部以 4 列大字号 KPI 数据收尾，整体清爽现代、信息层级清晰。",
-    "color": "#2389DA",
     "media": {
       "src": "/media/20261125-ir9qu0.jpg",
       "type": "image",
@@ -24,6 +47,9 @@
       "height": 2700,
       "thumb": "/media/20261125-ir9qu0.thumb.webp"
     },
+    "source": "https://www.pinterest.com/pin/896568238372520377/",
+    "note": "网球/板式网球俱乐部官网设计（设计师：official.irad）。大圆角天空蓝实景 Hero Banner 搭配黑色胶囊 CTA 与头像叠层；下方采用深色文字开关卡 + 实景毛玻璃标签卡 + 圆点进度数据卡的三列 Bento 组合，底部以 4 列大字号 KPI 数据收尾，整体清爽现代、信息层级清晰。",
+    "color": "#2389DA",
     "createdAt": "2026-11-25T07:59:17.966Z"
   },
   {
