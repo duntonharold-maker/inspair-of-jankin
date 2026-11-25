@@ -1,6 +1,36 @@
 [
   {
+    "id": "20261125-xeho5r",
+    "tags": [
+      "微交互",
+      "动效设计",
+      "弹簧物理",
+      "扇形卡片",
+      "悬停交互",
+      "卡片堆叠",
+      "暗黑模式",
+      "噪点渐变",
+      "前端动效"
+    ],
+    "title": "Fan Cards 扇形展开弹簧卡片动效",
+    "category": "motion",
+    "model": "HTML / CSS / Spring Physics JS",
+    "params": "fan spring: k=220 c=18 | lift: k=420 c=20 (-22px) | scale: k=420 c=22 (1.06) | spread=78px",
+    "source": "https://designbookmark.com/motion#db-fan-cards",
+    "note": "DesignBookmark 动效研究组件「Fan Cards」：三张叠加的项目卡片（01 Moodboard / 02 Wireframes / 03 Final UI），以底部中心（transform-origin: 50% 100%）为轴心通过弹簧物理模型展开为扇形；悬停单张卡片时独立触发上浮（-22px）与放大（1.06x）弹簧并置顶层级，点击附带回弹脉冲。配图采用三色径向渐变叠加 SVG feTurbulence 颗粒噪点质感。已按原 HTML 弹簧参数精确采样转为 60fps 循环动画 SVG 保存。",
+    "color": "#C07BFF",
+    "media": {
+      "src": "/media/20261125-xeho5r.svg",
+      "type": "svg",
+      "width": 540,
+      "height": 380
+    },
+    "createdAt": "2026-11-25T08:05:54.393Z"
+  },
+  {
     "id": "20261125-s41t51",
+    "title": "黑黄极简风商业提案 PPT 版式设计",
+    "category": "poster",
     "tags": [
       "PPT设计",
       "商业提案",
@@ -11,11 +41,6 @@
       "无衬线字体",
       "抽象质感"
     ],
-    "title": "黑黄极简风商业提案 PPT 版式设计",
-    "category": "poster",
-    "source": "https://www.pinterest.com/pin/871798440386120779/",
-    "note": "现代极简风格的商业提案（Business Proposal）PPT 全套版式参考，包含封面、目录（01–04 竖卡）、公司介绍、执行摘要、解决方案、愿景目标、市场分析与产品总览 8 页。采用高对比亮黄 + 纯黑 + 浅灰白配色，搭配紧凑的无衬线大标题、圆角模块化卡片、黑白抽象质感配图及黄色星号视觉符号，网格规范、节奏利落。",
-    "color": "#EFEA00",
     "media": {
       "src": "/media/20261125-s41t51.webp",
       "type": "image",
@@ -23,6 +48,9 @@
       "height": 1440,
       "thumb": "/media/20261125-s41t51.thumb.webp"
     },
+    "source": "https://www.pinterest.com/pin/871798440386120779/",
+    "note": "现代极简风格的商业提案（Business Proposal）PPT 全套版式参考，包含封面、目录（01–04 竖卡）、公司介绍、执行摘要、解决方案、愿景目标、市场分析与产品总览 8 页。采用高对比亮黄 + 纯黑 + 浅灰白配色，搭配紧凑的无衬线大标题、圆角模块化卡片、黑白抽象质感配图及黄色星号视觉符号，网格规范、节奏利落。",
+    "color": "#EFEA00",
     "createdAt": "2026-11-25T08:00:46.488Z"
   },
   {
