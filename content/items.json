@@ -1,6 +1,33 @@
 [
   {
+    "id": "20261125-bgpnfb",
+    "tags": [
+      "APP导航",
+      "胶囊导航",
+      "底部导航栏",
+      "移动端UI",
+      "极简设计",
+      "组件设计",
+      "冥想应用",
+      "暖橙点缀"
+    ],
+    "title": "Meditation App 暖橙焦点胶囊底部导航",
+    "category": "interface",
+    "source": "https://www.xiaohongshu.com/discovery/item/6aaa7b28000000000b0039bd?source=webshare&xhsshare=pc_web&xsec_token=ABNbReIHWhfBE0cbBoFyh8Zs5yjvMdjYu32b4Ad62yfM4=&xsec_source=pc_share",
+    "note": "冥想类 APP（Meditation App）创意胶囊底部导航设计（来源：小红书 圆点DESIGN）。柔和白色悬浮胶囊栏，左右对称放置 Home / Meditate 与 Sleep / Progress 线性图标+文字，中央突出一颗柔和暖橙渐变圆形主操作按钮，氛围平静柔和、焦点明确。",
+    "color": "#FF9F43",
+    "media": {
+      "src": "/media/20261125-bgpnfb.jpg",
+      "type": "image",
+      "width": 768,
+      "height": 1024
+    },
+    "createdAt": "2026-11-25T08:24:38.405Z"
+  },
+  {
     "id": "20261125-xcm3ro",
+    "title": "2026 新年绿黄噪点渐变数字图形",
+    "category": "illustration",
     "tags": [
       "数字图形",
       "新年主题",
@@ -11,17 +38,15 @@
       "复古印刷",
       "几何构图"
     ],
-    "title": "2026 新年绿黄噪点渐变数字图形",
-    "category": "illustration",
-    "source": "https://www.pinterest.com/pin/1139621880759289887/",
-    "note": "Studio crea 2026 新年数字图形设计。以满版交叠的超大号数字「26」作为主视觉骨架，搭配深炭黑底色与翡翠绿至暖杏黄的颗粒噪点渐变；巧用数字内部负空间嵌入「happy New Year」薄荷绿字标，底部穿插「Studio crea」与「©2026」，复古印刷质感强烈、图形张力十足。",
-    "color": "#22A572",
     "media": {
       "src": "/media/20261125-xcm3ro.jpg",
       "type": "image",
       "width": 736,
       "height": 981
     },
+    "source": "https://www.pinterest.com/pin/1139621880759289887/",
+    "note": "Studio crea 2026 新年数字图形设计。以满版交叠的超大号数字「26」作为主视觉骨架，搭配深炭黑底色与翡翠绿至暖杏黄的颗粒噪点渐变；巧用数字内部负空间嵌入「happy New Year」薄荷绿字标，底部穿插「Studio crea」与「©2026」，复古印刷质感强烈、图形张力十足。",
+    "color": "#22A572",
     "createdAt": "2026-11-25T08:14:24.557Z"
   },
   {
