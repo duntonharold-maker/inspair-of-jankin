@@ -1,12 +1,10 @@
-import "@fontsource/inter-tight/400.css";
-import "@fontsource/inter-tight/500.css";
-import "@fontsource/inter-tight/600.css";
 import "lenis/dist/lenis.css";
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import Ruler from "@/components/Ruler";
 import SmoothScroll from "@/components/SmoothScroll";
 import { getContent } from "@/lib/content";
+import "./fonts";
 
 const { site } = getContent();
 

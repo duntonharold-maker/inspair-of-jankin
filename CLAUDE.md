@@ -49,7 +49,7 @@ npm run check:scene  # 检查首页卡片场景：任何屏幕比例下卡片都
   - `--coral` #FC734D 珊瑚橘：点缀标记，包括 Logo、标题里的箭头、提示词标记、步骤编号。
   - 蓝色和橘色在浅色底上只做色块和图形，不做文字；色块上的文字一律用午夜冷黑（白字对比度不够）。在午夜冷黑的底上，它们可以直接做文字。
   - 灰色用变量里带冷色调的灰（`--muted`、`--border` 等），不要用纯中性灰。
-- 界面文字用中文，大标题用英文展示字体（Inter Tight），与现有风格保持一致。
+- 界面文字用中文，大标题用英文，与现有风格保持一致。英文字体是 Aventina（`app/fonts.ts` 用 `next/font/local` 加载 `app/fonts/` 里的 400/500/600/700 四个字重，中文回落到系统字体），通过 `--font` 用在全站；代码用 `--mono`。要用别的字重，先把对应的 woff2 加进 `app/fonts/` 和 `app/fonts.ts`。
 - 图标一律用 Lucide（https://lucide.dev/icons/ ，`lucide-react`），按名字导入，如 `import { ArrowRight } from "lucide-react"`。不要手写 SVG，也不要用 →、↗、× 这类字符充当图标。Logo（`components/Mark.tsx`）和正文里表示菜单路径的「设置 → 连接器」除外。图标跟随文字的颜色和大小（`.lucide` 默认 1em），要别的尺寸就在 CSS 里设宽高，不用 `size` 属性。链接和按钮里的箭头加 `ic-go`、`ic-back` 或 `ic-out`，悬停时会朝箭头方向轻推；标题里的珊瑚色箭头用 `arrow`。
 - 毛玻璃只写标准的 `backdrop-filter`，不要再手写 `-webkit-backdrop-filter`：构建时两条会被合并成只剩带前缀的那条，Chrome 和 Edge 认不出，模糊就会失效。Safari 需要的前缀构建工具会自动补上。
 - 不要把 `MCP_SECRET`、`GITHUB_TOKEN` 等密钥写进仓库，这个仓库是公开的。
