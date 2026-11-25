@@ -6,6 +6,7 @@ import McpGuide from "./McpGuide";
 import Modal from "./Modal";
 import Nav from "./Nav";
 import Story from "./story/Story";
+import { framed } from "@/lib/hooks";
 import { scrollToId } from "@/lib/scroll";
 import type { Item, Site } from "@/lib/types";
 
@@ -37,8 +38,10 @@ export default function Home({
     return () => window.removeEventListener("popstate", sync);
   }, []);
 
-  /** Mirrors the open item in ?i=… so links can be shared. Returns false where history is locked (embedded previews). */
+  /** Mirrors the open item in ?i=… so links can be shared. Returns false in a frame (the artifact viewer
+   * takes a changed query for a file it can't open) and where history is locked. */
   const setUrl = (id: string | null, mode: "push" | "replace") => {
+    if (framed()) return false;
     try {
       const url = new URL(location.href);
       if (id) url.searchParams.set("i", id);

@@ -1,13 +1,15 @@
 "use client";
 import { ArrowUpRight, ChevronRight } from "lucide-react";
 import MediaView from "./MediaView";
-import { useCopy } from "@/lib/hooks";
+import { useCopy, useFramed } from "@/lib/hooks";
 import type { Item, Site } from "@/lib/types";
 
 const TYPE_LABEL = { image: "图片", video: "视频", svg: "SVG", lottie: "Lottie" } as const;
 
 export default function ItemDetail({ item, site }: { item: Item; site: Site }) {
   const { copied, copy } = useCopy();
+  // in a frame (the artifact viewer) a link to the file can't be opened and nothing can be downloaded
+  const inFrame = useFramed();
   const cat = site.categories.find((c) => c.id === item.category);
   const date = item.createdAt.slice(0, 10).replaceAll("-", ".");
   const isUrl = /^https?:\/\//i.test(item.source ?? "");
@@ -113,9 +115,11 @@ export default function ItemDetail({ item, site }: { item: Item; site: Site }) {
           <button className="btn btn--line" onClick={() => copy(`${location.origin}/i/${item.id}`, "link")}>
             {copied === "link" ? "已复制链接" : "复制链接"}
           </button>
-          <a className="btn btn--line" href={item.media.src} target="_blank" rel="noopener">
-            原文件 <ArrowUpRight className="ic-out" />
-          </a>
+          {!inFrame && (
+            <a className="btn btn--line" href={item.media.src} target="_blank" rel="noopener">
+              原文件 <ArrowUpRight className="ic-out" />
+            </a>
+          )}
         </div>
       </aside>
     </div>

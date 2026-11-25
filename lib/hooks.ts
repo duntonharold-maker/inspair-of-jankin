@@ -49,6 +49,26 @@ export function useInView<T extends Element>(rootMargin = "200px", once = false)
 }
 
 /** Put text on the clipboard, falling back to a hidden text area where the clipboard API is refused. */
+/**
+ * Whether the page runs inside someone else's frame, as when the artifact viewer previews the site.
+ * There the address can't carry ?i=… and a link to one of the site's files can't be opened, so the
+ * page keeps those to itself.
+ */
+export function framed() {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+}
+
+/** framed(), read after hydration so the server's markup and the first client render agree. */
+export function useFramed() {
+  const [inFrame, setInFrame] = useState(false);
+  useEffect(() => setInFrame(framed()), []);
+  return inFrame;
+}
+
 export async function writeClipboard(text: string) {
   try {
     await navigator.clipboard.writeText(text);
