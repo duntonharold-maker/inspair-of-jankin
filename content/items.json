@@ -1,6 +1,33 @@
 [
   {
+    "id": "20261125-aqvhjh",
+    "tags": [
+      "APP导航",
+      "胶囊导航",
+      "底部导航栏",
+      "移动端UI",
+      "极简设计",
+      "组件设计",
+      "健身应用",
+      "克莱因蓝"
+    ],
+    "title": "Workout App 纯图标胶囊底部导航",
+    "category": "interface",
+    "source": "https://www.xiaohongshu.com/discovery/item/6aaa7b28000000000b0039bd?source=webshare&xhsshare=pc_web&xsec_token=ABNbReIHWhfBE0cbBoFyh8Zs5yjvMdjYu32b4Ad62yfM4=&xsec_source=pc_share",
+    "note": "健身类 APP（Workout App）创意胶囊底部导航设计（来源：小红书 圆点DESIGN）。采用纯图标极简胶囊栏，选中态以纯白内嵌胶囊高亮，中央搭配高饱和克莱因蓝圆形「+」主操作按钮，操作高效直观、运动感利落。",
+    "color": "#122FF5",
+    "media": {
+      "src": "/media/20261125-aqvhjh.jpg",
+      "type": "image",
+      "width": 768,
+      "height": 1024
+    },
+    "createdAt": "2026-11-25T08:24:43.887Z"
+  },
+  {
     "id": "20261125-bgpnfb",
+    "title": "Meditation App 暖橙焦点胶囊底部导航",
+    "category": "interface",
     "tags": [
       "APP导航",
       "胶囊导航",
@@ -11,17 +38,15 @@
       "冥想应用",
       "暖橙点缀"
     ],
-    "title": "Meditation App 暖橙焦点胶囊底部导航",
-    "category": "interface",
-    "source": "https://www.xiaohongshu.com/discovery/item/6aaa7b28000000000b0039bd?source=webshare&xhsshare=pc_web&xsec_token=ABNbReIHWhfBE0cbBoFyh8Zs5yjvMdjYu32b4Ad62yfM4=&xsec_source=pc_share",
-    "note": "冥想类 APP（Meditation App）创意胶囊底部导航设计（来源：小红书 圆点DESIGN）。柔和白色悬浮胶囊栏，左右对称放置 Home / Meditate 与 Sleep / Progress 线性图标+文字，中央突出一颗柔和暖橙渐变圆形主操作按钮，氛围平静柔和、焦点明确。",
-    "color": "#FF9F43",
     "media": {
       "src": "/media/20261125-bgpnfb.jpg",
       "type": "image",
       "width": 768,
       "height": 1024
     },
+    "source": "https://www.xiaohongshu.com/discovery/item/6aaa7b28000000000b0039bd?source=webshare&xhsshare=pc_web&xsec_token=ABNbReIHWhfBE0cbBoFyh8Zs5yjvMdjYu32b4Ad62yfM4=&xsec_source=pc_share",
+    "note": "冥想类 APP（Meditation App）创意胶囊底部导航设计（来源：小红书 圆点DESIGN）。柔和白色悬浮胶囊栏，左右对称放置 Home / Meditate 与 Sleep / Progress 线性图标+文字，中央突出一颗柔和暖橙渐变圆形主操作按钮，氛围平静柔和、焦点明确。",
+    "color": "#FF9F43",
     "createdAt": "2026-11-25T08:24:38.405Z"
   },
   {
