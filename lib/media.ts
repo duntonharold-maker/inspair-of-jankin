@@ -69,40 +69,44 @@ async function shrink(buf: Buffer) {
   }
 }
 
-const hex = (rgb: number[]) => "#" + rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
+/** The gentlest corner a card has: 0.625rem on the widest cards (about 330px), as a share of their width. */
+const CARD_CORNER = 0.03;
 
 /**
- * The colour a picture or SVG fills its own ground with, read just inside the middle of each of its four
- * edges: an icon drawn on a rounded tile leaves its corners clear, but the edges' midpoints are the tile.
- * Undefined when the four disagree (most photographs) or show through.
+ * Whether a picture or SVG covers its whole frame, so that it can fill a card: drawn at 256px, it must
+ * be opaque along its edges, and any clear corners must be no deeper than the card's own rounding cuts
+ * away (then the card hides exactly what is clear, and the piece keeps its outline). An icon on a rounder
+ * tile, a sticker or a line drawing on a clear ground doesn't: it has an outline of its own, which a card
+ * must neither crop nor paint over.
  */
-async function groundOf(buffer: Buffer, type: "image" | "svg") {
+async function coversFrame(buffer: Buffer, type: "image" | "svg") {
   try {
     const { default: sharp } = await import("sharp");
-    const { data, info } = await sharp(buffer, type === "svg" ? { density: 72 } : { animated: false })
-      .resize({ width: 96, height: 96, fit: "fill" })
-      .ensureAlpha()
-      .raw()
-      .toBuffer({ resolveWithObject: true });
-    const w = info.width, h = info.height, inset = 2;
-    const at = (x: number, y: number) => [...data.subarray((y * w + x) * 4, (y * w + x) * 4 + 4)];
-    const points = [at(w >> 1, inset), at(w >> 1, h - 1 - inset), at(inset, h >> 1), at(w - 1 - inset, h >> 1)];
-    if (points.some((p) => p[3] < 250)) return undefined;
-    for (let c = 0; c < 3; c++) {
-      const v = points.map((p) => p[c]);
-      if (Math.max(...v) - Math.min(...v) > 6) return undefined;
+    const image = sharp(buffer, type === "svg" ? { density: 72 } : { animated: false });
+    if (type === "image" && !(await image.metadata()).hasAlpha) return true;
+    const S = 256;
+    const { data } = await image.resize({ width: S, height: S, fit: "fill" }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const clear = (x: number, y: number) => data[(y * S + x) * 4 + 3] < 250;
+    // along the edges, away from the corners: nothing clear
+    const corner = Math.round(S * 0.15);
+    for (let t = corner; t < S - corner; t++) if (clear(t, 1) || clear(t, S - 2) || clear(1, t) || clear(S - 2, t)) return false;
+    // at each corner: a radius r leaves (1 - 1/√2)·r clear along the diagonal, that is 0.207·r pixel steps
+    const allowed = 0.207 * CARD_CORNER * S;
+    for (const [x0, y0, dx, dy] of [[0, 0, 1, 1], [S - 1, 0, -1, 1], [0, S - 1, 1, -1], [S - 1, S - 1, -1, -1]]) {
+      let d = 0;
+      while (d < S / 2 && clear(x0 + dx * d, y0 + dy * d)) d++;
+      if (d > allowed + 0.5) return false;
     }
-    return hex([0, 1, 2].map((c) => points.reduce((sum, p) => sum + p[c], 0) / points.length));
+    return true;
   } catch {
-    return undefined;
+    return true;
   }
 }
 
-/** A Lottie animation's backdrop: a solid layer the size of the whole composition, if it has one. */
-function lottieGround(json: { w?: number; h?: number; layers?: unknown }) {
-  const layers = (json.layers ?? []) as { ty?: number; sc?: string; sw?: number; sh?: number }[];
-  const solid = layers.find((l) => l.ty === 1 && l.sc && (l.sw ?? 0) >= (json.w ?? 1) && (l.sh ?? 0) >= (json.h ?? 1));
-  return solid?.sc && /^#[0-9a-f]{6}$/i.test(solid.sc) ? solid.sc.toLowerCase() : undefined;
+/** Whether a Lottie animation paints its whole composition: it has a solid layer at least that size. */
+function lottieCoversFrame(json: { w?: number; h?: number; layers?: unknown }) {
+  const layers = (json.layers ?? []) as { ty?: number; sw?: number; sh?: number }[];
+  return layers.some((l) => l.ty === 1 && (l.sw ?? 0) >= (json.w ?? 1) && (l.sh ?? 0) >= (json.h ?? 1));
 }
 
 export async function ingest(
@@ -115,7 +119,7 @@ export async function ingest(
   let ext = kind.ext;
   let width = opts.width;
   let height = opts.height;
-  let background: string | undefined;
+  let cutout = false;
 
   if (kind.type === "image") {
     try {
@@ -136,7 +140,7 @@ export async function ingest(
         height = small.height;
       }
     }
-    background = await groundOf(buffer, "image");
+    cutout = !(await coversFrame(buffer, "image"));
   } else if (kind.type === "svg") {
     const clean = sanitizeSvg(buffer.toString("utf8"));
     buffer = Buffer.from(clean, "utf8");
@@ -147,7 +151,7 @@ export async function ingest(
     } catch {
       /* size stays unknown */
     }
-    background = await groundOf(buffer, "svg");
+    cutout = !(await coversFrame(buffer, "svg"));
   } else if (kind.type === "lottie") {
     let json: { w?: number; h?: number; layers?: unknown };
     try {
@@ -158,12 +162,12 @@ export async function ingest(
     if (!Array.isArray(json.layers)) throw new Error("This JSON is not a Lottie animation (no layers).");
     width ??= json.w;
     height ??= json.h;
-    background = lottieGround(json);
+    cutout = !lottieCoversFrame(json);
     buffer = Buffer.from(JSON.stringify(json), "utf8");
   }
 
   const round = (n?: number) => (n && n > 0 ? Math.round(n) : undefined);
-  return { buffer, ext, media: { type: kind.type, width: round(width), height: round(height), ...(background && { background }) } };
+  return { buffer, ext, media: { type: kind.type, width: round(width), height: round(height), ...(cutout && { cutout }) } };
 }
 
 export async function fetchMedia(url: string): Promise<{ buffer: Buffer; filename: string }> {

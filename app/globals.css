@@ -546,6 +546,11 @@ input { font: inherit; color: inherit; }
   cursor: zoom-in;
 }
 .card-media .media { position: absolute; inset: 0; transition: transform 0.7s var(--ease); }
+/* A piece with an outline of its own (media.cutout: an icon on a rounded tile, a sticker, an animation
+   without a backdrop) is shown whole on the stage with room around it, as in the detail view, so the
+   card neither crops its outline nor paints over it. Everything else fills its card. */
+.card-media.is-cutout, .cats-thumb.is-cutout, .phone-card.is-cutout { background: var(--stage); }
+.card-media.is-cutout > .media, .cats-thumb.is-cutout > .media, .phone-card.is-cutout > .media { inset: 13%; width: auto; height: auto; }
 .card-copy {
   position: absolute;
   top: 0.625rem;

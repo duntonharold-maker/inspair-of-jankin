@@ -13,8 +13,7 @@
       "src": "/media/20261124-mux7q9.json",
       "type": "lottie",
       "width": 320,
-      "height": 320,
-      "background": "#f2efe9"
+      "height": 320
     },
     "note": "三层圆环依次放大淡出，中心圆点同步呼吸。\n示例数据（由代码生成，提示词仅用来演示格式），可以让智能体删除所有带「示例」标签的条目。",
     "color": "#ff5b2e",
@@ -35,7 +34,7 @@
       "type": "svg",
       "width": 240,
       "height": 240,
-      "background": "#0f1115"
+      "cutout": true
     },
     "note": "弧线长度在 30 和 160 之间伸缩，外侧小卫星反向慢转。\n示例数据（由代码生成，提示词仅用来演示格式），可以让智能体删除所有带「示例」标签的条目。",
     "color": "#5ee7df",
@@ -56,7 +55,7 @@
       "type": "svg",
       "width": 320,
       "height": 200,
-      "background": "#f5f5f7"
+      "cutout": true
     },
     "note": "滑块移动过程中横向拉伸（scale 1.25, .9），停下时回弹。\n示例数据（由代码生成，提示词仅用来演示格式），可以让智能体删除所有带「示例」标签的条目。",
     "color": "#34c759",
@@ -78,7 +77,7 @@
       "type": "svg",
       "width": 320,
       "height": 240,
-      "background": "#14121c"
+      "cutout": true
     },
     "note": "七根柱子用同一个关键帧，只靠负延迟错开节奏。\n示例数据（由代码生成，提示词仅用来演示格式），可以让智能体删除所有带「示例」标签的条目。",
     "color": "#7048e8",
@@ -99,7 +98,7 @@
       "type": "svg",
       "width": 240,
       "height": 240,
-      "background": "#effaf3"
+      "cutout": true
     },
     "note": "先画圆环，再画对勾，最后填充背景，三段动画错开。\n示例数据（由代码生成，提示词仅用来演示格式），可以让智能体删除所有带「示例」标签的条目。",
     "color": "#2fb36b",
@@ -120,7 +119,7 @@
       "type": "svg",
       "width": 240,
       "height": 240,
-      "background": "#e9eefc"
+      "cutout": true
     },
     "note": "铃身和铃舌反向摆动，角度逐次衰减；红点弹出时稍微放大再回落。\n示例数据（由代码生成，提示词仅用来演示格式），可以让智能体删除所有带「示例」标签的条目。",
     "color": "#4c6ef5",
@@ -141,7 +140,7 @@
       "type": "svg",
       "width": 240,
       "height": 240,
-      "background": "#1b1b1f"
+      "cutout": true
     },
     "note": "心形做两次缩放（1.22 → .94 → 1.08），外圈波纹同步扩散。\n示例数据（由代码生成，提示词仅用来演示格式），可以让智能体删除所有带「示例」标签的条目。",
     "color": "#ff3b5c",
@@ -162,7 +161,7 @@
       "type": "svg",
       "width": 240,
       "height": 240,
-      "background": "#f2efe9"
+      "cutout": true
     },
     "note": "三个点依次弹起，落地时有挤压变形（scale 1.12, .86），比纯位移更有弹性。\n示例数据（由代码生成，提示词仅用来演示格式），可以让智能体删除所有带「示例」标签的条目。",
     "color": "#ff5b2e",
@@ -206,8 +205,7 @@
       "src": "/media/20261124-abf4zr.webp",
       "type": "image",
       "width": 1200,
-      "height": 1600,
-      "background": "#1a1832"
+      "height": 1600
     },
     "prompt": "retro 80s sunset poster, striped sun with gradient bands yellow to violet, deep navy background, bold condensed title GOLDEN HOUR CLUB, print grain",
     "model": "Midjourney v7",
@@ -231,8 +229,7 @@
       "src": "/media/20261124-pcq8kn.webp",
       "type": "image",
       "width": 1600,
-      "height": 1600,
-      "background": "#dde9f3"
+      "height": 1600
     },
     "model": "Blender",
     "note": "等距视角的高低方块，三个面用三档蓝色区分明暗。\n示例数据（由代码生成，提示词仅用来演示格式），可以让智能体删除所有带「示例」标签的条目。",
@@ -344,8 +341,7 @@
       "src": "/media/20261124-cf09jk.webp",
       "type": "image",
       "width": 1200,
-      "height": 1600,
-      "background": "#d4cebe"
+      "height": 1600
     },
     "prompt": "bauhaus poster, primary colors red blue yellow, circle square triangle composition, cream paper with subtle grain, bold sans serif word FORM at the bottom",
     "model": "GPT Image",
@@ -368,8 +364,7 @@
       "src": "/media/20261124-s1jinn.webp",
       "type": "image",
       "width": 1200,
-      "height": 1600,
-      "background": "#e9e5df"
+      "height": 1600
     },
     "prompt": "swiss style typographic poster, strict 12 column grid, huge bold grotesk headline \"Raster System\", red square block, off-white paper, minimal, editorial",
     "model": "Midjourney v7",

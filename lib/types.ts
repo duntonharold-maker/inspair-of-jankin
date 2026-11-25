@@ -9,12 +9,11 @@ export const MediaSchema = z.object({
   type: z.enum(MEDIA_TYPES),
   width: z.number().int().positive().optional(),
   height: z.number().int().positive().optional(),
-  /** The colour the piece fills its own ground with (an icon's tile, an animation's backdrop), worked out
-   * when it is added. Cards fill with it, so the corners a rounded tile leaves don't show white. */
-  background: z
-    .string()
-    .regex(/^#[0-9a-f]{6}$/i)
-    .optional(),
+  /** True when the piece doesn't cover its whole frame: its corners or edges are clear, as with an icon on
+   * a rounded tile, a sticker or an animation without a backdrop. Worked out when it is added. Such a piece
+   * is shown whole, with room around it on a plain stage, so its own outline stays as it was designed;
+   * anything else fills its card. */
+  cutout: z.boolean().optional(),
 });
 export type Media = z.infer<typeof MediaSchema>;
 

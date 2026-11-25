@@ -22,12 +22,12 @@ export default function Card({
     <article className="card">
       <div className="card-frame">
         <button
-          className="card-media"
-          style={{ aspectRatio: String(Math.min(2.2, Math.max(0.45, ratioOf(item)))), background: item.media.background }}
+          className={`card-media${item.media.cutout ? " is-cutout" : ""}`}
+          style={{ aspectRatio: String(Math.min(2.2, Math.max(0.45, ratioOf(item)))) }}
           onClick={() => onOpen(item.id)}
           aria-label={`查看「${item.title}」`}
         >
-          <MediaView item={item} />
+          <MediaView item={item} fit={item.media.cutout ? "contain" : "cover"} />
         </button>
         {item.prompt && (
           <button className="card-copy" onClick={() => copy(item.prompt!)}>

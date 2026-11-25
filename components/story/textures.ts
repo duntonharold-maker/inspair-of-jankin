@@ -30,11 +30,20 @@ function loadImage(src: string) {
   });
 }
 
+/** The stage a piece with an outline of its own sits on (--stage), as in the gallery and the detail view. */
+const STAGE = "#e4eaee";
+/** The room around such a piece, as a share of the card's width (13% each side, as in the gallery). */
+const ROOM = Math.round(W * 0.13);
+
 function background(item: Item) {
-  // a piece's own ground where it has one (an icon's tile), so the card is that colour edge to edge;
-  // otherwise icons and Lottie files sit on white, and pictures on their main colour while they load
-  if (item.media.background) return item.media.background;
-  return item.media.type === "svg" || item.media.type === "lottie" ? "#ffffff" : item.color || "#e4eaee";
+  // a piece that covers its frame fills the card and shows its main colour only while it loads
+  return item.media.cutout ? STAGE : item.color || "#e4eaee";
+}
+
+/** A piece that covers its frame fills the card; one with an outline of its own is shown whole, with room. */
+function place(item: Item, ctx: CanvasRenderingContext2D, src: CanvasImageSource, sw: number, sh: number) {
+  if (item.media.cutout) contain(ctx, src, sw, sh, ROOM);
+  else cover(ctx, src, sw, sh);
 }
 
 export async function cardTexture(item: Item, renderer: WebGLRenderer): Promise<CardTexture> {
@@ -58,8 +67,7 @@ export async function cardTexture(item: Item, renderer: WebGLRenderer): Promise<
       const img = await loadImage(src);
       const iw = img.naturalWidth || item.media.width || W;
       const ih = img.naturalHeight || item.media.height || H;
-      if (type === "svg") contain(ctx, img, iw, ih);
-      else cover(ctx, img, iw, ih);
+      place(item, ctx, img, iw, ih);
     } catch {
       /* keep the plain colour card */
     }
@@ -109,7 +117,7 @@ export async function cardTexture(item: Item, renderer: WebGLRenderer): Promise<
     texture,
     tick: () => {
       paint();
-      contain(ctx, off, off.width, off.height, 40);
+      place(item, ctx, off, off.width, off.height);
       texture.needsUpdate = true;
     },
     dispose: () => {
