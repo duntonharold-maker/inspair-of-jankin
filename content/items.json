@@ -1,6 +1,35 @@
 [
   {
+    "id": "20261125-ir9qu0",
+    "tags": [
+      "网页设计",
+      "落地页",
+      "Bento布局",
+      "卡片设计",
+      "极简现代",
+      "蓝白配色",
+      "运动品牌",
+      "数据展示",
+      "玻璃拟态"
+    ],
+    "title": "Court Reserve 网球俱乐部官网落地页",
+    "category": "interface",
+    "source": "https://www.pinterest.com/pin/896568238372520377/",
+    "note": "网球/板式网球俱乐部官网设计（设计师：official.irad）。大圆角天空蓝实景 Hero Banner 搭配黑色胶囊 CTA 与头像叠层；下方采用深色文字开关卡 + 实景毛玻璃标签卡 + 圆点进度数据卡的三列 Bento 组合，底部以 4 列大字号 KPI 数据收尾，整体清爽现代、信息层级清晰。",
+    "color": "#2389DA",
+    "media": {
+      "src": "/media/20261125-ir9qu0.jpg",
+      "type": "image",
+      "width": 2160,
+      "height": 2700,
+      "thumb": "/media/20261125-ir9qu0.thumb.webp"
+    },
+    "createdAt": "2026-11-25T07:59:17.966Z"
+  },
+  {
     "id": "20261125-xbyod4",
+    "title": "TP-7 录音机产品页",
+    "category": "interface",
     "tags": [
       "网页设计",
       "产品落地页",
@@ -9,11 +38,6 @@
       "橙色渐变",
       "硬件产品"
     ],
-    "title": "TP-7 录音机产品页",
-    "category": "interface",
-    "source": "https://www.pinterest.com/pin/520025088241497333/",
-    "note": "便携录音机 TP-7 的产品落地页概念稿。像素风超大标题压在产品图后面，参数全部用小号等宽字体铺在四角；顶部导航做成一排胶囊按钮，当前项用橙色实心、「全部产品」用虚线描边区分；橙色斜向渐变把视线引到手里的产品。",
-    "color": "#f7841f",
     "media": {
       "src": "/media/20261125-xbyod4.jpg",
       "type": "image",
@@ -21,6 +45,9 @@
       "height": 714,
       "thumb": "/media/20261125-xbyod4.thumb.webp"
     },
+    "source": "https://www.pinterest.com/pin/520025088241497333/",
+    "note": "便携录音机 TP-7 的产品落地页概念稿。像素风超大标题压在产品图后面，参数全部用小号等宽字体铺在四角；顶部导航做成一排胶囊按钮，当前项用橙色实心、「全部产品」用虚线描边区分；橙色斜向渐变把视线引到手里的产品。",
+    "color": "#f7841f",
     "createdAt": "2026-11-25T07:56:24.767Z"
   }
 ]
