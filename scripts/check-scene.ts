@@ -28,10 +28,16 @@ const dot = (a: V, b: V) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const cross = (a: V, b: V): V => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const norm = (a: V): V => mul(a, 1 / (Math.hypot(...a) || 1));
 
-/** A card as drawn: its corners where the shared camera sees them. */
-type Card = { corners: V[]; c: V; reach: number; layer: number; alpha: number; box: number[] | null };
+/** One flat facet of a card as drawn: its corners where the shared camera sees them. */
+type Facet = { corners: V[]; c: V; reach: number };
+/** A card as drawn: a single facet when flat, a grid of facets when its paper bows or flaps. */
+type Card = { facets: Facet[]; c: V; reach: number; layer: number; alpha: number; box: number[] | null };
 
 const shared = new Vector3();
+function facetOf(corners: V[]): Facet {
+  const c = mul(corners.reduce((s, p) => add(s, p), [0, 0, 0] as V), 0.25);
+  return { corners, c, reach: Math.max(...corners.map((p) => Math.hypot(...sub(p, c)))) };
+}
 function cardOf(pose: Pose): Card {
   const q = pose.quat;
   const qv: V = [q.x, q.y, q.z];
@@ -41,20 +47,32 @@ function cardOf(pose: Pose): Card {
   };
   const u = rot([1, 0, 0]);
   const v = rot([0, 1, 0]);
+  const n = rot([0, 0, 1]);
   const centre: V = [pose.pos.x, pose.pos.y, pose.pos.z];
-  const corners = [
-    [-1, -1],
-    [1, -1],
-    [1, 1],
-    [-1, 1],
-  ].map(([a, b]) => {
-    const p = add(centre, add(mul(u, a * 0.375 * pose.size), mul(v, b * 0.5 * pose.size)));
+  // the same sheet as the scene's vertex shader draws
+  const point = (x: number, y: number): V => {
+    const d = (x / 0.375) * Math.cos(pose.axis) + (y / 0.5) * Math.sin(pose.axis);
+    const z = pose.bend * (d * d - 0.5) * 0.16 + pose.flutter * Math.sin(d * 2.8 - pose.phase) * (0.35 + 0.65 * Math.min(Math.abs(d), 1)) * 0.07;
+    const p = add(centre, add(add(mul(u, x * pose.size), mul(v, y * pose.size)), mul(n, z * pose.size)));
     toShared(p[0], p[1], p[2], pose.lens, pose.depth, BASE, shared);
-    return [shared.x, shared.y, shared.z] as V;
-  });
-  const c = mul(corners.reduce((s, p) => add(s, p), [0, 0, 0] as V), 0.25);
-  const reach = Math.max(...corners.map((p) => Math.hypot(...sub(p, c))));
-  return { corners, c, reach, layer: pose.layer, alpha: pose.alpha, box: null };
+    return [shared.x, shared.y, shared.z];
+  };
+  const flat = Math.abs(pose.bend) < 1e-3 && pose.flutter < 1e-3;
+  const [nx, ny] = flat ? [1, 1] : [4, 5];
+  const facets: Facet[] = [];
+  for (let i = 0; i < nx; i++) {
+    for (let j = 0; j < ny; j++) {
+      const x0 = -0.375 + (0.75 * i) / nx;
+      const x1 = -0.375 + (0.75 * (i + 1)) / nx;
+      const y0 = -0.5 + j / ny;
+      const y1 = -0.5 + (j + 1) / ny;
+      facets.push(facetOf([point(x0, y0), point(x1, y0), point(x1, y1), point(x0, y1)]));
+    }
+  }
+  const all = facets.flatMap((f) => f.corners);
+  const c = mul(all.reduce((s, p) => add(s, p), [0, 0, 0] as V), 1 / all.length);
+  const reach = Math.max(...all.map((p) => Math.hypot(...sub(p, c))));
+  return { facets, c, reach, layer: pose.layer, alpha: pose.alpha, box: null };
 }
 
 function frameOf(q: V[]) {
@@ -69,7 +87,7 @@ function frameOf(q: V[]) {
  * through each other when part of that segment lies inside r (a hair inside, so cards that only touch
  * at an edge pass).
  */
-function crosses(a: Card, r: Card) {
+function crosses(a: Facet, r: Facet) {
   const f = frameOf(r.corners);
   const d = a.corners.map((p) => dot(sub(p, f.c), f.n));
   if (d.every((x) => x > 1e-9) || d.every((x) => x < -1e-9)) return false;
@@ -110,7 +128,7 @@ function crosses(a: Card, r: Card) {
 }
 
 /** Two cards in one plane that overlap. */
-function overlapInPlane(a: Card, b: Card) {
+function overlapInPlane(a: Facet, b: Facet) {
   const fa = frameOf(a.corners);
   const fb = frameOf(b.corners);
   if (Math.abs(Math.abs(dot(fa.n, fb.n)) - 1) > 1e-5 || Math.abs(dot(sub(fb.c, fa.c), fa.n)) > 1e-3) return false;
@@ -126,7 +144,13 @@ function overlapInPlane(a: Card, b: Card) {
 
 function cut(a: Card, b: Card) {
   if (Math.hypot(...sub(a.c, b.c)) > a.reach + b.reach) return false;
-  return crosses(a, b) || crosses(b, a) || overlapInPlane(a, b);
+  for (const fa of a.facets) {
+    for (const fb of b.facets) {
+      if (Math.hypot(...sub(fa.c, fb.c)) > fa.reach + fb.reach) continue;
+      if (crosses(fa, fb) || crosses(fb, fa) || overlapInPlane(fa, fb)) return true;
+    }
+  }
+  return false;
 }
 
 function check(aspect: number, mobile: boolean, marks: Marks, clock: number, until: number) {
@@ -147,7 +171,7 @@ function check(aspect: number, mobile: boolean, marks: Marks, clock: number, unt
       const card = cardOf(choreo.pose(k, p, pose, clock));
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
       card.box = [];
-      for (const [x, y, z] of card.corners) {
+      for (const [x, y, z] of card.facets.flatMap((f) => f.corners)) {
         const d = BASE - z;
         if (d < 0.5) card.box = null;
         if (!card.box) break;

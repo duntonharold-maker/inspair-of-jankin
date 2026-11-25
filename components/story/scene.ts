@@ -19,7 +19,6 @@ import {
 import { cardTexture, type CardTexture } from "./textures";
 import { createRays } from "./rays";
 import {
-  FLIGHT,
   FLOAT,
   LONG_FOV,
   LOOSE,
@@ -70,7 +69,8 @@ vec4 throughLens(vec3 local) {
 
 const vertex = /* glsl */ `
 uniform float uBend;
-uniform float uWave;
+uniform float uAxis;
+uniform float uFlutter;
 uniform float uPhase;
 varying vec2 vUv;
 varying float vShade;
@@ -78,10 +78,15 @@ ${lensChunk}
 void main() {
   vUv = uv;
   vec3 p = position;
-  float x = p.x / 0.375;                      // -1 … 1 across the card
-  p.z += uBend * (x * x - 0.4) * 0.16;        // curl like a sheet of paper
-  p.z += uWave * sin(x * 2.4 + uPhase) * 0.05;
-  vShade = 1.0 - 0.22 * clamp(abs(uBend), 0.0, 1.5) * abs(x);
+  // where this point lies across the sheet, along the way it curls (-1 … 1 edge to edge for a side)
+  vec2 q = p.xy / vec2(0.375, 0.5);
+  float d = dot(q, vec2(cos(uAxis), sin(uAxis)));
+  // bowed like a sheet of paper, and flapping in a wave that runs across it, most at the edges
+  float flap = sin(d * 2.8 - uPhase);
+  float edge = 0.35 + 0.65 * min(abs(d), 1.0);
+  p.z += uBend * (d * d - 0.5) * 0.16;
+  p.z += uFlutter * flap * edge * 0.07;
+  vShade = 1.0 - 0.2 * clamp(abs(uBend), 0.0, 1.5) * min(abs(d), 1.2) - 0.08 * uFlutter * cos(d * 2.8 - uPhase) * edge;
   gl_Position = throughLens(p);
 }`;
 
@@ -201,7 +206,8 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
   const COLS = mobile ? 7 : 8;
   const choreo = createChoreo({ n: N, cols: COLS, mobile });
   const rays = createRays(renderer, { mobile });
-  const geometry = new PlaneGeometry(0.75, 1, 24, 1);
+  // fine enough to bow and flap along any direction
+  const geometry = new PlaneGeometry(0.75, 1, 12, 16);
 
   const shared = {
     uClip: { value: new Vector4(0, 0, 1e5, 1e5) },
@@ -225,7 +231,8 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
         uHasMap: { value: 0 },
         uAlpha: { value: 1 },
         uBend: { value: 0 },
-        uWave: { value: 0 },
+        uAxis: { value: 0 },
+        uFlutter: { value: 0 },
         uPhase: { value: 0 },
         uTint: { value: new Vector3(1, 1, 1) },
       },
@@ -454,14 +461,12 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       c.prev.copy(P.pos);
       const speed = c.vel.length();
 
-      // Paper curl from speed, only where it cannot reach a neighbour: in the air, and in flight once
-      // clear of the ring. Cards on the ring stay flat; cards on the wall keep a slight curl.
-      const inAir = P.mode === FLOAT;
-      const curl = Math.min(1.2, speed / (viewH * 2.2));
+      // the paper's shape (choreo.ts: it stays flat wherever it could reach a card at rest)
       u0.uAlpha.value = alpha;
-      u0.uBend.value = inAir ? 0.12 + Math.min(0.35, curl) : P.mode === FLIGHT && P.flight > 0.12 ? curl : P.mode === WALL ? 0.12 : 0;
-      u0.uWave.value = inAir ? 0.5 : 0;
-      u0.uPhase.value = c.ph + clock * 1.7 + p * 2.4;
+      u0.uBend.value = P.bend;
+      u0.uAxis.value = P.axis;
+      u0.uFlutter.value = P.flutter;
+      u0.uPhase.value = P.phase;
 
       // ghosts: spectral copies trailing along the motion
       const boost = 1 + (1 - gathered) * 1.6;
@@ -482,7 +487,8 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
         const gu = m.material.uniforms;
         gu.uAlpha.value = alpha * strength * 0.2 * (1 - f * 0.8);
         gu.uBend.value = u0.uBend.value;
-        gu.uWave.value = u0.uWave.value;
+        gu.uAxis.value = u0.uAxis.value;
+        gu.uFlutter.value = u0.uFlutter.value;
         gu.uPhase.value = u0.uPhase.value;
         gu.uLens.value = P.lens;
         gu.uDepth.value = P.depth;

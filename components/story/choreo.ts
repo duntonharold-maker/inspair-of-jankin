@@ -65,6 +65,14 @@ export type Pose = {
   lens: number;
   /** how far behind its place the card is drawn (world units), so the wall stays behind the ring */
   depth: number;
+  /** how far up its slot a card on the ring is raised (world units) */
+  lift: number;
+  /** the paper: how much it bows (+ edges toward its face), which way across it curls (radians in its
+   * own plane), how much its edges flap, and where along the flap it is */
+  bend: number;
+  axis: number;
+  flutter: number;
+  phase: number;
 };
 
 export const newPose = (): Pose => ({
@@ -78,6 +86,11 @@ export const newPose = (): Pose => ({
   layer: SOLID,
   lens: 14,
   depth: 0,
+  lift: 0,
+  bend: 0,
+  axis: 0,
+  flutter: 0,
+  phase: 0,
 });
 
 /**
@@ -103,6 +116,10 @@ const easeIn = (x: number) => {
   return x * x * x;
 };
 export const phase = (p: number, a: number, b: number) => clamp01((p - a) / (b - a));
+const smooth = (a: number, b: number, x: number) => {
+  const t = clamp01((x - a) / (b - a));
+  return t * t * (3 - 2 * t);
+};
 /** 0 → 1, easing in over the first `t` and out over the last `t`, at an even pace between. */
 function ramp(x: number, t = 0.18) {
   const n = 1 / (1 - t);
@@ -155,6 +172,10 @@ const WALL_TURN = 0.41;
 const WALL_LAY = 0.8;
 /** How far behind its place the wall is drawn, so the ring always stays in front of it. */
 const WALL_BEHIND = 12;
+/** The air's strength (world units per screen height of scrolling), and the step over which a card's
+ * own motion is measured. */
+const AIR = 18;
+const PAPER_STEP = 0.002;
 
 export type Choreo = ReturnType<typeof createChoreo>;
 
@@ -254,6 +275,7 @@ export function createChoreo({ n, cols, mobile }: { n: number; cols: number; mob
     out.size = ring.size;
     out.mode = RING;
     out.layer = h > 1e-6 ? LOOSE : SOLID;
+    out.lift = h;
     out.lens = WIDE;
     out.depth = 0;
     return a;
@@ -428,11 +450,81 @@ export function createChoreo({ n, cols, mobile }: { n: number; cols: number; mob
 
   /* ----------------------------------------------------------- the pose */
 
+  /* ---------------------------------------------------------- the paper */
+
+  // The air: a few broad swirls, each a wave in space with its own heading and pace. Together with the
+  // wind of a card's own motion it bows the sheet, curls it, flaps its edges and rocks it in flight.
+  const swirls = Array.from({ length: 4 }, (_, i) => {
+    const r = rng(91 + i * 7);
+    const unit = () => new Vector3(r() - 0.5, r() - 0.5, r() - 0.5).normalize();
+    return { wave: unit().multiplyScalar(0.25 + r() * 0.3), push: unit(), pace: (0.6 + r() * 0.8) * (r() < 0.5 ? -1 : 1), phase: r() * TAU };
+  });
+  /** Air speed at a point (world units per screen height of scrolling), at the air's own time s. */
+  function gust(at: Vector3, s: number, out: Vector3) {
+    out.set(0, 0, 0);
+    for (const w of swirls) out.addScaledVector(w.push, Math.sin(at.dot(w.wave) + w.pace * s + w.phase));
+    return out.multiplyScalar(AIR / Math.sqrt(swirls.length));
+  }
+
+  const ahead = newPose();
+  const wind = new Vector3();
+  const motion = new Vector3();
+  const side = new Vector3();
+  const tmpRoll = new Quaternion();
+
+  /** The sheet's shape for card k at p, from the air it moves through. */
+  function paper(k: number, p: number, clock: number, out: Pose) {
+    const ph = seeds[k].ph;
+    out.bend = out.mode === WALL ? 0.12 : 0;
+    out.axis = 0;
+    out.flutter = 0;
+    out.phase = ph + p * 9;
+    // how free the sheet is to move: none where it is level with cards at rest beside it
+    let free = 0;
+    let roll = 0;
+    if (out.mode === FLOAT) {
+      free = 1;
+      out.phase = ph + clock * 2.2 + p * 9;
+    } else if (out.mode === RING && out.layer === LOOSE) {
+      free = smooth(ring.size * 1.15, ring.size * 2.2, out.lift);
+    } else if (out.mode === FLIGHT) {
+      free = out.flight === 0 ? 0.3 : 1 - smooth(0.72, 0.94, out.flight);
+      roll = out.flight === 0 ? 0 : Math.sin(Math.PI * out.flight) * free;
+    }
+    if (free <= 0) return;
+    // the wind it feels: the air's own swirl, against its motion along its path
+    gust(out.pos, clock * 0.35 + p * 2, wind);
+    poseAt(k, p + PAPER_STEP, ahead, clock);
+    motion.copy(ahead.pos).sub(out.pos).divideScalar(PAPER_STEP);
+    if (motion.lengthSq() < H * H * 900) wind.sub(motion); // (a card that changes stage within the step is not blown away)
+    // in the sheet's own frame: across its face, and through it
+    const through = wind.dot(v.set(0, 0, 1).applyQuaternion(out.quat));
+    const across = wind.dot(side.set(1, 0, 0).applyQuaternion(out.quat));
+    const along = wind.dot(v.set(0, 1, 0).applyQuaternion(out.quat));
+    out.bend += free * Math.max(-1.1, Math.min(1.1, -through / 45));
+    out.axis = Math.atan2(along / 0.5, across / 0.375);
+    out.flutter = free * Math.min(1, Math.hypot(across, along) / 55);
+    if (roll > 0) {
+      // rocked about its own axes by the swirl, never while it is near anything at rest
+      tmpE.set(Math.sin(out.phase * 0.7) * 0.22 * roll, 0, Math.cos(out.phase * 0.5) * 0.16 * roll);
+      out.quat.multiply(tmpRoll.setFromEuler(tmpE));
+    }
+  }
+
+  /* ----------------------------------------------------------- the pose */
+
   /** Card k at scroll position p; `clock` drives the drift in the air (seconds, frozen once scrolling on). */
   function pose(k: number, p: number, out: Pose, clock = 0) {
+    poseAt(k, p, out, clock);
+    paper(k, p, clock, out);
+    return out;
+  }
+
+  function poseAt(k: number, p: number, out: Pose, clock: number) {
     out.alpha = 1;
     out.landed = 0;
     out.flight = 0;
+    out.lift = 0;
     const left = leaves(k) + LEAVE_TAKES;
     const r = route[k];
     if (p < left) {
