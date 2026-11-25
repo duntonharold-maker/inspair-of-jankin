@@ -23,7 +23,7 @@ export default function Card({
       <div className="card-frame">
         <button
           className="card-media"
-          style={{ aspectRatio: String(Math.min(2.2, Math.max(0.45, ratioOf(item)))) }}
+          style={{ aspectRatio: String(Math.min(2.2, Math.max(0.45, ratioOf(item)))), background: item.media.background }}
           onClick={() => onOpen(item.id)}
           aria-label={`查看「${item.title}」`}
         >

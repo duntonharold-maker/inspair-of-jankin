@@ -9,6 +9,12 @@ export const MediaSchema = z.object({
   type: z.enum(MEDIA_TYPES),
   width: z.number().int().positive().optional(),
   height: z.number().int().positive().optional(),
+  /** The colour the piece fills its own ground with (an icon's tile, an animation's backdrop), worked out
+   * when it is added. Cards fill with it, so the corners a rounded tile leaves don't show white. */
+  background: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i)
+    .optional(),
 });
 export type Media = z.infer<typeof MediaSchema>;
 

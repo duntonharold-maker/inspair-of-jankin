@@ -193,6 +193,7 @@ export default function CategoriesScreen({ site, items, onPick }: { site: Site; 
                           top: `${s.y}%`,
                           width: `${s.w}%`,
                           aspectRatio: String(Math.min(1.5, Math.max(0.62, ratio))),
+                          background: item.media.background,
                           animationDelay: leaving ? "0ms" : `${k * 60}ms`,
                         }}
                       >

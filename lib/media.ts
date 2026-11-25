@@ -69,6 +69,42 @@ async function shrink(buf: Buffer) {
   }
 }
 
+const hex = (rgb: number[]) => "#" + rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
+
+/**
+ * The colour a picture or SVG fills its own ground with, read just inside the middle of each of its four
+ * edges: an icon drawn on a rounded tile leaves its corners clear, but the edges' midpoints are the tile.
+ * Undefined when the four disagree (most photographs) or show through.
+ */
+async function groundOf(buffer: Buffer, type: "image" | "svg") {
+  try {
+    const { default: sharp } = await import("sharp");
+    const { data, info } = await sharp(buffer, type === "svg" ? { density: 72 } : { animated: false })
+      .resize({ width: 96, height: 96, fit: "fill" })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const w = info.width, h = info.height, inset = 2;
+    const at = (x: number, y: number) => [...data.subarray((y * w + x) * 4, (y * w + x) * 4 + 4)];
+    const points = [at(w >> 1, inset), at(w >> 1, h - 1 - inset), at(inset, h >> 1), at(w - 1 - inset, h >> 1)];
+    if (points.some((p) => p[3] < 250)) return undefined;
+    for (let c = 0; c < 3; c++) {
+      const v = points.map((p) => p[c]);
+      if (Math.max(...v) - Math.min(...v) > 6) return undefined;
+    }
+    return hex([0, 1, 2].map((c) => points.reduce((sum, p) => sum + p[c], 0) / points.length));
+  } catch {
+    return undefined;
+  }
+}
+
+/** A Lottie animation's backdrop: a solid layer the size of the whole composition, if it has one. */
+function lottieGround(json: { w?: number; h?: number; layers?: unknown }) {
+  const layers = (json.layers ?? []) as { ty?: number; sc?: string; sw?: number; sh?: number }[];
+  const solid = layers.find((l) => l.ty === 1 && l.sc && (l.sw ?? 0) >= (json.w ?? 1) && (l.sh ?? 0) >= (json.h ?? 1));
+  return solid?.sc && /^#[0-9a-f]{6}$/i.test(solid.sc) ? solid.sc.toLowerCase() : undefined;
+}
+
 export async function ingest(
   input: Buffer,
   opts: { filename?: string; width?: number; height?: number } = {},
@@ -79,6 +115,7 @@ export async function ingest(
   let ext = kind.ext;
   let width = opts.width;
   let height = opts.height;
+  let background: string | undefined;
 
   if (kind.type === "image") {
     try {
@@ -99,6 +136,7 @@ export async function ingest(
         height = small.height;
       }
     }
+    background = await groundOf(buffer, "image");
   } else if (kind.type === "svg") {
     const clean = sanitizeSvg(buffer.toString("utf8"));
     buffer = Buffer.from(clean, "utf8");
@@ -109,6 +147,7 @@ export async function ingest(
     } catch {
       /* size stays unknown */
     }
+    background = await groundOf(buffer, "svg");
   } else if (kind.type === "lottie") {
     let json: { w?: number; h?: number; layers?: unknown };
     try {
@@ -119,11 +158,12 @@ export async function ingest(
     if (!Array.isArray(json.layers)) throw new Error("This JSON is not a Lottie animation (no layers).");
     width ??= json.w;
     height ??= json.h;
+    background = lottieGround(json);
     buffer = Buffer.from(JSON.stringify(json), "utf8");
   }
 
   const round = (n?: number) => (n && n > 0 ? Math.round(n) : undefined);
-  return { buffer, ext, media: { type: kind.type, width: round(width), height: round(height) } };
+  return { buffer, ext, media: { type: kind.type, width: round(width), height: round(height), ...(background && { background }) } };
 }
 
 export async function fetchMedia(url: string): Promise<{ buffer: Buffer; filename: string }> {

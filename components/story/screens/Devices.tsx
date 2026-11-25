@@ -25,7 +25,7 @@ export default function DevicesScreen({ items, site }: { items: Item[]; site: Si
                 {shown
                   .filter((_, k) => k % 2 === col)
                   .map((item) => (
-                    <div key={item.id} className="phone-card">
+                    <div key={item.id} className="phone-card" style={{ background: item.media.background }}>
                       <MediaView item={item} />
                     </div>
                   ))}

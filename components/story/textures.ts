@@ -31,7 +31,9 @@ function loadImage(src: string) {
 }
 
 function background(item: Item) {
-  // Icons and Lottie files carry their own artwork on a transparent ground.
+  // a piece's own ground where it has one (an icon's tile), so the card is that colour edge to edge;
+  // otherwise icons and Lottie files sit on white, and pictures on their main colour while they load
+  if (item.media.background) return item.media.background;
   return item.media.type === "svg" || item.media.type === "lottie" ? "#ffffff" : item.color || "#e4eaee";
 }
 
