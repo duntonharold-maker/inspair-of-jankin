@@ -512,7 +512,8 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     const ring = choreo.ring;
     raysAt.centre.set(pxW / 2 + ring.centre.x * perUnit, pxH / 2 + ring.centre.y * perUnit);
     raysAt.ring.set((ring.radius + ring.size * 0.375) * perUnit, ring.radius * 0.8 * perUnit);
-    raysAt.prism = phase(p, marks.gather[0] + 0.6, marks.gather[1]) * (1 - phase(p, marks.unroll[0] + 0.15, marks.unroll[1] - 0.25));
+    // (gone as soon as the cards start leaving, so what is left of the ring stays sharp)
+    raysAt.prism = phase(p, marks.gather[0] + 0.6, marks.gather[1]) * (1 - phase(p, marks.unroll[0] - 0.05, marks.unroll[0] + 0.2));
     // strong in the air, as on premotio's first screen; gentler on the ring; slight on the settled wall
     raysAt.edges = 1 - 0.5 * phase(p, marks.gather[0], marks.gather[1]) - 0.2 * settle;
     raysAt.rush = still ? 0 : rush;

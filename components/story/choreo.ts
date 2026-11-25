@@ -160,10 +160,10 @@ const LEAVE_AT = Math.PI - 0.9;
 /** One card's trip from the ring to the wall, in screen heights of scrolling: rising out of its slot,
  * lying down as the ring carries it on, riding on above the ring (the cards there make a band that
  * follows the ring round, as on premotio), flying to its cell. */
-const RISE_TAKES = 0.07;
-const TURN_TAKES = 0.06;
-const RIDE_TAKES = 0.08;
-const FLY_TAKES = 0.2;
+const RISE_TAKES = 0.035;
+const TURN_TAKES = 0.03;
+const RIDE_TAKES = 0.04;
+const FLY_TAKES = 0.13;
 export const TRIP = RISE_TAKES + TURN_TAKES + RIDE_TAKES + FLY_TAKES;
 /** How far in front of its cell a landing card starts its final approach (in card heights). */
 const APPROACH = 0.9;
@@ -344,7 +344,7 @@ export function createChoreo({ n, cols, mobile }: { n: number; cols: number; mob
   /* ---------------------------------------------------------- the routes */
 
   // The ring turns once round while the cards leave; each leaves as its slot passes LEAVE_AT. The
-  // wall fills in that order from its farthest cell (top left) to its nearest.
+  // wall fills in that order row by row, from its farthest row to its nearest, each left to right.
   const route = Array.from({ length: n }, () => ({ order: 0, row: 0, col: 0, sweep: 0, departs: 0 }));
   {
     for (let k = 0; k < n; k++) {
@@ -352,15 +352,13 @@ export function createChoreo({ n, cols, mobile }: { n: number; cols: number; mob
       route[k].sweep = ((((LEAVE_AT - a0) % TAU) + TAU) % TAU) / TAU; // share of the turn before slot k leaves
     }
     const order = [...Array(n).keys()].sort((a, b) => route[a].sweep - route[b].sweep);
-    const cells: { row: number; col: number; z: number; x: number }[] = [];
+    // row 0 is the wall's top row, the farthest from the viewer
+    const cells: { row: number; col: number }[] = [];
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
-        if (cells.length >= n) break;
-        const c = cellLocal(row, col, new Vector3()).applyQuaternion(wall.q);
-        cells.push({ row, col, z: c.z, x: c.x });
+        if (cells.length < n) cells.push({ row, col });
       }
     }
-    cells.sort((a, b) => a.z - b.z || a.x - b.x);
     order.forEach((k, j) => {
       route[k].order = j;
       route[k].row = cells[j].row;
