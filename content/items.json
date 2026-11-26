@@ -1,6 +1,33 @@
 [
   {
+    "id": "20261126-n4astw",
+    "tags": [
+      "网页设计",
+      "产品落地页",
+      "首屏设计",
+      "汽车官网",
+      "俯视构图",
+      "玻璃拟态",
+      "极简现代",
+      "数据卡片"
+    ],
+    "title": "MINI Electric 俯视构图电动汽车官网首屏",
+    "category": "interface",
+    "source": "https://www.pinterest.com/pin/484137028710876169/",
+    "note": "MINI Electric 电动汽车官网首屏设计（设计师：Nicholas Ergemla）。以极具张力的正俯视实拍车身作为视觉中轴，搭配冷灰影棚光影背景；左侧采用轻重字重对比的「MINI ELECTRIC」标题、售价信息与亮钴蓝胶囊主按钮「BUILD YOUR MINI」；右侧以 2×2 毛玻璃核心参数卡片（极速/车重/续航/零百加速）叠加视频预览卡片，整体对称平衡、克制高级。",
+    "color": "#2553F0",
+    "media": {
+      "src": "/media/20261126-n4astw.jpg",
+      "type": "image",
+      "width": 749,
+      "height": 562
+    },
+    "createdAt": "2026-11-26T02:48:29.931Z"
+  },
+  {
     "id": "20261126-ne3sp1",
+    "title": "Skot 电动踏板车异形破框官网首屏",
+    "category": "interface",
     "tags": [
       "网页设计",
       "产品落地页",
@@ -11,11 +38,6 @@
       "3D产品展示",
       "首屏设计"
     ],
-    "title": "Skot 电动踏板车异形破框官网首屏",
-    "category": "interface",
-    "source": "https://www.pinterest.com/pin/1141381099327567787/",
-    "note": "Skot 电动踏板车品牌官网首屏设计（Super fast electric Moped / C45 Classic Model）。采用柔和浅灰底色搭配大圆角内凹异形灰色容器，纯白车身配亮红轮毂的 3D 机车主体破框而出，视觉层次极具张力；标题行内嵌微图标，右上角放置好评头像叠层，左下角异形切角承载型号介绍与亮红圆形箭头按钮，右下角悬浮车型切换卡片，整体干净高级、工业产品感十足。",
-    "color": "#E53935",
     "media": {
       "src": "/media/20261126-ne3sp1.jpg",
       "type": "image",
@@ -23,6 +45,9 @@
       "height": 1049,
       "thumb": "/media/20261126-ne3sp1.thumb.webp"
     },
+    "source": "https://www.pinterest.com/pin/1141381099327567787/",
+    "note": "Skot 电动踏板车品牌官网首屏设计（Super fast electric Moped / C45 Classic Model）。采用柔和浅灰底色搭配大圆角内凹异形灰色容器，纯白车身配亮红轮毂的 3D 机车主体破框而出，视觉层次极具张力；标题行内嵌微图标，右上角放置好评头像叠层，左下角异形切角承载型号介绍与亮红圆形箭头按钮，右下角悬浮车型切换卡片，整体干净高级、工业产品感十足。",
+    "color": "#E53935",
     "createdAt": "2026-11-26T02:47:41.768Z"
   },
   {
