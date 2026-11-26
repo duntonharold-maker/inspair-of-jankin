@@ -7,6 +7,7 @@ const status = (text, kind = "") => {
   $("status").className = `status ${kind}`;
 };
 let conn = null; // { site, key } once the connection works
+let labels = new Map(); // category id → label
 const urls = new Set(); // object URLs of pictures on screen, freed on each refresh
 
 chrome.storage.local.get(["site", "key"]).then(({ site, key }) => {
@@ -52,6 +53,9 @@ async function test(site, key, { quiet = false } = {}) {
     else if (!res.ok) status(`已保存，但网站返回了 ${res.status}：${data.error || "请稍后再试"}`, "bad");
     else {
       conn = { site, key };
+      labels = new Map((data.categories || []).map((c) => [c.id, c.label]));
+      // the box shown when collecting offers these
+      if (data.categories) chrome.storage.local.set({ categories: data.categories });
       status(`已连接「${data.site}」。`, "ok");
       render(data.items || [], data.inbox);
       return;
@@ -127,6 +131,13 @@ function render(items, total) {
     pic.setAttribute("aria-label", `查看大图：${item.title}`);
     pic.addEventListener("click", () => view(item));
     tile.querySelector(".title").textContent = item.title;
+    // what was said and picked while collecting
+    const remark = tile.querySelector(".remark");
+    if (item.remark) remark.textContent = `「${item.remark}」`;
+    else remark.remove();
+    const cat = tile.querySelector(".cat");
+    if (item.category && labels.has(item.category)) cat.textContent = labels.get(item.category);
+    else cat.remove();
     const src = tile.querySelector(".src");
     if (item.source && /^https?:/.test(item.source)) {
       src.href = item.source;

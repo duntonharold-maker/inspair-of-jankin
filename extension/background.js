@@ -20,8 +20,19 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === MENU) collect(info, tab);
 });
 chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());
+// the box in the page: 收藏 (with what was said) or Esc
+chrome.runtime.onMessage.addListener((msg, sender) => {
+  if (msg?.type === "inspair:send") send(msg.token, msg.job, sender.tab?.id, { remark: msg.remark, category: msg.category });
+  if (msg?.type === "inspair:cancel") pending.delete(msg.token);
+});
 
-/** Collect the picture a context-menu click was on, or the one found under the pointer. */
+/** Pictures being fetched while the box waits for a word and a category, by token. */
+const pending = new Map();
+
+/**
+ * Right-click → 「收藏到 inspair」: find the picture (the one clicked, or the one under the pointer when a layer
+ * covers it), start fetching it, and ask in the page for a line about it and a rough category. 收藏 sends it.
+ */
 async function collect(info, tab) {
   const tabId = tab?.id;
   const frameId = info.frameId ?? 0;
@@ -32,25 +43,61 @@ async function collect(info, tab) {
     return;
   }
   // the browser saw an image: take it; otherwise look under the pointer (covered pictures, backgrounds)
-  let shown = info.mediaType === "image" && info.srcUrl ? info.srcUrl : null;
-  let page = shown ? await describe(tabId, frameId, shown) : await pickAt(tabId, frameId);
-  if (!shown) shown = page.src;
+  const clicked = info.mediaType === "image" && info.srcUrl ? info.srcUrl : null;
+  const page = clicked ? await describe(tabId, frameId, clicked) : await pickAt(tabId, frameId);
+  const shown = clicked || page.src;
   if (!shown) {
     await say(tabId, { state: "error", text: "这里没找到图片", sub: "在图片正上方右键再试；视频和画在 canvas 里的图暂时采不了。" });
     return;
   }
-  await say(tabId, { state: "busy", text: "正在收藏…", thumb: shown });
+  const job = { shown, best: page.best || shown, pageUrl: info.pageUrl || tab?.url || "", title: page.title || tab?.title || "", alt: page.alt || "", frameId };
+  const token = crypto.randomUUID();
+  pending.set(token, fetchPicture(job, tabId));
+  const categories = await categoriesOf(site, key);
+  const asked = await say(tabId, { state: "ask", text: "收藏到 inspair", sub: job.alt || job.title, thumb: shown, token, job, categories });
+  // pages the extension can't draw on (the web store, browser pages): collect straight away
+  if (!asked) send(token, job, tabId, {});
+}
+// for tests: the same entry points without the menu and the box
+self.collect = collect;
+self.send = send;
+
+/** The site's categories for the box, remembered between collections and refreshed in the background. */
+async function categoriesOf(site, key) {
+  const { categories } = await chrome.storage.local.get("categories");
+  const refresh = fetch(`${site}/api/collect`, { headers: { Authorization: `Bearer ${key}` } })
+    .then((r) => (r.ok ? r.json() : {}))
+    .then((d) => (d.categories ? chrome.storage.local.set({ categories: d.categories }).then(() => d.categories) : categories))
+    .catch(() => categories);
+  return categories?.length ? categories : await refresh;
+}
+
+/** The picture at its largest size, fetched the way its page would (see download). */
+function fetchPicture(job, tabId) {
+  const candidates = largest(job.best);
+  const run = download(candidates, job.pageUrl, tabId, job.frameId)
+    .then((picture) => ({ candidates, picture }))
+    .catch(() => ({ candidates, picture: null }));
+  return run;
+}
+
+/** Send the picture, with what was said about it, to the site's inbox. */
+async function send(token, job, tabId, { remark = "", category = "" } = {}) {
+  const { site = DEFAULT_SITE, key = "" } = await chrome.storage.local.get(["site", "key"]);
+  await say(tabId, { state: "busy", text: "正在收藏…", sub: remark, thumb: job.shown });
   try {
-    const pageUrl = info.pageUrl || tab?.url || "";
-    const candidates = largest(page.best || shown);
-    const picture = await download(candidates, pageUrl, tabId, frameId);
+    // the service worker may have been asleep while the box was open: then fetch the picture again
+    const { candidates, picture } = await (pending.get(token) ?? fetchPicture(job, tabId));
+    pending.delete(token);
     const form = new FormData();
     if (picture) form.append("file", picture.blob, fileName(picture.url, picture.blob.type));
     const address = picture?.url || candidates[0];
     if (/^https?:/.test(address)) form.append("image_url", address);
-    if (/^https?:/.test(pageUrl)) form.append("page_url", pageUrl);
-    form.append("page_title", page.title || tab?.title || "");
-    form.append("alt", page.alt || "");
+    if (/^https?:/.test(job.pageUrl)) form.append("page_url", job.pageUrl);
+    form.append("page_title", job.title || "");
+    form.append("alt", job.alt || "");
+    if (remark.trim()) form.append("remark", remark.trim());
+    if (category) form.append("category", category);
     const res = await fetch(`${site}/api/collect`, { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `网站返回了 ${res.status}`);
@@ -60,14 +107,12 @@ async function collect(info, tab) {
       state: "done",
       text: data.duplicate ? "这张之前收藏过了" : "已收进收件箱",
       sub: `收件箱里有 ${data.inbox} 张等 Claude 整理`,
-      thumb: shown,
+      thumb: job.shown,
     });
   } catch (e) {
-    await say(tabId, { state: "error", text: "没收藏成功", sub: e instanceof Error ? e.message : String(e), thumb: shown });
+    await say(tabId, { state: "error", text: "没收藏成功", sub: e instanceof Error ? e.message : String(e), thumb: job.shown });
   }
 }
-// for tests: the same entry point without the menu
-self.collect = collect;
 
 /** The picture under the last right-click, found in the page (picker.js remembered where that was). */
 async function pickAt(tabId, frameId) {
@@ -316,71 +361,116 @@ async function say(tabId, message) {
   try {
     if (tabId == null) throw new Error("no tab");
     await chrome.scripting.executeScript({ target: { tabId, frameIds: [0] }, func: showToast, args: [message] });
+    return true;
   } catch {
+    if (message.state === "ask") return false;
     const badge = { busy: "…", done: "✓", error: "!" }[message.state];
     chrome.action.setBadgeBackgroundColor({ color: message.state === "error" ? "#FC734D" : "#0297DE" });
     chrome.action.setBadgeText({ text: badge });
     if (message.state !== "busy") setTimeout(() => chrome.action.setBadgeText({ text: "" }), 4000);
+    return false;
   }
 }
 
-/** Runs in the page: a small card in the corner, in its own shadow root so the page's styles can't reach it. */
-function showToast({ state, text, sub, thumb }) {
-  // Lucide shapes: check, circle-alert, loader-circle, x
+/**
+ * Runs in the page: a small card in the corner, in its own shadow root so the page's styles can't reach it.
+ * state "ask" is the box shown right after 收藏到 inspair: a rough category and a line about the picture,
+ * sent with 收藏 (or Enter); Esc or the close button drops it. The other states report how sending went.
+ */
+function showToast({ state, text, sub, thumb, token, job, categories }) {
+  // Lucide shapes: check, circle-alert, loader-circle, x, bookmark-plus
   const icons = {
     done: '<path d="M20 6 9 17l-5-5"/>',
     error: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
     busy: '<path d="M21 12a9 9 0 1 1-6.219-8.56"/>',
     close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    ask: '<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/><line x1="12" x2="12" y1="7" y2="13"/><line x1="15" x2="9" y1="10" y2="10"/>',
   };
   const svg = (name) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name]}</svg>`;
   let host = document.getElementById("inspair-collect-toast");
+  // a box still waiting for an answer when another picture is collected: that one is dropped
+  if (host?._token && host._token !== token) chrome.runtime.sendMessage({ type: "inspair:cancel", token: host._token }).catch(() => {});
   if (!host) {
     host = document.createElement("div");
     host.id = "inspair-collect-toast";
     host.style.cssText = "position:fixed;right:20px;bottom:20px;z-index:2147483647;";
     host.attachShadow({ mode: "open" });
+    // keys typed in the box are the box's: the page's shortcuts must not see them
+    for (const type of ["keydown", "keyup", "keypress"]) host.addEventListener(type, (e) => e.stopPropagation());
     (document.body || document.documentElement).appendChild(host);
   }
   clearTimeout(host._timer);
+  host._token = state === "ask" ? token : null;
+  const ease = "cubic-bezier(0.22, 1, 0.36, 1)";
   const root = host.shadowRoot;
   root.innerHTML = `
     <style>
       :host { all: initial; }
-      .t { --ink: #02070a; --fg: #eef3f6; --muted: #8796a0; --blue: #0297de; --coral: #fc734d;
-        display: flex; align-items: center; gap: 12px; width: 320px; max-width: calc(100vw - 40px); box-sizing: border-box;
-        padding: 10px 10px 10px 10px; border-radius: 14px; background: var(--ink); color: var(--fg);
+      .t { --ink: #02070a; --fg: #eef3f6; --muted: #8796a0; --blue: #0297de; --coral: #fc734d; --line: rgba(238, 243, 246, 0.14);
+        width: 340px; max-width: calc(100vw - 40px); box-sizing: border-box;
+        padding: 10px; border-radius: 14px; background: var(--ink); color: var(--fg);
         box-shadow: 0 18px 40px -16px rgba(2, 7, 10, 0.55), 0 0 0 1px rgba(238, 243, 246, 0.06);
         font: 13px/1.4 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-        animation: in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        animation: in 0.32s ${ease} both; }
+      .t.again { animation: none; }
       @keyframes in { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+      .row { display: flex; align-items: center; gap: 12px; }
       .pic { position: relative; flex: none; width: 44px; height: 44px; border-radius: 9px; overflow: hidden; background: #1a2026; }
       .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
       .pic img[hidden] { display: none; }
       .mark { position: absolute; right: -2px; bottom: -2px; width: 20px; height: 20px; border-radius: 50%;
         display: grid; place-items: center; color: var(--ink); background: var(--blue); box-shadow: 0 0 0 2px var(--ink); }
       .error .mark { background: var(--coral); }
-      .busy .mark { background: var(--ink); color: var(--fg); }
+      .busy .mark, .ask .mark { background: var(--ink); color: var(--fg); }
       .mark svg { width: 12px; height: 12px; }
       .busy .mark svg { animation: spin 0.8s linear infinite; }
       @keyframes spin { to { transform: rotate(360deg); } }
       .words { flex: 1; min-width: 0; }
       .text { font-weight: 600; }
       .sub { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
-      button { flex: none; align-self: flex-start; display: grid; place-items: center; width: 26px; height: 26px; padding: 0;
-        border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer;
-        transition: background-color 0.2s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s cubic-bezier(0.22, 1, 0.36, 1), transform 0.1s; }
-      button svg { width: 15px; height: 15px; }
-      @media (hover: hover) { button:hover { background: rgba(238, 243, 246, 0.1); color: var(--fg); } }
+      .ask .sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      button { font: inherit; cursor: pointer; transition: background-color 0.2s ${ease}, color 0.2s ${ease}, border-color 0.2s ${ease}, transform 0.1s; }
       button:active { transform: scale(0.96); }
       button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-      @media (prefers-reduced-motion: reduce) { .t, .busy .mark svg { animation: none; } }
+      .x { flex: none; align-self: flex-start; display: grid; place-items: center; width: 26px; height: 26px; padding: 0;
+        border: 0; border-radius: 999px; background: transparent; color: var(--muted); }
+      .x svg { width: 15px; height: 15px; }
+      form { margin: 12px 0 0; display: grid; gap: 10px; }
+      .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; border: 0; }
+      .chip { height: 28px; padding: 0 11px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--fg); font-size: 12px; }
+      .chip[aria-pressed="true"] { background: var(--blue); border-color: var(--blue); color: var(--ink); font-weight: 600; }
+      .say { display: flex; gap: 6px; }
+      input { flex: 1; min-width: 0; height: 36px; box-sizing: border-box; padding: 0 12px; border: 1px solid transparent; border-radius: 10px;
+        background: rgba(238, 243, 246, 0.08); color: var(--fg); font: inherit; outline: none;
+        transition: border-color 0.2s ${ease}, background-color 0.2s ${ease}; }
+      input::placeholder { color: var(--muted); }
+      input:focus { border-color: var(--blue); background: rgba(238, 243, 246, 0.04); }
+      .go { flex: none; height: 36px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--blue); color: var(--ink); font-weight: 600; }
+      @media (hover: hover) {
+        .x:hover { background: rgba(238, 243, 246, 0.1); color: var(--fg); }
+        .chip:hover { border-color: var(--blue); }
+        .chip[aria-pressed="true"]:hover { background: #33abe5; }
+        .go:hover { background: #33abe5; transform: translateY(-1px); }
+        .go:active { transform: scale(0.97); }
+      }
+      @media (prefers-reduced-motion: reduce) { .t, .busy .mark svg { animation: none; } button, input { transition-duration: 0.01ms; } }
     </style>
-    <div class="t ${state}" role="status">
-      <div class="pic"><img alt="" hidden><span class="mark">${svg(state)}</span></div>
-      <div class="words"><div class="text"></div><div class="sub"></div></div>
-      <button type="button" aria-label="关闭">${svg("close")}</button>
+    <div class="t ${state}${host._shown ? " again" : ""}" role="${state === "ask" ? "dialog" : "status"}" aria-label="${state === "ask" ? "收藏到 inspair" : ""}">
+      <div class="row">
+        <div class="pic"><img alt="" hidden><span class="mark">${svg(state)}</span></div>
+        <div class="words"><div class="text"></div><div class="sub"></div></div>
+        <button class="x" type="button" aria-label="${state === "ask" ? "不收藏了" : "关闭"}">${svg("close")}</button>
+      </div>
+      ${state === "ask" ? `
+      <form>
+        <fieldset class="chips" aria-label="大概是哪一类"></fieldset>
+        <div class="say">
+          <input name="remark" maxlength="300" autocomplete="off" placeholder="说一句，比如：这个按钮动效好看" aria-label="说一句这张图">
+          <button class="go" type="submit">收藏</button>
+        </div>
+      </form>` : ""}
     </div>`;
+  host._shown = true;
   const img = root.querySelector("img");
   if (thumb && /^https?:/.test(thumb)) {
     img.src = thumb;
@@ -388,6 +478,39 @@ function showToast({ state, text, sub, thumb }) {
   }
   root.querySelector(".text").textContent = text || "";
   root.querySelector(".sub").textContent = sub || "";
-  root.querySelector("button").addEventListener("click", () => host.remove());
-  if (state !== "busy") host._timer = setTimeout(() => host.remove(), state === "error" ? 7000 : 3500);
+  const gone = () => {
+    if (host._token) chrome.runtime.sendMessage({ type: "inspair:cancel", token: host._token }).catch(() => {});
+    host.remove();
+  };
+  root.querySelector(".x").addEventListener("click", gone);
+  if (state !== "ask") {
+    if (state !== "busy") host._timer = setTimeout(() => host.remove(), state === "error" ? 7000 : 3500);
+    return;
+  }
+  // the box: pick a category (or none), say something (or nothing), 收藏
+  let category = "";
+  const chips = root.querySelector(".chips");
+  for (const c of categories || []) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.textContent = c.label;
+    b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", () => {
+      category = category === c.id ? "" : c.id;
+      for (const other of chips.children) other.setAttribute("aria-pressed", String(other === b && category === c.id));
+    });
+    chips.append(b);
+  }
+  if (!chips.children.length) chips.remove();
+  const input = root.querySelector("input");
+  root.querySelector(".t").addEventListener("keydown", (e) => {
+    if (e.key === "Escape") gone();
+  });
+  root.querySelector("form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    host._token = null;
+    chrome.runtime.sendMessage({ type: "inspair:send", token, job, remark: input.value, category }).catch(() => {});
+  });
+  input.focus({ preventScroll: true });
 }

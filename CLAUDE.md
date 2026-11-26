@@ -19,7 +19,7 @@ npm run check:scene  # 检查首页卡片场景：任何屏幕比例下卡片都
 - `public/media/`：媒体文件，文件名由 MCP 生成，不要手动改名。宽于 800 px 的静态图片收录时会另存一张 `<文件名>.thumb.webp`（`media.thumb`），卡片、分类缩略图和场景贴图用它，详情里看原图。
 - `components/story/`：首页的滚动故事。`timeline.ts` 定义每一幕占多少屏和卡片场景各阶段的起止，`choreo.ts` 算出每张卡片在任一滚动位置的位置，`scene.ts` 用 three.js 把它们画出来（悬停、指针扰动、拖尾），`rays.ts` 把画好的场景沿放射方向拉出分光的拖影（屏幕边缘、圆环周围、鼠标划过的地方），`screens/` 里是每一幕的 DOM。
 - `lib/`：存储（GitHub / 本地）、媒体处理、MCP 工具、鉴权。
-- `extension/`：浏览器插件（Chrome MV3），右键图片「收藏到 inspair」，发到 `/api/collect`。菜单在页面任何位置都出现；不是直接右键在 `<img>` 上时（透明遮罩、背景图），`picker.js` 记下的右键位置交给 `background.js` 的 `findPicture` 找出下面的图。采集的条目带 `inbox: true`，进收件箱：已提交但不上网站（`lib/content.ts` 过滤掉），分类可以为空；智能体用 `organize_items` 给它分类即归档上线。采集提交的信息以 `inspair: collect` 开头，`scripts/vercel-ignore.sh` 让 Vercel 跳过这些构建。插件的设置页（`options.html`）同时是收件箱画廊：`GET /api/collect` 列出收件箱，`/api/collect/[id]` 取图片（收件箱的图片没部署到网站上，从存储里读）和删除（只能删收件箱里的，提交信息同样以 `inspair: collect` 开头）。插件用 `COLLECT_SECRET`（只能采集、看和删收件箱），也接受 `MCP_SECRET`。
+- `extension/`：浏览器插件（Chrome MV3），右键图片「收藏到 inspair」，发到 `/api/collect`。菜单在页面任何位置都出现；不是直接右键在 `<img>` 上时（透明遮罩、背景图），`picker.js` 记下的右键位置交给 `background.js` 的 `findPicture` 找出下面的图。采集的条目带 `inbox: true`，进收件箱：已提交但不上网站（`lib/content.ts` 过滤掉），分类可以为空；智能体用 `organize_items` 给它分类即归档上线。采集提交的信息以 `inspair: collect` 开头，`scripts/vercel-ignore.sh` 让 Vercel 跳过这些构建。点菜单后页面里弹出小框（`background.js` 的 `showToast` 的 ask 状态），可选一个大概的分类、写一句话，随图片发出：分类存进 `category`（条目仍在收件箱），那句话存成笔记里以「我的想法：」开头的一行，MCP 说明要求整理时据此写笔记。插件的设置页（`options.html`）同时是收件箱画廊：`GET /api/collect` 列出收件箱，`/api/collect/[id]` 取图片（收件箱的图片没部署到网站上，从存储里读）和删除（只能删收件箱里的，提交信息同样以 `inspair: collect` 开头）。插件用 `COLLECT_SECRET`（只能采集、看和删收件箱），也接受 `MCP_SECRET`。
 - `app/globals.css`：顶部是颜色、字体、间距、缓动等设计变量，新样式一律使用这些变量。
 
 ## 要求

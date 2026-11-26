@@ -185,7 +185,19 @@ export async function updateItem(id: string, fields: Partial<ItemFieldsInput>, m
 }
 
 /** What the browser extension knows about a picture it collects. */
-export type Collected = { pageUrl?: string; pageTitle?: string; imageUrl?: string; alt?: string };
+export type Collected = {
+  pageUrl?: string;
+  pageTitle?: string;
+  imageUrl?: string;
+  alt?: string;
+  /** What the collector said about it when collecting, e.g. 这个按钮动效好看. */
+  remark?: string;
+  /** The category the collector guessed when collecting; the picture still waits in the inbox. */
+  category?: string;
+};
+
+/** The line of an inbox picture's note that holds what the collector said. */
+export const REMARK = "我的想法：";
 
 const clip = (s: string | undefined, n: number) => (s ? s.replace(/\s+/g, " ").trim().slice(0, n) : "");
 
@@ -205,13 +217,18 @@ export async function collectItem(media: Ingested, from: Collected) {
     while (snap.items.some((i) => i.id === id)) id = newId(now);
     const stored = mediaFiles(mediaPath(id, media.ext), media);
     const title = clip(from.alt, 80) || clip(from.pageTitle, 80) || "未命名";
-    const note = [from.pageTitle && `采集自「${clip(from.pageTitle, 200)}」`, from.alt && `图片说明：${clip(from.alt, 300)}`]
+    const note = [
+      from.remark && `${REMARK}${clip(from.remark, 300)}`,
+      from.pageTitle && `采集自「${clip(from.pageTitle, 200)}」`,
+      from.alt && `图片说明：${clip(from.alt, 300)}`,
+    ]
       .filter(Boolean)
       .join("\n");
     const item = {
       id,
       title,
-      category: "",
+      // a guess made while collecting; the picture stays in the inbox until it is filed
+      category: from.category && snap.site.categories.some((c) => c.id === from.category) ? from.category : "",
       tags: [],
       media: stored.media,
       ...(from.pageUrl || from.imageUrl ? { source: from.pageUrl || from.imageUrl } : {}),

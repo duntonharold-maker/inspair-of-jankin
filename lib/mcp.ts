@@ -25,12 +25,15 @@ Organizing the library (re-categorising, retagging, merging duplicate tags):
 
 The inbox (when the user says 整理收件箱 / sort the inbox):
 Pictures collected with the browser extension wait in the inbox, off the site, with a rough title, the
-page they came from as source, and a note naming that page. To file them:
+page they came from as source, and a note naming that page. Some also carry what the user said while
+collecting: a category they picked (a rough guess: keep it unless the picture clearly belongs elsewhere)
+and a note line starting "我的想法：" (their own words on what caught their eye). To file them:
 1. search_items with inbox: true (and list_categories for the categories and the tags already in use).
 2. view_items to look at each picture; get_item when you need its source or note.
 3. organize_items, one change per picture: a short descriptive title (Chinese, keeping product or brand
    names), a category, tags in the library's existing wording, a note on what is worth learning from it
-   (replacing the collected note, keeping the designer or studio if the page names one), and a colour.
+   (replacing the collected note, keeping the designer or studio if the page names one; when there is a
+   "我的想法" line, build the note on that point — say what makes it work — and leave out the label), and a colour.
    Giving an inbox picture a category files it onto the site. Show the plan (dry_run) first; apply after
    the user agrees. Pictures that aren't worth keeping can be deleted with delete_items instead.`;
 
