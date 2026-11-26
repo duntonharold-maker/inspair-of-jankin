@@ -65,7 +65,7 @@ Vercel 项目 → Settings → Environment Variables：
 - **只能填 URL 的客户端**（claude.ai、ChatGPT）：`https://你的域名/api/mcp/<MCP_SECRET>`
 - **可以加请求头的客户端**（Claude Code、Cursor 等）：`https://你的域名/api/mcp`，请求头 `Authorization: Bearer <MCP_SECRET>`
 
-**claude.ai / Claude 桌面版**：设置 → Connectors（连接器）→ 添加自定义连接器 → 填入带密钥的 URL。
+**claude.ai / Claude 桌面版**：自定义（Customize）→ 连接器 → 添加 → 添加自定义连接器，填入带密钥的 URL，登录方式选「不需要登录」，请求头和 OAuth 留空。
 
 **Claude Code**
 
@@ -88,6 +88,21 @@ claude mcp add --transport http inspair https://你的域名/api/mcp --header "A
 
 **ChatGPT**：开启开发者模式后添加连接器，URL 填带密钥的地址，认证选「无」。
 
+## 浏览器插件：右键采集图片
+
+`extension/` 是一个 Chrome / Edge / Arc 插件：在任意网页的图片上右键 →「收藏到 inspair」，图片会进入网站的**收件箱**。收件箱里的图片已经存进仓库，但不会出现在网站上；跟智能体说「整理收件箱」，它会看图写好标题、分类、标签和笔记（先给你看方案），确认后一次提交上线。
+
+插件会自动取图片的最大尺寸（`srcset`、Pinterest 原图、X 原图、Dribbble 原图），用浏览器自己下载（所以只给自家网页看图的网站也能采），超过 4 MB 的图片会先压成 WebP。同一张图采两次不会重复。只往收件箱放东西的提交不会触发 Vercel 部署（`vercel.json` 的 Ignored Build Step），整理归档时才部署一次。
+
+**安装**
+
+1. 在 Vercel 加一个环境变量 `COLLECT_SECRET`（一串随机字符，生成方法同 `MCP_SECRET`），保存后 Redeploy。这把钥匙只能往收件箱里放图片，不能改删别的，适合放在浏览器里。
+2. 下载这个仓库（GitHub 页面 Code → Download ZIP，解压）。
+3. 打开 `chrome://extensions`（Edge 是 `edge://extensions`），打开右上角「开发者模式」，点「加载已解压的扩展程序」，选 `extension` 文件夹。
+4. 插件设置页会自动打开：网站地址填你的域名，密钥填 `COLLECT_SECRET`，点「保存并测试连接」。
+
+插件更新后，在扩展程序页面点插件卡片上的刷新按钮即可。
+
 ## 怎么跟智能体说
 
 - 「收藏这张图 https://…/a.png，归到海报，提示词是 …，模型 Midjourney v7」
@@ -97,6 +112,7 @@ claude mcp add --transport http inspair https://你的域名/api/mcp --header "A
 - 「新建一个分类：加载动画，英文名 Loaders」
 - 「删除所有带『示例』标签的条目」（仓库里自带的 17 条是演示数据）
 - 「看一遍所有图标和动效，按画面重新分类，把意思重复的标签合并，先给我看方案」
+- 「整理收件箱」（用浏览器插件采集的图片，整理后才会上线）
 
 ### 智能整理
 

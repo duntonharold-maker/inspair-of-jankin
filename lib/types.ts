@@ -39,6 +39,11 @@ export const ItemSchema = z.object({
   /** Accent color as hex, e.g. #c8102e. */
   color: z.string().optional(),
   featured: z.boolean().optional(),
+  /** Collected with the browser extension and not filed yet: kept out of the site (category may be "")
+   * until an agent gives it a category, which files it. */
+  inbox: z.boolean().optional(),
+  /** The picture's own address when it was collected from a web page, to spot it being collected twice. */
+  imageUrl: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string().optional(),
 });

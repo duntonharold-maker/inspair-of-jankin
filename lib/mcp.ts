@@ -21,7 +21,18 @@ Organizing the library (re-categorising, retagging, merging duplicate tags):
 2. view_items to look at the pictures themselves (up to 10 per call) — judge by what you see, not only by titles.
 3. organize_items with dry_run true (the default) to get the plan; show it to the user.
 4. Only after the user agrees, call organize_items again with the same edits and dry_run false.
-   Everything is written in one commit, so prefer one organize_items call over many update_item calls.`;
+   Everything is written in one commit, so prefer one organize_items call over many update_item calls.
+
+The inbox (when the user says 整理收件箱 / sort the inbox):
+Pictures collected with the browser extension wait in the inbox, off the site, with a rough title, the
+page they came from as source, and a note naming that page. To file them:
+1. search_items with inbox: true (and list_categories for the categories and the tags already in use).
+2. view_items to look at each picture; get_item when you need its source or note.
+3. organize_items, one change per picture: a short descriptive title (Chinese, keeping product or brand
+   names), a category, tags in the library's existing wording, a note on what is worth learning from it
+   (replacing the collected note, keeping the designer or studio if the page names one), and a colour.
+   Giving an inbox picture a category files it onto the site. Show the plan (dry_run) first; apply after
+   the user agrees. Pictures that aren't worth keeping can be deleted with delete_items instead.`;
 
 type Ctx = { origin: string };
 
@@ -54,12 +65,14 @@ function brief(item: Item, ctx: Ctx) {
     media_type: item.media.type,
     prompt: item.prompt && item.prompt.length > 160 ? item.prompt.slice(0, 160) + "…" : item.prompt,
     model: item.model,
-    url: `${ctx.origin}/i/${item.id}`,
+    ...(item.inbox ? { inbox: true, source: item.source, note: item.note } : { url: `${ctx.origin}/i/${item.id}` }),
     created_at: item.createdAt,
   };
 }
 
 function full(item: Item, ctx: Ctx) {
+  // an inbox picture has no page yet, and its file goes live with the deploy that files it
+  if (item.inbox) return item;
   return { ...item, url: `${ctx.origin}/i/${item.id}`, media_url: `${ctx.origin}${item.media.src}` };
 }
 
@@ -68,17 +81,19 @@ export function registerTools(server: McpServer, ctx: Ctx) {
     "list_categories",
     {
       title: "List categories and tags",
-      description: "Lists the valid category ids (with Chinese labels and item counts) and the most used tags.",
+      description: "Lists the valid category ids (with Chinese labels and item counts), the most used tags, and how many collected pictures wait in the inbox.",
       inputSchema: z.object({}).strict(),
       annotations: { readOnlyHint: true },
     },
     () =>
       guard(async () => {
-        const { items, site } = await getStore().read();
+        const { items: all, site } = await getStore().read();
+        const items = all.filter((i) => !i.inbox);
         const tagCounts = new Map<string, number>();
         for (const i of items) for (const t of i.tags) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
         return {
           total_items: items.length,
+          inbox: all.length - items.length,
           categories: site.categories.map((c) => ({ ...c, count: items.filter((i) => i.category === c.id).length })),
           top_tags: [...tagCounts].sort((a, b) => b[1] - a[1]).slice(0, 40).map(([tag, count]) => ({ tag, count })),
         };
@@ -95,6 +110,10 @@ export function registerTools(server: McpServer, ctx: Ctx) {
         category: z.string().optional(),
         tag: z.string().optional(),
         has_prompt: z.boolean().optional(),
+        inbox: z
+          .boolean()
+          .optional()
+          .describe("true: only the pictures waiting in the inbox (collected with the browser extension, not on the site yet). Otherwise inbox pictures are left out."),
         limit: z.number().int().min(1).max(100).optional(),
         offset: z.number().int().min(0).optional(),
       }).strict(),
@@ -232,7 +251,7 @@ export function registerTools(server: McpServer, ctx: Ctx) {
           const cat = site.categories.find((c) => c.id === item.category);
           content.push({
             type: "text",
-            text: `${item.id} · 「${item.title}」 · ${item.category}${cat ? `（${cat.label}）` : ""} · tags: ${item.tags.join(", ") || "—"} · ${item.media.type}`,
+            text: `${item.id} · 「${item.title}」 · ${item.inbox ? "收件箱（待整理）" : `${item.category}${cat ? `（${cat.label}）` : ""}`} · tags: ${item.tags.join(", ") || "—"} · ${item.media.type}`,
           });
           try {
             const pic = await preview(await store.readFile(`public${item.media.src}`), item.media.type, size ?? 512);
@@ -253,7 +272,7 @@ export function registerTools(server: McpServer, ctx: Ctx) {
     {
       title: "Organize many items at once",
       description:
-        "Batch edits: change category, title, tags (replace / add / remove), note, colour or featured on many items, rename or merge tags across the whole library, and create categories — all in ONE commit. Defaults to dry_run=true, which only returns the plan (before → after for every item) and changes nothing. Show the plan to the user and call again with dry_run=false once they agree.",
+        "Batch edits: change category, title, tags (replace / add / remove), note, colour or featured on many items, rename or merge tags across the whole library, and create categories — all in ONE commit. Giving an inbox picture a category files it onto the site. Defaults to dry_run=true, which only returns the plan (before → after for every item) and changes nothing. Show the plan to the user and call again with dry_run=false once they agree.",
       inputSchema: OrganizeInput.strict(),
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
     },

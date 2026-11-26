@@ -19,6 +19,7 @@ npm run check:scene  # 检查首页卡片场景：任何屏幕比例下卡片都
 - `public/media/`：媒体文件，文件名由 MCP 生成，不要手动改名。宽于 800 px 的静态图片收录时会另存一张 `<文件名>.thumb.webp`（`media.thumb`），卡片、分类缩略图和场景贴图用它，详情里看原图。
 - `components/story/`：首页的滚动故事。`timeline.ts` 定义每一幕占多少屏和卡片场景各阶段的起止，`choreo.ts` 算出每张卡片在任一滚动位置的位置，`scene.ts` 用 three.js 把它们画出来（悬停、指针扰动、拖尾），`rays.ts` 把画好的场景沿放射方向拉出分光的拖影（屏幕边缘、圆环周围、鼠标划过的地方），`screens/` 里是每一幕的 DOM。
 - `lib/`：存储（GitHub / 本地）、媒体处理、MCP 工具、鉴权。
+- `extension/`：浏览器插件（Chrome MV3），右键图片「收藏到 inspair」，发到 `/api/collect`。采集的条目带 `inbox: true`，进收件箱：已提交但不上网站（`lib/content.ts` 过滤掉），分类可以为空；智能体用 `organize_items` 给它分类即归档上线。采集提交的信息以 `inspair: collect` 开头，`scripts/vercel-ignore.sh` 让 Vercel 跳过这些构建。插件用 `COLLECT_SECRET`（只能采集），也接受 `MCP_SECRET`。
 - `app/globals.css`：顶部是颜色、字体、间距、缓动等设计变量，新样式一律使用这些变量。
 
 ## 要求
@@ -53,7 +54,7 @@ npm run check:scene  # 检查首页卡片场景：任何屏幕比例下卡片都
 - 图标一律用 Lucide（https://lucide.dev/icons/ ，`lucide-react`），按名字导入，如 `import { ArrowRight } from "lucide-react"`。不要手写 SVG，也不要用 →、↗、× 这类字符充当图标。Logo（`components/Mark.tsx`）和正文里表示菜单路径的「设置 → 连接器」除外。图标跟随文字的颜色和大小（`.lucide` 默认 1em），要别的尺寸就在 CSS 里设宽高，不用 `size` 属性。链接和按钮里的箭头加 `ic-go`、`ic-back` 或 `ic-out`，悬停时会朝箭头方向轻推；标题里的珊瑚色箭头用 `arrow`。
 - 作品怎么摆：铺满自己画面的作品（照片、海报、满版插画）铺满卡片；有自己轮廓的作品（`media.cutout`，收录时由 `lib/media.ts` 判断：边缘有透明，或四角透明的部分比卡片圆角能裁掉的还深，比如圆角图标、贴纸、没有底色的动画）完整放在 `--stage` 展示底上，四周留白，不裁切、不改色。任何展示作品的地方（卡片、分类、场景贴图、详情）都按这条处理。
 - 毛玻璃只写标准的 `backdrop-filter`，不要再手写 `-webkit-backdrop-filter`：构建时两条会被合并成只剩带前缀的那条，Chrome 和 Edge 认不出，模糊就会失效。Safari 需要的前缀构建工具会自动补上。
-- 不要把 `MCP_SECRET`、`GITHUB_TOKEN` 等密钥写进仓库，这个仓库是公开的。
+- 不要把 `MCP_SECRET`、`COLLECT_SECRET`、`GITHUB_TOKEN` 等密钥写进仓库，这个仓库是公开的。
 - 卡片场景只跟着滚动走：只有第一屏的空中卡片按时间漂浮（和 premotio 一样），往下滚到圆环之前漂浮会平滑停下；从那以后卡片的位置、角度只能由滚动进度算出来，不要用时间驱动漂浮、旋转或波动，页面停下时卡片必须静止。指针扰动和悬停是例外，圆环和墙上的卡片只能沿不会碰到邻居的方向移动（圆环上的卡片沿圆环的轴上下，墙上的卡片沿墙面法线）。
 - 每张卡片有自己的镜头和绘制深度（`choreo.ts` 的 `lens`、`depth`），在 `scene.ts` 的顶点着色器里换算到同一台长焦相机（与 `toShared` 是同一个公式）：圆环和铺墙时用广角，墙铺满后收窄成长焦；墙始终画在圆环后面，所以两者在空间里重叠也不会互相切到。three.js 的射线拾取看不到这一步，`pick` 是按每张卡片的镜头手算的；新增绘制或拾取相关的代码时要用同样的换算。
 - 静止的卡片（圆环上、墙上）共用深度缓冲，运动中的卡片（空中漂浮、落入或离开圆环、飞向墙面）在它们之后由远及近叠画，所以运动中的卡片之间可以交错，但不能穿过静止的卡片。纸张的弯曲、翻动和飞行中的摇晃也在 `choreo.ts` 里算（`paper`），同样只由滚动进度决定（第一屏按时间），在卡片和静止的卡片齐平的地方（落入、升出圆环，快落到墙上时）会减到完全平整；`npm run check:scene` 按弯曲后的形状检查。改动 `choreo.ts` 或 `timeline.ts` 里场景的阶段后，运行 `npm run check:scene` 确认这一点，并截图确认圆环在屏幕中间、完整可见，卡片墙在 4:3 到 2:1 的屏幕上都能铺满左半屏。

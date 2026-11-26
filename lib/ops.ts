@@ -167,6 +167,7 @@ export async function updateItem(id: string, fields: Partial<ItemFieldsInput>, m
     if (fields.category) assertCategory(snap.site, fields.category);
     const old = snap.items[idx];
     const next = { ...applyFields(old, fields), updatedAt: new Date().toISOString() } as Item;
+    if (next.inbox && fields.category) delete next.inbox; // a category files an inbox item
     const addFiles = [];
     const deleteFiles = [];
     if (media) {
@@ -180,6 +181,51 @@ export async function updateItem(id: string, fields: Partial<ItemFieldsInput>, m
     const items = [...snap.items];
     items[idx] = next;
     return { items, addFiles, deleteFiles, message: `inspair: update "${next.title}" (${id})`, result: next };
+  });
+}
+
+/** What the browser extension knows about a picture it collects. */
+export type Collected = { pageUrl?: string; pageTitle?: string; imageUrl?: string; alt?: string };
+
+const clip = (s: string | undefined, n: number) => (s ? s.replace(/\s+/g, " ").trim().slice(0, n) : "");
+
+/**
+ * Puts a picture collected from a web page into the inbox: stored and committed, but kept off the site
+ * until an agent looks at it and gives it a title, category, tags and a note (organize_items). The same
+ * picture collected again (same image address) returns the item already made.
+ * The commit message starts "inspair: collect", which tells Vercel it needs no deploy.
+ */
+export async function collectItem(media: Ingested, from: Collected) {
+  const store = getStore();
+  const now = new Date();
+  return store.mutate((snap) => {
+    const same = from.imageUrl ? snap.items.find((i) => i.imageUrl === from.imageUrl) : undefined;
+    if (same) return { message: "", result: { item: same, duplicate: true, inbox: snap.items.filter((i) => i.inbox).length } };
+    let id = newId(now);
+    while (snap.items.some((i) => i.id === id)) id = newId(now);
+    const stored = mediaFiles(mediaPath(id, media.ext), media);
+    const title = clip(from.alt, 80) || clip(from.pageTitle, 80) || "未命名";
+    const note = [from.pageTitle && `采集自「${clip(from.pageTitle, 200)}」`, from.alt && `图片说明：${clip(from.alt, 300)}`]
+      .filter(Boolean)
+      .join("\n");
+    const item = {
+      id,
+      title,
+      category: "",
+      tags: [],
+      media: stored.media,
+      ...(from.pageUrl || from.imageUrl ? { source: from.pageUrl || from.imageUrl } : {}),
+      ...(note ? { note } : {}),
+      ...(from.imageUrl ? { imageUrl: from.imageUrl } : {}),
+      inbox: true,
+      createdAt: now.toISOString(),
+    } as Item;
+    return {
+      items: [item, ...snap.items],
+      addFiles: stored.files,
+      message: `inspair: collect "${title}" (${id})`,
+      result: { item, duplicate: false, inbox: snap.items.filter((i) => i.inbox).length + 1 },
+    };
   });
 }
 
@@ -215,12 +261,13 @@ export async function upsertCategory(cat: { id: string; name: string; label: str
 
 export function search(
   snap: Snapshot,
-  q: { query?: string; category?: string; tag?: string; has_prompt?: boolean; limit?: number; offset?: number },
+  q: { query?: string; category?: string; tag?: string; has_prompt?: boolean; inbox?: boolean; limit?: number; offset?: number },
 ) {
   if (q.category) assertCategory(snap.site, q.category);
   const needle = q.query?.trim().toLowerCase();
   const names = new Map(snap.site.categories.map((c) => [c.id, `${c.name}\n${c.label}`]));
   const hits = snap.items.filter((i) => {
+    if (Boolean(i.inbox) !== Boolean(q.inbox)) return false;
     if (q.category && i.category !== q.category) return false;
     if (q.tag && !i.tags.includes(q.tag)) return false;
     if (q.has_prompt && !i.prompt) return false;
@@ -258,6 +305,10 @@ export const OrganizeInput = z.object({
         note: text(4000).optional().describe("Replaces the note; empty string clears it"),
         color: hex.optional(),
         featured: z.boolean().optional(),
+        inbox: z
+          .literal(false)
+          .optional()
+          .describe("Files an inbox item; giving it a category does the same"),
       }).strict(),
     )
     .max(300)
@@ -335,6 +386,11 @@ export function planOrganize(snap: Snapshot, spec: OrganizeSpec) {
       if (ch.featured) item.featured = true;
       else delete item.featured;
     }
+    // an inbox item is filed by giving it a category (or inbox: false with the category it has)
+    if (item.inbox && (ch.category !== undefined || ch.inbox === false)) {
+      if (valid.has(item.category)) delete item.inbox;
+      else errors.push(`"${ch.id}" is in the inbox: give it a category to file it.`);
+    }
   }
 
   const diffs: Diff[] = [];
@@ -350,6 +406,7 @@ export function planOrganize(snap: Snapshot, spec: OrganizeSpec) {
     if ((before.note ?? "") !== (after.note ?? "")) changes.note = [before.note ?? "", after.note ?? ""];
     if (before.color !== after.color) changes.color = [before.color, after.color];
     if (Boolean(before.featured) !== Boolean(after.featured)) changes.featured = [Boolean(before.featured), Boolean(after.featured)];
+    if (before.inbox && !after.inbox) changes.filed = "out of the inbox, onto the site";
     if (Object.keys(changes).length) {
       after.updatedAt = now;
       diffs.push({ id: after.id, title: after.title, changes });

@@ -25,6 +25,17 @@ export function isAuthorized(req: Request, pathSecret?: string) {
   return Boolean(m && safeEqual(m[1].trim(), s));
 }
 
+/**
+ * The browser extension's key: COLLECT_SECRET, which can only put pictures into the inbox, or MCP_SECRET.
+ * Sent as `Authorization: Bearer <key>`. Without either secret (local dev) everything is allowed.
+ */
+export function isCollectAuthorized(req: Request) {
+  const keys = [process.env.COLLECT_SECRET || "", secret()].filter(Boolean);
+  if (!keys.length) return process.env.NODE_ENV !== "production";
+  const m = (req.headers.get("authorization") || "").match(/^Bearer\s+(.+)$/i);
+  return Boolean(m && keys.some((k) => safeEqual(m[1].trim(), k)));
+}
+
 const b64url = (b: Buffer) => b.toString("base64url");
 
 function sign(body: string) {

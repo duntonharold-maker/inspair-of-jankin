@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>inspair 采集设置</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <img src="icons/48.png" alt="" width="28" height="28" />
+        <h1>inspair 采集</h1>
+      </header>
+      <p class="how">在网页图片上右键，选「收藏到 inspair」。图片会先进网站的收件箱，跟 Claude 说「整理收件箱」后上线。</p>
+
+      <form id="form" novalidate>
+        <label for="site">网站地址</label>
+        <input id="site" name="site" type="url" inputmode="url" autocomplete="url" spellcheck="false" required />
+
+        <label for="key">密钥</label>
+        <div class="key">
+          <input id="key" name="key" type="password" autocomplete="off" spellcheck="false" required placeholder="COLLECT_SECRET 或 MCP_SECRET" />
+          <button id="reveal" class="icon-btn" type="button" aria-label="显示密钥" aria-pressed="false">
+            <!-- Lucide: eye / eye-off -->
+            <svg class="eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
+            <svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" /><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" /><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" /><path d="m2 2 20 20" /></svg>
+          </button>
+        </div>
+
+        <button id="save" class="btn" type="submit">保存并测试连接</button>
+        <p id="status" class="status" role="status"></p>
+      </form>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>
