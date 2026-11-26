@@ -10,6 +10,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { ItemSchema, SiteSchema, type Item, type Site } from "./types";
+import { blobDel, blobGet, blobOn, blobPut, isMediaPath } from "./blob";
 
 export const ITEMS_PATH = "content/items.json";
 export const SITE_PATH = "content/site.json";
@@ -37,6 +38,8 @@ export interface Store {
   read(): Promise<Snapshot>;
   /** Read one file of the repository (e.g. public/media/…) as it is now. */
   readFile(path: string): Promise<Buffer>;
+  /** The media files kept in the repository itself (public/media/…). */
+  repoMedia(): Promise<string[]>;
   /** Read the latest state, apply the mutator, write the result. Retries on races. */
   mutate<T>(mutator: Mutator<T>): Promise<{ result: T; commit?: string }>;
 }
@@ -72,6 +75,11 @@ class LocalStore implements Store {
 
   readFile(rel: string) {
     return fs.readFile(this.p(rel));
+  }
+
+  async repoMedia() {
+    const names = await fs.readdir(this.p(MEDIA_DIR)).catch(() => [] as string[]);
+    return names.filter((n) => !n.startsWith(".")).map((n) => `${MEDIA_DIR}/${n}`);
   }
 
   async mutate<T>(mutator: Mutator<T>) {
@@ -142,6 +150,11 @@ class GitHubStore implements Store {
   }
 
   async readFile(rel: string) {
+    // newer media lives in the Blob store, older media in the repository
+    if (blobOn() && isMediaPath(rel)) {
+      const got = await blobGet(rel);
+      if (got) return Buffer.from(await new Response(got.stream).arrayBuffer());
+    }
     const { commitSha } = await this.head();
     const api = process.env.GITHUB_API_URL || "https://api.github.com";
     const res = await fetch(`${api}/repos/${this.repo}/contents/${rel}?ref=${commitSha}`, {
@@ -157,6 +170,21 @@ class GitHubStore implements Store {
     return Buffer.from(await res.arrayBuffer());
   }
 
+  async repoMedia() {
+    const { commitSha } = await this.head();
+    return [...(await this.mediaInRepo(commitSha))];
+  }
+
+  /** The media files kept in the repository at a commit (older media, from before the Blob store). */
+  private async mediaInRepo(ref: string) {
+    try {
+      const list = await this.gh<{ path: string }[]>("GET", `/contents/${MEDIA_DIR}?ref=${ref}`);
+      return new Set(list.map((f) => f.path));
+    } catch {
+      return new Set<string>();
+    }
+  }
+
   async mutate<T>(mutator: Mutator<T>) {
     // Blobs are content-addressed, so uploading them again on a retry is harmless.
     for (let attempt = 0; ; attempt++) {
@@ -164,17 +192,27 @@ class GitHubStore implements Store {
       const change = await mutator(await this.readAt(commitSha));
 
       const tree: Record<string, unknown>[] = [];
-      for (const f of change.addFiles ?? []) {
+      // media goes to the Blob store when there is one; the commit then only carries text
+      const toBlob = blobOn() ? (change.addFiles ?? []).filter((f) => isMediaPath(f.path)) : [];
+      for (const f of toBlob) await blobPut(f.path, f.content);
+      const deletes = change.deleteFiles ?? [];
+      const inRepo = blobOn() && deletes.some(isMediaPath) ? await this.mediaInRepo(commitSha) : null;
+      const repoDeletes = inRepo ? deletes.filter((p) => !isMediaPath(p) || inRepo.has(p)) : deletes;
+      const blobDeletes = inRepo ? deletes.filter((p) => isMediaPath(p) && !inRepo.has(p)) : [];
+      for (const f of (change.addFiles ?? []).filter((f) => !toBlob.includes(f))) {
         const blob = await this.gh<{ sha: string }>("POST", "/git/blobs", {
           content: f.content.toString("base64"),
           encoding: "base64",
         });
         tree.push({ path: f.path, mode: "100644", type: "blob", sha: blob.sha });
       }
-      for (const p of change.deleteFiles ?? []) tree.push({ path: p, mode: "100644", type: "blob", sha: null });
+      for (const p of repoDeletes) tree.push({ path: p, mode: "100644", type: "blob", sha: null });
       if (change.items) tree.push({ path: ITEMS_PATH, mode: "100644", type: "blob", content: serialize(change.items) });
       if (change.site) tree.push({ path: SITE_PATH, mode: "100644", type: "blob", content: serialize(change.site) });
-      if (!tree.length) return { result: change.result };
+      if (!tree.length) {
+        await blobDel(blobDeletes);
+        return { result: change.result };
+      }
 
       const newTree = await this.gh<{ sha: string }>("POST", "/git/trees", { base_tree: treeSha, tree });
       const commit = await this.gh<{ sha: string }>("POST", "/git/commits", {
@@ -184,6 +222,8 @@ class GitHubStore implements Store {
       });
       try {
         await this.gh("PATCH", `/git/refs/heads/${this.branch}`, { sha: commit.sha, force: false });
+        // the items no longer point at these: free the space
+        await blobDel(blobDeletes);
         return { result: change.result, commit: commit.sha };
       } catch (e) {
         if (e instanceof ConflictError && attempt < 3) continue;

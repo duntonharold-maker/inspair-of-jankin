@@ -12,6 +12,7 @@ import {
   deleteItems,
   groupItems,
   loadMedia,
+  moveMediaToBlob,
   newId,
   organizeItems,
   search,
@@ -378,6 +379,22 @@ export function registerTools(server: McpServer, ctx: Ctx) {
       guard(async () => {
         const out = await arrangeSet(spec);
         return { ...out, note: liveNote() };
+      }),
+  );
+
+  server.registerTool(
+    "move_media_to_blob",
+    {
+      title: "Move media out of the repository",
+      description:
+        "Maintenance, only when the user asks: moves the media files still kept in the repository (public/media) into the connected Blob store and removes them from the repository in one commit. Nothing on the site changes: the same /media/… addresses are then served from the store. dry_run (default) only counts the files.",
+      inputSchema: z.object({ dry_run: z.boolean().default(true) }).strict(),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    ({ dry_run }) =>
+      guard(async () => {
+        const out = await moveMediaToBlob({ dryRun: dry_run });
+        return out.applied ? { ...out, note: liveNote() } : { ...out, note: "Dry run — call again with dry_run: false to move them." };
       }),
   );
 

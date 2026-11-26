@@ -2,8 +2,9 @@
 import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { createUploadToken, readUploadToken } from "./auth";
+import { blobOn } from "./blob";
 import { fetchMedia, ingest, type Ingested } from "./media";
-import { MEDIA_DIR, getStore, type Snapshot } from "./store";
+import { MEDIA_DIR, getStore, type FileWrite, type Snapshot } from "./store";
 import { ItemSchema as ItemSchemaStrict, picturesOf, type Item, type Media, type Site } from "./types";
 
 /* ------------------------------------------------------------- input schemas */
@@ -564,6 +565,27 @@ export async function arrangeSet(spec: ArrangeSpec, { collect = false } = {}) {
     };
   });
   return { ...result, commit };
+}
+
+/**
+ * Move the media still kept in the repository into the Blob store, in one commit that removes it from the
+ * repository. Items keep their /media/… paths: those files are then answered from the store.
+ */
+export async function moveMediaToBlob({ dryRun = true } = {}) {
+  const store = getStore();
+  if (store.mode !== "github" || !blobOn()) throw new Error("Needs the GitHub store and a connected Blob store (BLOB_READ_WRITE_TOKEN).");
+  const paths = await store.repoMedia();
+  if (dryRun) return { applied: false, files: paths.length };
+  if (!paths.length) return { applied: true, files: 0 };
+  const files: FileWrite[] = [];
+  for (const path of paths) files.push({ path, content: await store.readFile(path) });
+  const { commit } = await store.mutate(() => ({
+    addFiles: files,
+    deleteFiles: paths,
+    message: `inspair: move ${paths.length} media file(s) to the Blob store`,
+    result: null,
+  }));
+  return { applied: true, files: paths.length, bytes: files.reduce((n, f) => n + f.content.length, 0), commit };
 }
 
 export async function upsertCategory(cat: { id: string; name: string; label: string }) {

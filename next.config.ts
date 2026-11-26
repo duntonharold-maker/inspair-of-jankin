@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   // Media is served as static files; never copy it into serverless functions.
   outputFileTracingExcludes: { "*": ["public/media/**", "content/**"] },
+  // media not in public/media (newer files, kept in the Blob store) is answered by app/api/media
+  async rewrites() {
+    return { beforeFiles: [], afterFiles: [], fallback: [{ source: "/media/:path*", destination: "/api/media/:path*" }] };
+  },
   async headers() {
     return [
       {
