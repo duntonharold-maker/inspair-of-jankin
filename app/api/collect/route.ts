@@ -17,7 +17,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const unauthorized = () => Response.json({ error: "钥匙不对：在插件设置里填 COLLECT_SECRET 或 MCP_SECRET。" }, { status: 401 });
+const unauthorized = () => Response.json({ error: "密钥不对：在插件设置里填 COLLECT_SECRET 或 MCP_SECRET。" }, { status: 401 });
 const text = (v: FormDataEntryValue | null) => (typeof v === "string" && v.trim() ? v.trim() : undefined);
 
 export async function GET(req: Request) {
