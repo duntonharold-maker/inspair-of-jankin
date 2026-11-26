@@ -395,12 +395,13 @@ export const ArrangeInput = z.object({
 export type ArrangeSpec = z.infer<typeof ArrangeInput>;
 
 /** Reorders a set, changes its cover, takes pictures out as items of their own, or drops pictures. */
-export async function arrangeSet(spec: ArrangeSpec) {
+export async function arrangeSet(spec: ArrangeSpec, { collect = false } = {}) {
   const store = getStore();
   const now = new Date();
   const { result, commit } = await store.mutate((snap) => {
     const set = snap.items.find((i) => i.id === spec.id);
     if (!set) throw new Error(`No item with id "${spec.id}".`);
+    if (collect && !set.inbox) throw new Error("这一组已经整理上线，在网站上改要跟 Claude 说。");
     const pics = picturesOf(set);
     const split = [...new Set(spec.split ?? [])];
     const order = spec.order ?? pics.map((_, k) => k).filter((k) => !split.includes(k));
@@ -431,7 +432,8 @@ export async function arrangeSet(spec: ArrangeSpec) {
     return {
       items,
       deleteFiles: dropped.flatMap((k) => filesOf(pics[k])),
-      message: `inspair: arrange "${set.title}" (${set.id})`,
+      // from the extension's inbox page the set is still off the site: no deploy needed
+      message: `inspair: ${collect ? "collect " : ""}arrange "${set.title}" (${set.id})`,
       result: {
         id: set.id,
         pictures: picturesOf(next).length,

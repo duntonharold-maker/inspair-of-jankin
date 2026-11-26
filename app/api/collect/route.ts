@@ -42,6 +42,9 @@ export async function GET(req: Request) {
       height: i.media.height,
       cutout: i.media.cutout,
       pictures: picturesOf(i).length,
+      // every picture's shape, so a set can be laid out before its pictures load
+      sizes: picturesOf(i).map((m) => ({ width: m.width, height: m.height, cutout: m.cutout })),
+      remarks: (i.note ?? "").split("\n").filter((l) => l.startsWith(REMARK)).map((l) => l.slice(REMARK.length)),
     }));
   const categories = site.categories.map((c) => ({ id: c.id, label: c.label }));
   return Response.json({ ok: true, site: site.name, inbox: inbox.length, items: inbox, categories });

@@ -3,88 +3,177 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>inspair 采集</title>
+    <title>inspair 收件箱</title>
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
-    <main>
-      <header>
-        <img src="icons/48.png" alt="" width="28" height="28" />
-        <h1>inspair 采集</h1>
-      </header>
-      <p class="how">在网页图片上右键，选「收藏到 inspair」。图片会先进网站的收件箱，跟 Claude 说「整理收件箱」后上线。</p>
-
-      <section id="inbox" class="inbox" aria-labelledby="inbox-title" hidden>
-        <div class="inbox-head">
-          <h2 id="inbox-title">收件箱 <span id="count" class="count"></span></h2>
-          <button id="refresh" class="icon-btn" type="button" aria-label="刷新收件箱">
-            <!-- Lucide: rotate-cw -->
+    <!-- Icons are Lucide (lucide.dev), copied as SVG because the extension has no build step. -->
+    <div class="window">
+      <header class="top">
+        <a id="brand" class="brand" target="_blank" rel="noopener noreferrer" aria-label="打开 inspair 网站">
+          <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="16" rx="3.5" opacity="0.35" /><rect x="9" y="2" width="14" height="17" rx="3.5" /></svg>
+          <span>inspair</span>
+        </a>
+        <div class="seg" role="group" aria-label="筛选">
+          <button type="button" data-filter="all" aria-pressed="true">全部</button>
+          <button type="button" data-filter="remark" aria-pressed="false">有想法</button>
+          <button type="button" data-filter="set" aria-pressed="false">成组</button>
+          <button type="button" data-filter="none" aria-pressed="false">没分类</button>
+        </div>
+        <div class="tools">
+          <button id="refresh" class="icon-btn" type="button" aria-label="刷新">
+            <!-- rotate-cw -->
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /></svg>
           </button>
-        </div>
-        <p id="empty" class="empty" hidden>收件箱是空的。</p>
-        <ul id="grid" class="grid"></ul>
-        <div id="bar" class="bar" hidden>
-          <p id="bar-text" role="status"></p>
-          <button id="bar-cancel" class="bar-btn" type="button">取消</button>
-          <button id="bar-group" class="bar-btn bar-btn--go" type="button">合成一组</button>
-        </div>
-      </section>
+          <button id="gear" class="icon-btn" type="button" aria-label="连接设置" aria-expanded="false" aria-controls="settings">
+            <!-- settings -->
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></svg>
+            <span class="alert" hidden></span>
+          </button>
 
-      <h2 class="settings-title">连接</h2>
-      <form id="form" novalidate>
-        <label for="site">网站地址</label>
-        <input id="site" name="site" type="url" inputmode="url" autocomplete="url" spellcheck="false" required />
+          <div id="settings" class="popover" role="dialog" aria-labelledby="settings-title" hidden>
+            <div class="popover-head">
+              <h2 id="settings-title">连接</h2>
+              <button id="settings-close" class="icon-btn icon-btn--plain" type="button" aria-label="关闭">
+                <!-- x -->
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+              </button>
+            </div>
+            <form id="form" novalidate>
+              <label for="site">网站地址</label>
+              <input id="site" name="site" type="url" inputmode="url" autocomplete="url" spellcheck="false" required />
+              <label for="key">密钥</label>
+              <div class="key">
+                <input id="key" name="key" type="password" autocomplete="off" spellcheck="false" required placeholder="COLLECT_SECRET 或 MCP_SECRET" />
+                <button id="reveal" class="icon-btn icon-btn--plain" type="button" aria-label="显示密钥" aria-pressed="false">
+                  <!-- eye / eye-off -->
+                  <svg class="eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
+                  <svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" /><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" /><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" /><path d="m2 2 20 20" /></svg>
+                </button>
+              </div>
+              <button id="save" class="btn" type="submit">保存并测试连接</button>
+              <p id="status" class="status" role="status"></p>
+            </form>
+          </div>
+        </div>
+      </header>
 
-        <label for="key">密钥</label>
-        <div class="key">
-          <input id="key" name="key" type="password" autocomplete="off" spellcheck="false" required placeholder="COLLECT_SECRET 或 MCP_SECRET" />
-          <button id="reveal" class="icon-btn" type="button" aria-label="显示密钥" aria-pressed="false">
-            <!-- Lucide: eye / eye-off -->
-            <svg class="eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
-            <svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" /><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" /><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" /><path d="m2 2 20 20" /></svg>
+      <main id="inbox-view">
+        <h1 class="title">Inbox</h1>
+        <p id="empty" class="empty" hidden></p>
+        <div id="grid" class="grid"></div>
+      </main>
+
+      <main id="set-view" hidden>
+        <div class="set-top">
+          <button id="set-back" class="icon-btn" type="button" aria-label="返回收件箱">
+            <!-- arrow-left -->
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
+          </button>
+          <span class="grow"></span>
+          <button id="set-split" class="pill-btn" type="button">
+            <!-- ungroup -->
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="6" x="5" y="4" rx="1" /><rect width="8" height="6" x="11" y="14" rx="1" /></svg>
+            <span>拆开这一组</span>
+          </button>
+          <button id="set-del" class="icon-btn del" type="button" aria-label="删除这一组">
+            <!-- trash -->
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 11v6" /><path d="M14 11v6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+            <span>删除</span>
           </button>
         </div>
+        <div class="set-head">
+          <div class="set-name">
+            <h1 id="set-title" class="set-title"></h1>
+            <p class="set-meta"><span id="set-cat" class="cat"></span><a id="set-src" class="src" target="_blank" rel="noopener noreferrer"><span></span><!-- arrow-up-right --><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg></a></p>
+          </div>
+          <ul id="set-remarks" class="remarks"></ul>
+        </div>
+        <div id="set-row" class="set-row"></div>
+      </main>
+    </div>
 
-        <button id="save" class="btn" type="submit">保存并测试连接</button>
-        <p id="status" class="status" role="status"></p>
-      </form>
-    </main>
+    <div id="bar" class="bar" hidden>
+      <span id="bar-status" class="sr-only" role="status"></span>
+      <button id="bar-cancel" class="pill-btn" type="button">取消</button>
+      <button id="bar-group" class="btn" type="button">合成一组</button>
+    </div>
+    <p id="toast" class="toast" role="status" hidden></p>
 
     <template id="tile">
-      <li class="tile">
-        <button class="pic" type="button"><img alt="" decoding="async" /><span class="n" hidden></span></button>
-        <button class="pick" type="button" aria-pressed="false">
-          <!-- Lucide: check -->
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
-          <span></span>
-        </button>
-        <div class="meta">
-          <p class="title"></p>
-          <p class="remark"></p>
-          <p class="where"><span class="cat"></span><a class="src" target="_blank" rel="noopener noreferrer"
-            ><span></span
-            ><!-- Lucide: external-link --><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg
-          ></a></p>
+      <article class="tile">
+        <div class="mat">
+          <button class="pic" type="button"><img alt="" decoding="async" draggable="false" /></button>
+          <span class="dot" hidden></span>
+          <div class="info">
+            <p class="info-title"></p>
+            <a class="src" target="_blank" rel="noopener noreferrer"><span></span><!-- arrow-up-right --><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg></a>
+          </div>
+          <button class="pick icon-btn" type="button" aria-pressed="false">
+            <!-- check -->
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+            <span class="n"></span>
+          </button>
+          <button class="del icon-btn" type="button">
+            <!-- trash -->
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 11v6" /><path d="M14 11v6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+            <span>删除</span>
+          </button>
         </div>
-        <button class="del" type="button">
-          <!-- Lucide: trash -->
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 11v6" /><path d="M14 11v6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-          <span>删除</span>
+      </article>
+    </template>
+
+    <template id="folder">
+      <article class="tile folder">
+        <button class="fcard" type="button">
+          <span class="fcanvas">
+            <span class="fcover"><img alt="" decoding="async" draggable="false" /></span>
+            <span class="fsheet" aria-hidden="true"><span class="ftab"></span><span class="fnotch"></span><span class="fbody"></span></span>
+            <span class="fcontent">
+              <span class="ftitle"></span>
+              <span class="fthumbs"></span>
+              <span class="ffoot"><span class="fcount"></span><span class="fcat"><span class="dot" hidden></span><span class="fcat-text"></span></span></span>
+            </span>
+            <span class="fgo icon-btn" aria-hidden="true">
+              <!-- arrow-up-right -->
+              <svg viewBox="0 0 24 24"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg>
+            </span>
+          </span>
         </button>
-      </li>
+        <button class="pick icon-btn" type="button" aria-pressed="false">
+          <!-- check -->
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+          <span class="n"></span>
+        </button>
+      </article>
+    </template>
+
+    <template id="set-pic">
+      <div class="mat set-mat">
+        <button class="pic" type="button"><img alt="" decoding="async" draggable="false" /></button>
+        <div class="acts">
+          <button class="icon-btn cover" type="button" aria-label="设为封面">
+            <!-- image-up -->
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21" /><path d="m14 19.5 3-3 3 3" /><path d="M17 22v-5.5" /><circle cx="9" cy="9" r="2" /></svg>
+          </button>
+          <button class="icon-btn out" type="button" aria-label="移出这一组">
+            <!-- ungroup -->
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="6" x="5" y="4" rx="1" /><rect width="8" height="6" x="11" y="14" rx="1" /></svg>
+          </button>
+        </div>
+      </div>
     </template>
 
     <dialog id="viewer" aria-labelledby="viewer-title">
       <figure>
         <div class="viewer-stage">
           <img id="viewer-img" alt="" />
-          <button id="viewer-prev" class="icon-btn flip flip--prev" type="button" aria-label="这一组的上一张" hidden>
-            <!-- Lucide: chevron-left -->
+          <button id="viewer-prev" class="icon-btn flip flip--prev" type="button" aria-label="上一张" hidden>
+            <!-- chevron-left -->
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
           </button>
-          <button id="viewer-next" class="icon-btn flip flip--next" type="button" aria-label="这一组的下一张" hidden>
-            <!-- Lucide: chevron-right -->
+          <button id="viewer-next" class="icon-btn flip flip--next" type="button" aria-label="下一张" hidden>
+            <!-- chevron-right -->
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
           </button>
         </div>
@@ -92,7 +181,7 @@
           <span id="viewer-count" class="viewer-count" hidden></span>
           <p id="viewer-title"></p>
           <button id="viewer-close" class="icon-btn" type="button" aria-label="关闭">
-            <!-- Lucide: x -->
+            <!-- x -->
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
           </button>
         </figcaption>
