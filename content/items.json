@@ -1,6 +1,34 @@
 [
   {
+    "id": "20261126-ne3sp1",
+    "tags": [
+      "网页设计",
+      "产品落地页",
+      "硬件产品",
+      "极简现代",
+      "异形卡片",
+      "红白配色",
+      "3D产品展示",
+      "首屏设计"
+    ],
+    "title": "Skot 电动踏板车异形破框官网首屏",
+    "category": "interface",
+    "source": "https://www.pinterest.com/pin/1141381099327567787/",
+    "note": "Skot 电动踏板车品牌官网首屏设计（Super fast electric Moped / C45 Classic Model）。采用柔和浅灰底色搭配大圆角内凹异形灰色容器，纯白车身配亮红轮毂的 3D 机车主体破框而出，视觉层次极具张力；标题行内嵌微图标，右上角放置好评头像叠层，左下角异形切角承载型号介绍与亮红圆形箭头按钮，右下角悬浮车型切换卡片，整体干净高级、工业产品感十足。",
+    "color": "#E53935",
+    "media": {
+      "src": "/media/20261126-ne3sp1.jpg",
+      "type": "image",
+      "width": 1200,
+      "height": 1049,
+      "thumb": "/media/20261126-ne3sp1.thumb.webp"
+    },
+    "createdAt": "2026-11-26T02:47:41.768Z"
+  },
+  {
     "id": "20261126-jzqu2y",
+    "title": "Progress Indicator 竖条进度组件",
+    "category": "ui",
     "tags": [
       "组件设计",
       "进度条",
@@ -9,11 +37,6 @@
       "黑白极简",
       "仪表盘"
     ],
-    "title": "Progress Indicator 竖条进度组件",
-    "category": "ui",
-    "source": "https://www.pinterest.com/pin/1088674909957766796/",
-    "note": "Joshua Guo 的 Interfaces Design System 里的进度组件。黑底卡片：标题和一句「比计划提前三天」的说明，下面大号「66%」配一个描边小胶囊「↗ 30%」和「vs. the last period」做环比；进度不用常见的连续进度条，而是一排等宽竖条，已完成的亮白、未完成的暗灰，读数一眼可见，也更有仪器感。",
-    "color": "#0b0b0b",
     "media": {
       "src": "/media/20261126-jzqu2y.jpg",
       "type": "image",
@@ -21,6 +44,9 @@
       "height": 1200,
       "thumb": "/media/20261126-jzqu2y.thumb.webp"
     },
+    "source": "https://www.pinterest.com/pin/1088674909957766796/",
+    "note": "Joshua Guo 的 Interfaces Design System 里的进度组件。黑底卡片：标题和一句「比计划提前三天」的说明，下面大号「66%」配一个描边小胶囊「↗ 30%」和「vs. the last period」做环比；进度不用常见的连续进度条，而是一排等宽竖条，已完成的亮白、未完成的暗灰，读数一眼可见，也更有仪器感。",
+    "color": "#0b0b0b",
     "createdAt": "2026-11-26T00:46:22.268Z"
   },
   {
