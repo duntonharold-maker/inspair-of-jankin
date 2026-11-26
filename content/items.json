@@ -1,6 +1,8 @@
 [
   {
     "id": "20261126-ibzjyt",
+    "title": "Collage 旅行拼贴相册 App 首页",
+    "category": "ui",
     "tags": [
       "App 设计",
       "移动端",
@@ -10,11 +12,6 @@
       "胶囊导航",
       "暗色"
     ],
-    "title": "Collage 旅行拼贴相册 App 首页",
-    "category": "ui",
-    "source": "https://www.pinterest.com/pin/607000856072877250/",
-    "note": "把旅行照片做成拼贴故事来分享的社交 App 概念稿（Pinterest 的灵感 + Instagram 的社交）。首页以目的地为单位：衬线大标题「Japan」配日期、高光数和同行好友头像；主体是一张大圆角照片卡，左右两侧露出相邻卡片的边缘，暗示可以横滑；深酒红底让霓虹夜景更跳。底部导航拆成左侧三图标胶囊和右侧独立的「+」新建按钮。",
-    "color": "#4a2433",
     "media": {
       "src": "/media/20261126-ibzjyt.webp",
       "type": "image",
@@ -22,12 +19,15 @@
       "height": 3840,
       "thumb": "/media/20261126-ibzjyt.thumb.webp"
     },
+    "source": "https://www.pinterest.com/pin/607000856072877250/",
+    "note": "把旅行照片做成拼贴故事来分享的社交 App 概念稿（Pinterest 的灵感 + Instagram 的社交）。首页以目的地为单位：衬线大标题「Japan」配日期、高光数和同行好友头像；主体是一张大圆角照片卡，左右两侧露出相邻卡片的边缘，暗示可以横滑；深酒红底让霓虹夜景更跳。底部导航拆成左侧三图标胶囊和右侧独立的「+」新建按钮。",
+    "color": "#4a2433",
     "createdAt": "2026-11-26T00:33:52.351Z"
   },
   {
     "id": "20261125-52y3wc",
     "title": "旅行行程规划 APP 地图与时间轴界面",
-    "category": "interface",
+    "category": "ui",
     "tags": [
       "移动端UI",
       "旅行应用",
@@ -48,12 +48,13 @@
     },
     "note": "东京旅行行程规划 APP 界面设计（Itinerary）。浅灰白极简画布上依次排布：顶部低饱和极简路线地图与实景图钉卡片；中段带立体绿光圆球图标的 AI 贴士胶囊提示条；下方采用左侧数字时间轴（1 / 2）+ 右侧圆角白底行程卡片（图文混排、标签胶囊与多图轮播点）；底部悬浮圆形编辑键与深炭黑「Start my trip」胶囊主按钮，层级清爽、细节精致。",
     "color": "#2AC769",
-    "createdAt": "2026-11-25T08:27:27.933Z"
+    "createdAt": "2026-11-25T08:27:27.933Z",
+    "updatedAt": "2026-11-26T00:35:56.593Z"
   },
   {
     "id": "20261125-o3tuzk",
     "title": "Travel App 蓝橙插画暗黑登录引导页",
-    "category": "interface",
+    "category": "ui",
     "tags": [
       "移动端UI",
       "登录页",
@@ -72,12 +73,13 @@
     },
     "note": "旅行类 APP 引导登录页设计（Travel, simplified.）。上半部分采用大圆角天空蓝卡片承载醒目白色无衬线大标题与扁平矢量旅行插画（橙红行李箱、草帽、起飞客机与云层剪影）及轮播指示点；下半部分切换为沉稳暗黑模式登录表单，搭配深灰胶囊输入框、高对比纯白胶囊主按钮「Continue」与第三方 Google 登录按钮，蓝橙撞色与明暗分区层次鲜明。",
     "color": "#156EC9",
-    "createdAt": "2026-11-25T08:26:36.629Z"
+    "createdAt": "2026-11-25T08:26:36.629Z",
+    "updatedAt": "2026-11-26T00:35:56.593Z"
   },
   {
     "id": "20261125-2eu91c",
     "title": "Crypto App 黑白极简胶囊底部导航",
-    "category": "interface",
+    "category": "ui",
     "tags": [
       "APP导航",
       "胶囊导航",
@@ -97,12 +99,13 @@
     "source": "https://www.xiaohongshu.com/discovery/item/6aaa7b28000000000b0039bd?source=webshare&xhsshare=pc_web&xsec_token=ABNbReIHWhfBE0cbBoFyh8Zs5yjvMdjYu32b4Ad62yfM4=&xsec_source=pc_share",
     "note": "加密钱包类 APP（Crypto App）极简胶囊底部导航设计（来源：小红书 圆点DESIGN）。五项等距线性图标+文字布局（Home / Chart / Swap / Wallet / Security），克制的纯黑白灰配色与细腻柔和投影，将核心高频动作「Swap」置中以深黑高亮，专业克制、视觉无干扰。",
     "color": "#1A1A1A",
-    "createdAt": "2026-11-25T08:24:52.562Z"
+    "createdAt": "2026-11-25T08:24:52.562Z",
+    "updatedAt": "2026-11-26T00:35:56.593Z"
   },
   {
     "id": "20261125-nx0y4z",
     "title": "Finance App 分离式胶囊底部导航",
-    "category": "interface",
+    "category": "ui",
     "tags": [
       "APP导航",
       "胶囊导航",
@@ -122,12 +125,13 @@
     "source": "https://www.xiaohongshu.com/discovery/item/6aaa7b28000000000b0039bd?source=webshare&xhsshare=pc_web&xsec_token=ABNbReIHWhfBE0cbBoFyh8Zs5yjvMdjYu32b4Ad62yfM4=&xsec_source=pc_share",
     "note": "金融类 APP（Finance App）创意分离式胶囊底部导航设计（来源：小红书 圆点DESIGN）。左侧为半透明悬浮胶囊栏，当前选中项展开显示「图标+文字」纯白内胶囊，右侧独立分离出一颗亮紫色圆形「+」快捷操作按钮，兼顾导航清晰度与高频核心动作触发。",
     "color": "#5B3DF5",
-    "createdAt": "2026-11-25T08:24:48.181Z"
+    "createdAt": "2026-11-25T08:24:48.181Z",
+    "updatedAt": "2026-11-26T00:35:56.593Z"
   },
   {
     "id": "20261125-aqvhjh",
     "title": "Workout App 纯图标胶囊底部导航",
-    "category": "interface",
+    "category": "ui",
     "tags": [
       "APP导航",
       "胶囊导航",
@@ -147,12 +151,13 @@
     "source": "https://www.xiaohongshu.com/discovery/item/6aaa7b28000000000b0039bd?source=webshare&xhsshare=pc_web&xsec_token=ABNbReIHWhfBE0cbBoFyh8Zs5yjvMdjYu32b4Ad62yfM4=&xsec_source=pc_share",
     "note": "健身类 APP（Workout App）创意胶囊底部导航设计（来源：小红书 圆点DESIGN）。采用纯图标极简胶囊栏，选中态以纯白内嵌胶囊高亮，中央搭配高饱和克莱因蓝圆形「+」主操作按钮，操作高效直观、运动感利落。",
     "color": "#122FF5",
-    "createdAt": "2026-11-25T08:24:43.887Z"
+    "createdAt": "2026-11-25T08:24:43.887Z",
+    "updatedAt": "2026-11-26T00:35:56.593Z"
   },
   {
     "id": "20261125-bgpnfb",
     "title": "Meditation App 暖橙焦点胶囊底部导航",
-    "category": "interface",
+    "category": "ui",
     "tags": [
       "APP导航",
       "胶囊导航",
@@ -172,7 +177,8 @@
     "source": "https://www.xiaohongshu.com/discovery/item/6aaa7b28000000000b0039bd?source=webshare&xhsshare=pc_web&xsec_token=ABNbReIHWhfBE0cbBoFyh8Zs5yjvMdjYu32b4Ad62yfM4=&xsec_source=pc_share",
     "note": "冥想类 APP（Meditation App）创意胶囊底部导航设计（来源：小红书 圆点DESIGN）。柔和白色悬浮胶囊栏，左右对称放置 Home / Meditate 与 Sleep / Progress 线性图标+文字，中央突出一颗柔和暖橙渐变圆形主操作按钮，氛围平静柔和、焦点明确。",
     "color": "#FF9F43",
-    "createdAt": "2026-11-25T08:24:38.405Z"
+    "createdAt": "2026-11-25T08:24:38.405Z",
+    "updatedAt": "2026-11-26T00:35:56.593Z"
   },
   {
     "id": "20261125-xcm3ro",
