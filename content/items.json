@@ -1,6 +1,35 @@
 [
   {
+    "id": "20261126-yl8zgc",
+    "tags": [
+      "移动端UI",
+      "旅行应用",
+      "暗黑模式",
+      "黑金配色",
+      "卡片堆叠",
+      "引导页",
+      "沉浸式摄影",
+      "轻奢极简",
+      "胶囊导航"
+    ],
+    "title": "Welcome to Saudi 黑金沉浸式文旅 APP 三屏界面",
+    "category": "interface",
+    "source": "https://www.pinterest.com/pin/207658232812087209/",
+    "note": "沙特文旅与 NEOM 投资移动端 APP 三屏界面设计（设计师：@uxbymo）。整体以沙漠暖金 + 曜石黑营造电影级轻奢沉浸感：左屏欢迎页以全屏山脉实景渐隐入暗底搭配玻璃描边胶囊按钮「Get Started」；中屏以金黑渐变背景承载立体堆叠卡片组（「THE LINE」项目实景、暖金跳转圆钮与底部悬浮胶囊导航）；右屏「Magna City」详情页采用日落实景无缝过渡至纯黑文案区，搭配高对比纯白「Invest Now」主按钮，氛围克制高级。",
+    "color": "#C89B54",
+    "media": {
+      "src": "/media/20261126-yl8zgc.jpg",
+      "type": "image",
+      "width": 1080,
+      "height": 720,
+      "thumb": "/media/20261126-yl8zgc.thumb.webp"
+    },
+    "createdAt": "2026-11-26T02:54:02.512Z"
+  },
+  {
     "id": "20261126-p2afwv",
+    "title": "NFT 交易平台移动端双屏界面（引导页 + 暗黑首页）",
+    "category": "interface",
     "tags": [
       "移动端UI",
       "NFT应用",
@@ -12,11 +41,6 @@
       "3D角色",
       "滑动按钮"
     ],
-    "title": "NFT 交易平台移动端双屏界面（引导页 + 暗黑首页）",
-    "category": "interface",
-    "source": "https://www.pinterest.com/pin/837106649513120415/",
-    "note": "NFT 交易与收藏 APP 移动端双屏界面设计（浅色引导页 + 暗黑首页）。左侧引导页以大圆角 3D 潮流刺猬角色卡片轮播搭配底部滑动解锁式胶囊按钮「Get Started >>>」；右侧暗黑模式首页采用胶囊分类标签（Recent / Trending / Popular）、大圆角 3D 藏品卡片叠加底部毛玻璃倒计时/报价条与圆形收藏/跳转按钮，底部悬浮毛玻璃胶囊导航栏，潮流感与交互细节兼备。",
-    "color": "#1C1C1E",
     "media": {
       "src": "/media/20261126-p2afwv.jpg",
       "type": "image",
@@ -24,6 +48,9 @@
       "height": 1440,
       "thumb": "/media/20261126-p2afwv.thumb.webp"
     },
+    "source": "https://www.pinterest.com/pin/837106649513120415/",
+    "note": "NFT 交易与收藏 APP 移动端双屏界面设计（浅色引导页 + 暗黑首页）。左侧引导页以大圆角 3D 潮流刺猬角色卡片轮播搭配底部滑动解锁式胶囊按钮「Get Started >>>」；右侧暗黑模式首页采用胶囊分类标签（Recent / Trending / Popular）、大圆角 3D 藏品卡片叠加底部毛玻璃倒计时/报价条与圆形收藏/跳转按钮，底部悬浮毛玻璃胶囊导航栏，潮流感与交互细节兼备。",
+    "color": "#1C1C1E",
     "createdAt": "2026-11-26T02:50:58.986Z"
   },
   {
