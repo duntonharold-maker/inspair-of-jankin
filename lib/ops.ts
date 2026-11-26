@@ -573,7 +573,7 @@ export async function arrangeSet(spec: ArrangeSpec, { collect = false } = {}) {
  */
 export async function moveMediaToBlob({ dryRun = true } = {}) {
   const store = getStore();
-  if (store.mode !== "github" || !blobOn()) throw new Error("Needs the GitHub store and a connected Blob store (BLOB_READ_WRITE_TOKEN).");
+  if (store.mode !== "github" || !blobOn()) throw new Error("Needs the GitHub store and a connected Blob store (BLOB_STORE_ID or BLOB_READ_WRITE_TOKEN).");
   const paths = await store.repoMedia();
   if (dryRun) return { applied: false, files: paths.length };
   if (!paths.length) return { applied: true, files: 0 };

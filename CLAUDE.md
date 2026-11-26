@@ -16,7 +16,7 @@ npm run check:scene  # 检查首页卡片场景：任何屏幕比例下卡片都
 ## 目录
 
 - `content/site.json`、`content/items.json`：站点配置和所有条目。内容改动走 MCP 或直接改这两个文件，不要在组件里写死内容。
-- 媒体文件：连上 Vercel Blob（环境变量 `BLOB_READ_WRITE_TOKEN`）后，新文件存进 Blob（`lib/blob.ts`），仓库只存文字；条目里的路径仍是 `/media/<文件名>`，`public/media/` 里没有的文件由 `next.config.ts` 的 fallback 改写交给 `app/api/media` 从 Blob 读出（同样的安全头和永久缓存）。没有 Blob 时（本地开发）照旧写进 `public/media/`。MCP 的 `move_media_to_blob` 可把仓库里剩下的旧文件一次搬进 Blob。`public/media/`：仓库里的媒体文件，文件名由 MCP 生成，不要手动改名。宽于 800 px 的静态图片收录时会另存一张 `<文件名>.thumb.webp`（`media.thumb`），卡片、分类缩略图和场景贴图用它，详情里看原图。
+- 媒体文件：连上 Vercel Blob（环境变量 `BLOB_STORE_ID`，部署里用 Vercel 的 OIDC 自动登录；也认 `BLOB_READ_WRITE_TOKEN`）后，新文件存进 Blob（`lib/blob.ts`），仓库只存文字；条目里的路径仍是 `/media/<文件名>`，`public/media/` 里没有的文件由 `next.config.ts` 的 fallback 改写交给 `app/api/media` 从 Blob 读出（同样的安全头和永久缓存）。没有 Blob 时（本地开发）照旧写进 `public/media/`。MCP 的 `move_media_to_blob` 可把仓库里剩下的旧文件一次搬进 Blob。`public/media/`：仓库里的媒体文件，文件名由 MCP 生成，不要手动改名。宽于 800 px 的静态图片收录时会另存一张 `<文件名>.thumb.webp`（`media.thumb`），卡片、分类缩略图和场景贴图用它，详情里看原图。
 - 一组图（`Item.gallery`）：一个设计有好几张图（预览图加细节图）时是一个条目，`media` 是封面，`gallery` 按顺序放其余的（`picturesOf(item)` 取全部）。卡片、分类、场景只用封面，卡片角上显示张数；详情（`ItemDetail.tsx`）在图上左右切换：两侧箭头、下方缩略图条、「n / N」、触屏左右滑；键盘 ← → 先在组内翻，到头才交给弹窗切换作品（window 上的捕获监听先于弹窗）。右栏的格式、尺寸、原文件跟着当前这张。MCP：`add_item` 的 `more_media_urls`、`group_items`（合并，第一个作封面）、`arrange_group`（排序、换封面、拆出、删图）。
 - `components/story/`：首页的滚动故事。`timeline.ts` 定义每一幕占多少屏和卡片场景各阶段的起止，`choreo.ts` 算出每张卡片在任一滚动位置的位置，`scene.ts` 用 three.js 把它们画出来（悬停、指针扰动、拖尾），`rays.ts` 把画好的场景沿放射方向拉出分光的拖影（屏幕边缘、圆环周围、鼠标划过的地方），`screens/` 里是每一幕的 DOM。
 - `lib/`：存储（GitHub / 本地）、媒体处理、MCP 工具、鉴权。

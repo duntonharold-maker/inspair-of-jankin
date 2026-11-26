@@ -1,13 +1,13 @@
 /**
- * Media files in Vercel Blob instead of the repository, once the project has a Blob store connected
- * (BLOB_READ_WRITE_TOKEN). The repository then only holds text; items keep their /media/<name> paths, and
+ * Media files in Vercel Blob instead of the repository, once the project has a Blob store connected:
+ * BLOB_STORE_ID (deployments then sign in with Vercel's OIDC token, no key needed) or BLOB_READ_WRITE_TOKEN. The repository then only holds text; items keep their /media/<name> paths, and
  * /media/<name> requests that aren't a file in public/ (older media stays there) are answered from Blob by
  * app/api/media (a fallback rewrite in next.config.ts), so the site, the scene and SVG sandboxing work the
  * same whichever place a file lives in.
  */
 import { del, get, put } from "@vercel/blob";
 
-export const blobOn = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+export const blobOn = () => Boolean(process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN);
 
 /** public/media/x.webp → media/x.webp, the file's name in the store. */
 const nameOf = (repoPath: string) => repoPath.replace(/^public\//, "");
