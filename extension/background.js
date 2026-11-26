@@ -11,7 +11,8 @@ const LIMIT = 4 * 1024 * 1024;
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   await chrome.contextMenus.removeAll();
-  chrome.contextMenus.create({ id: MENU, title: "收藏到 inspair", contexts: ["image"] });
+  // everywhere, not only on <img>: many sites cover their pictures with a layer or paint them as backgrounds
+  chrome.contextMenus.create({ id: MENU, title: "收藏到 inspair", contexts: ["image", "page", "link", "frame", "video"] });
   const { key } = await chrome.storage.local.get("key");
   if (reason === "install" && !key) chrome.runtime.openOptionsPage();
 });
@@ -20,22 +21,29 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());
 
-/** Collect the picture a context-menu click was on. */
+/** Collect the picture a context-menu click was on, or the one found under the pointer. */
 async function collect(info, tab) {
   const tabId = tab?.id;
-  const shown = info.srcUrl;
+  const frameId = info.frameId ?? 0;
   const { site = DEFAULT_SITE, key = "" } = await chrome.storage.local.get(["site", "key"]);
   if (!key) {
     await say(tabId, { state: "error", text: "还没填密钥", sub: "已打开插件设置，填好网站和密钥再试。" });
     chrome.runtime.openOptionsPage();
     return;
   }
+  // the browser saw an image: take it; otherwise look under the pointer (covered pictures, backgrounds)
+  let shown = info.mediaType === "image" && info.srcUrl ? info.srcUrl : null;
+  let page = shown ? await describe(tabId, frameId, shown) : await pickAt(tabId, frameId);
+  if (!shown) shown = page.src;
+  if (!shown) {
+    await say(tabId, { state: "error", text: "这里没找到图片", sub: "在图片正上方右键再试；视频和画在 canvas 里的图暂时采不了。" });
+    return;
+  }
   await say(tabId, { state: "busy", text: "正在收藏…", thumb: shown });
   try {
-    const page = await describe(tabId, info.frameId ?? 0, shown);
     const pageUrl = info.pageUrl || tab?.url || "";
     const candidates = largest(page.best || shown);
-    const picture = await download(candidates, pageUrl, tabId, info.frameId ?? 0);
+    const picture = await download(candidates, pageUrl, tabId, frameId);
     const form = new FormData();
     if (picture) form.append("file", picture.blob, fileName(picture.url, picture.blob.type));
     const address = picture?.url || candidates[0];
@@ -58,6 +66,81 @@ async function collect(info, tab) {
 }
 // for tests: the same entry point without the menu
 self.collect = collect;
+
+/** The picture under the last right-click, found in the page (picker.js remembered where that was). */
+async function pickAt(tabId, frameId) {
+  if (tabId == null) return {};
+  try {
+    const [{ result }] = await chrome.scripting.executeScript({ target: { tabId, frameIds: [frameId] }, func: findPicture });
+    return result || {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Runs in the page: every picture at the right-clicked spot, through any layers laid over it, topmost first:
+ * <img> (also ones that ignore the pointer), a video's poster, a CSS background, inside open shadow roots too.
+ * Tiny ones (icons, avatars under 40px) only count when nothing bigger is there.
+ */
+function findPicture() {
+  const point = window.__inspairPoint;
+  if (!point || Date.now() - point.at > 60000) return {};
+  const { x, y } = point;
+  const abs = (u) => {
+    try {
+      return new URL(u, location.href).href;
+    } catch {
+      return u;
+    }
+  };
+  const background = (el) => {
+    const m = /url\(\s*["']?([^"')]+)["']?\s*\)/.exec(getComputedStyle(el).backgroundImage || "");
+    return m && !m[1].startsWith("data:image/svg") ? abs(m[1]) : null;
+  };
+  const inside = (r) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+  const stack = [];
+  const walk = (root) => {
+    for (const el of root.elementsFromPoint(x, y)) {
+      if (stack.includes(el)) continue;
+      stack.push(el);
+      if (el.shadowRoot) walk(el.shadowRoot);
+    }
+  };
+  walk(document);
+  const found = [];
+  const add = (el, src, depth) => {
+    if (!src || found.some((f) => f.el === el)) return;
+    const r = el.getBoundingClientRect();
+    found.push({ el, src, depth, big: r.width >= 40 && r.height >= 40, area: r.width * r.height });
+  };
+  stack.forEach((el, depth) => {
+    if (el instanceof HTMLImageElement) add(el, el.currentSrc || el.src, depth);
+    else if (el instanceof HTMLVideoElement && el.poster) add(el, abs(el.poster), depth);
+    else add(el, background(el), depth);
+  });
+  // pictures set to ignore the pointer don't show up in the stack: find them by their box
+  for (const img of document.images) {
+    if (!inside(img.getBoundingClientRect())) continue;
+    const holder = stack.findIndex((el) => el.contains(img));
+    add(img, img.currentSrc || img.src, holder === -1 ? stack.length : holder + 0.5);
+  }
+  found.sort((a, b) => b.big - a.big || a.depth - b.depth || b.area - a.area);
+  const pick = found[0];
+  if (!pick) return { title: document.title };
+  let best = null;
+  let bestSize = 0;
+  if (pick.el instanceof HTMLImageElement) {
+    const sets = [pick.el.getAttribute("srcset"), ...[...(pick.el.closest("picture")?.querySelectorAll("source") || [])].map((s) => s.getAttribute("srcset"))];
+    for (const set of sets)
+      for (const part of (set || "").split(/,\s+/)) {
+        const [url, d = ""] = part.trim().split(/\s+/);
+        const size = d.endsWith("w") ? parseFloat(d) : d.endsWith("x") ? parseFloat(d) * 1000 : 1;
+        if (url && size > bestSize) (bestSize = size), (best = abs(url));
+      }
+  }
+  return { src: pick.src, best, alt: pick.el.alt || pick.el.title || pick.el.getAttribute("aria-label") || "", title: document.title };
+}
 
 /** The picture's description, its largest source (srcset, <picture>) and the page title, read in the page. */
 async function describe(tabId, frameId, src) {
@@ -115,6 +198,13 @@ function largest(url) {
     } else if (u.hostname === "cdn.dribbble.com") {
       u.search = "";
       out.push(u.href);
+    } else if (u.hostname.endsWith("huaban.com")) {
+      // 花瓣: <key>_fw658webp, _sq236 … are sized copies of <key>
+      const m = u.pathname.match(/^\/([^/_]+)_[a-z]{2}\d+/);
+      if (m) out.push(`${u.origin}/${m[1]}`);
+    } else if (u.hostname.endsWith("xhscdn.com") && u.href.includes("!")) {
+      // 小红书: …/<key>!nd_dft_wlteh_webp_3 is a processed copy; without the suffix, the upload
+      out.push(u.href.split("!")[0]);
     }
   } catch {
     /* not a URL we know how to enlarge */
