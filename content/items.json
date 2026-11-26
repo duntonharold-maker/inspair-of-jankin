@@ -16,17 +16,26 @@
     "inbox": true,
     "imageUrl": "https://pbs.twimg.com/media/HXm8EsAWQAAqwuG?format=jpg&name=orig",
     "createdAt": "2026-11-26T07:32:00.758Z",
-    "gallery": [
-      {
-        "src": "/media/20261126-57r8gw.jpg",
-        "type": "image",
-        "width": 1126,
-        "height": 2004,
-        "thumb": "/media/20261126-57r8gw.thumb.webp",
-        "imageUrl": "https://pbs.twimg.com/media/HXm8EsGWcAAu8AH?format=jpg&name=orig"
-      }
-    ],
-    "updatedAt": "2026-11-26T07:35:55.623Z"
+    "updatedAt": "2026-11-26T07:37:21.051Z"
+  },
+  {
+    "id": "20261126-ksuc8q",
+    "title": "Image",
+    "category": "ui",
+    "tags": [],
+    "media": {
+      "src": "/media/20261126-57r8gw.jpg",
+      "type": "image",
+      "width": 1126,
+      "height": 2004,
+      "thumb": "/media/20261126-57r8gw.thumb.webp"
+    },
+    "source": "https://x.com/morrre_dsgn/status/2123935510276288717/photo/1",
+    "note": "采集自「morrre_dsgn on X: \"Backgrounds that take your design to the next level https://t.co/2rqbWsr7Cu\" / X」\n图片说明：Image",
+    "inbox": true,
+    "createdAt": "2026-11-26T07:37:21.051Z",
+    "updatedAt": "2026-11-26T07:35:55.623Z",
+    "imageUrl": "https://pbs.twimg.com/media/HXm8EsGWcAAu8AH?format=jpg&name=orig"
   },
   {
     "id": "20261126-gwc1fz",
