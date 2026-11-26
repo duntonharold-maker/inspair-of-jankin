@@ -1,6 +1,32 @@
 [
   {
+    "id": "20261126-ftxspl",
+    "tags": [
+      "网页设计",
+      "落地页",
+      "扇形卡片",
+      "艺术平台",
+      "极简现代",
+      "大标题"
+    ],
+    "title": "Pallet Ross 艺术平台官网首屏",
+    "category": "interface",
+    "source": "https://www.pinterest.com/pin/1088674909960027162/",
+    "note": "Sam Halpert 为 Awsmd 设计的作品展示平台首屏（Dribbble 上原本是一段网站动画，这里是静帧）。居中两行大标题「A place to display your masterpiece.」，下面一排作品卡片呈扇形展开，卡片上浮着 @用户名 气泡，暗示艺术家和买家在这里相遇；页面只有灰白，颜色全部交给作品。可以和库里的「Fan Cards 扇形展开弹簧卡片动效」对照着看。",
+    "color": "#2f5bff",
+    "media": {
+      "src": "/media/20261126-ftxspl.png",
+      "type": "image",
+      "width": 1600,
+      "height": 1200,
+      "thumb": "/media/20261126-ftxspl.thumb.webp"
+    },
+    "createdAt": "2026-11-26T00:46:14.030Z"
+  },
+  {
     "id": "20261126-2otuvx",
+    "title": "Wish 视频 App 宣传页",
+    "category": "interface",
     "tags": [
       "网页设计",
       "落地页",
@@ -9,17 +35,15 @@
       "视频应用",
       "黑白灰"
     ],
-    "title": "Wish 视频 App 宣传页",
-    "category": "interface",
-    "source": "https://www.pinterest.com/pin/422845852533081467/",
-    "note": "视频祝福 App 的宣传页。手机样机压在一整面人像缩略图网格正中，网格向四周渐隐、越靠边越淡，焦点自然落在手机里的主视频上；上方是粗体宽字标题「CREATE WISH VIDEO WITH LOVE」，下方一行小字收尾。整页灰白，只有照片带颜色。",
-    "color": "#2c4a7c",
     "media": {
       "src": "/media/20261126-2otuvx.jpg",
       "type": "image",
       "width": 800,
       "height": 600
     },
+    "source": "https://www.pinterest.com/pin/422845852533081467/",
+    "note": "视频祝福 App 的宣传页。手机样机压在一整面人像缩略图网格正中，网格向四周渐隐、越靠边越淡，焦点自然落在手机里的主视频上；上方是粗体宽字标题「CREATE WISH VIDEO WITH LOVE」，下方一行小字收尾。整页灰白，只有照片带颜色。",
+    "color": "#2c4a7c",
     "createdAt": "2026-11-26T00:46:10.469Z"
   },
   {
