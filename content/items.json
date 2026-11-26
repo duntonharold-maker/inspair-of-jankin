@@ -1,6 +1,33 @@
 [
   {
+    "id": "20261126-xr17rz",
+    "tags": [
+      "移动端UI",
+      "个人主页",
+      "资料卡",
+      "卡片设计",
+      "极简现代",
+      "3D头像",
+      "数据展示"
+    ],
+    "title": "Noah Thompson 个人资料卡",
+    "category": "ui",
+    "source": "https://www.pinterest.com/pin/1088674909957850077/",
+    "note": "社交产品的个人资料卡。天空照片做头图，「Follow +」胶囊按钮浮在头图右上角；3D 卡通头像压在头图和白底的分界线上，旁边一条彩色刻度的经验条；名字和一句话简介之后，用三等分格子放点赞、帖子、浏览三个数字，最底一排是社交平台图标。层次全靠留白和细分隔线，没有多余装饰。",
+    "color": "#b9d3ea",
+    "media": {
+      "src": "/media/20261126-xr17rz.webp",
+      "type": "image",
+      "width": 2560,
+      "height": 1920,
+      "thumb": "/media/20261126-xr17rz.thumb.webp"
+    },
+    "createdAt": "2026-11-26T00:46:18.573Z"
+  },
+  {
     "id": "20261126-ftxspl",
+    "title": "Pallet Ross 艺术平台官网首屏",
+    "category": "interface",
     "tags": [
       "网页设计",
       "落地页",
@@ -9,11 +36,6 @@
       "极简现代",
       "大标题"
     ],
-    "title": "Pallet Ross 艺术平台官网首屏",
-    "category": "interface",
-    "source": "https://www.pinterest.com/pin/1088674909960027162/",
-    "note": "Sam Halpert 为 Awsmd 设计的作品展示平台首屏（Dribbble 上原本是一段网站动画，这里是静帧）。居中两行大标题「A place to display your masterpiece.」，下面一排作品卡片呈扇形展开，卡片上浮着 @用户名 气泡，暗示艺术家和买家在这里相遇；页面只有灰白，颜色全部交给作品。可以和库里的「Fan Cards 扇形展开弹簧卡片动效」对照着看。",
-    "color": "#2f5bff",
     "media": {
       "src": "/media/20261126-ftxspl.png",
       "type": "image",
@@ -21,6 +43,9 @@
       "height": 1200,
       "thumb": "/media/20261126-ftxspl.thumb.webp"
     },
+    "source": "https://www.pinterest.com/pin/1088674909960027162/",
+    "note": "Sam Halpert 为 Awsmd 设计的作品展示平台首屏（Dribbble 上原本是一段网站动画，这里是静帧）。居中两行大标题「A place to display your masterpiece.」，下面一排作品卡片呈扇形展开，卡片上浮着 @用户名 气泡，暗示艺术家和买家在这里相遇；页面只有灰白，颜色全部交给作品。可以和库里的「Fan Cards 扇形展开弹簧卡片动效」对照着看。",
+    "color": "#2f5bff",
     "createdAt": "2026-11-26T00:46:14.030Z"
   },
   {
