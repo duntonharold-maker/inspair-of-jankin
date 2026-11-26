@@ -1,6 +1,32 @@
 [
   {
+    "id": "20261126-jzqu2y",
+    "tags": [
+      "组件设计",
+      "进度条",
+      "数据展示",
+      "暗黑模式",
+      "黑白极简",
+      "仪表盘"
+    ],
+    "title": "Progress Indicator 竖条进度组件",
+    "category": "ui",
+    "source": "https://www.pinterest.com/pin/1088674909957766796/",
+    "note": "Joshua Guo 的 Interfaces Design System 里的进度组件。黑底卡片：标题和一句「比计划提前三天」的说明，下面大号「66%」配一个描边小胶囊「↗ 30%」和「vs. the last period」做环比；进度不用常见的连续进度条，而是一排等宽竖条，已完成的亮白、未完成的暗灰，读数一眼可见，也更有仪器感。",
+    "color": "#0b0b0b",
+    "media": {
+      "src": "/media/20261126-jzqu2y.jpg",
+      "type": "image",
+      "width": 1200,
+      "height": 1200,
+      "thumb": "/media/20261126-jzqu2y.thumb.webp"
+    },
+    "createdAt": "2026-11-26T00:46:22.268Z"
+  },
+  {
     "id": "20261126-xr17rz",
+    "title": "Noah Thompson 个人资料卡",
+    "category": "ui",
     "tags": [
       "移动端UI",
       "个人主页",
@@ -10,11 +36,6 @@
       "3D头像",
       "数据展示"
     ],
-    "title": "Noah Thompson 个人资料卡",
-    "category": "ui",
-    "source": "https://www.pinterest.com/pin/1088674909957850077/",
-    "note": "社交产品的个人资料卡。天空照片做头图，「Follow +」胶囊按钮浮在头图右上角；3D 卡通头像压在头图和白底的分界线上，旁边一条彩色刻度的经验条；名字和一句话简介之后，用三等分格子放点赞、帖子、浏览三个数字，最底一排是社交平台图标。层次全靠留白和细分隔线，没有多余装饰。",
-    "color": "#b9d3ea",
     "media": {
       "src": "/media/20261126-xr17rz.webp",
       "type": "image",
@@ -22,6 +43,9 @@
       "height": 1920,
       "thumb": "/media/20261126-xr17rz.thumb.webp"
     },
+    "source": "https://www.pinterest.com/pin/1088674909957850077/",
+    "note": "社交产品的个人资料卡。天空照片做头图，「Follow +」胶囊按钮浮在头图右上角；3D 卡通头像压在头图和白底的分界线上，旁边一条彩色刻度的经验条；名字和一句话简介之后，用三等分格子放点赞、帖子、浏览三个数字，最底一排是社交平台图标。层次全靠留白和细分隔线，没有多余装饰。",
+    "color": "#b9d3ea",
     "createdAt": "2026-11-26T00:46:18.573Z"
   },
   {
