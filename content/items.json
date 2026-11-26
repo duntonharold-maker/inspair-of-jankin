@@ -1,5 +1,28 @@
 [
   {
+    "id": "20261126-2otuvx",
+    "tags": [
+      "网页设计",
+      "落地页",
+      "手机样机",
+      "照片网格",
+      "视频应用",
+      "黑白灰"
+    ],
+    "title": "Wish 视频 App 宣传页",
+    "category": "interface",
+    "source": "https://www.pinterest.com/pin/422845852533081467/",
+    "note": "视频祝福 App 的宣传页。手机样机压在一整面人像缩略图网格正中，网格向四周渐隐、越靠边越淡，焦点自然落在手机里的主视频上；上方是粗体宽字标题「CREATE WISH VIDEO WITH LOVE」，下方一行小字收尾。整页灰白，只有照片带颜色。",
+    "color": "#2c4a7c",
+    "media": {
+      "src": "/media/20261126-2otuvx.jpg",
+      "type": "image",
+      "width": 800,
+      "height": 600
+    },
+    "createdAt": "2026-11-26T00:46:10.469Z"
+  },
+  {
     "id": "20261126-ibzjyt",
     "title": "Collage 旅行拼贴相册 App 首页",
     "category": "ui",
