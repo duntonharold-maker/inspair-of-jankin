@@ -98,13 +98,14 @@
       <button id="bar-cancel" class="pill-btn" type="button">取消</button>
       <button id="bar-group" class="btn" type="button">合成一组</button>
     </div>
-    <p id="toast" class="toast" role="status" hidden></p>
+    <div id="toast" class="toast" role="status" hidden><span id="toast-text"></span><button id="toast-undo" class="toast-undo" type="button" hidden>撤销</button></div>
 
     <template id="tile">
       <article class="tile">
         <div class="mat">
           <button class="pic" type="button"><img alt="" decoding="async" draggable="false" /></button>
           <span class="dot" hidden></span>
+          <span class="drop-hint" aria-hidden="true">合成一组</span>
           <div class="info">
             <p class="info-title"></p>
             <a class="src" target="_blank" rel="noopener noreferrer"><span></span><!-- arrow-up-right --><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg></a>
@@ -134,6 +135,7 @@
               <span class="fthumbs"></span>
               <span class="ffoot"><span class="fcount"></span><span class="fcat"><span class="dot" hidden></span><span class="fcat-text"></span></span></span>
             </span>
+            <span class="drop-hint" aria-hidden="true">放进这一组</span>
             <span class="fgo icon-btn" aria-hidden="true">
               <!-- arrow-up-right -->
               <svg viewBox="0 0 24 24"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg>

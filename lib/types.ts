@@ -19,6 +19,19 @@ export const MediaSchema = z.object({
   thumb: z.string().optional(),
   /** A picture of a set (Item.gallery) collected from a web page: its own address there, to spot it twice. */
   imageUrl: z.string().optional(),
+  /** What this picture was on its own before it joined a set (title, note, category…), so taking it out of
+   * the set gives it back as it was. */
+  origin: z
+    .object({
+      title: z.string(),
+      category: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      note: z.string().optional(),
+      source: z.string().optional(),
+      color: z.string().optional(),
+      createdAt: z.string().optional(),
+    })
+    .optional(),
 });
 export type Media = z.infer<typeof MediaSchema>;
 

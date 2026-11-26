@@ -1,9 +1,10 @@
 /** Operations shared by the MCP tools and the upload endpoint. */
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
+import { createUploadToken, readUploadToken } from "./auth";
 import { fetchMedia, ingest, type Ingested } from "./media";
 import { MEDIA_DIR, getStore, type Snapshot } from "./store";
-import { picturesOf, type Item, type Media, type Site } from "./types";
+import { ItemSchema as ItemSchemaStrict, picturesOf, type Item, type Media, type Site } from "./types";
 
 /* ------------------------------------------------------------- input schemas */
 
@@ -213,6 +214,27 @@ export const REMARK = "我的想法：";
 
 const clip = (s: string | undefined, n: number) => (s ? s.replace(/\s+/g, " ").trim().slice(0, n) : "");
 
+/** A collected picture's own title, note, category and source (also kept on it when it joins a set). */
+function collectedFields(snap: Snapshot, from: Collected, now: Date): Origin {
+  const note = [
+    from.remark && `${REMARK}${clip(from.remark, 300)}`,
+    from.pageTitle && `采集自「${clip(from.pageTitle, 200)}」`,
+    from.alt && `图片说明：${clip(from.alt, 300)}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const source = from.pageUrl || from.imageUrl;
+  // a guess made while collecting; the picture stays in the inbox until it is filed
+  const category = from.category && snap.site.categories.some((c) => c.id === from.category) ? from.category : undefined;
+  return {
+    title: clip(from.alt, 80) || clip(from.pageTitle, 80) || "未命名",
+    ...(category ? { category } : {}),
+    ...(note ? { note } : {}),
+    ...(source ? { source } : {}),
+    createdAt: now.toISOString(),
+  };
+}
+
 /**
  * Puts a picture collected from a web page into the inbox: stored and committed, but kept off the site
  * until an agent looks at it and gives it a title, category, tags and a note (organize_items). The same
@@ -231,9 +253,10 @@ export async function collectItem(media: Ingested, from: Collected) {
     if (set) {
       const stored = mediaFiles(extraPath(set.id, media.ext), media);
       const line = from.remark && `${REMARK}${clip(from.remark, 300)}`;
+      const own = collectedFields(snap, from, now);
       const next: Item = {
         ...set,
-        gallery: [...(set.gallery ?? []), { ...stored.media, ...(from.imageUrl ? { imageUrl: from.imageUrl } : {}) }],
+        gallery: [...(set.gallery ?? []), { ...stored.media, ...(from.imageUrl ? { imageUrl: from.imageUrl } : {}), origin: own }],
         ...(line && !set.note?.split("\n").includes(line) ? { note: [line, set.note].filter(Boolean).join("\n") } : {}),
         updatedAt: now.toISOString(),
       };
@@ -247,26 +270,16 @@ export async function collectItem(media: Ingested, from: Collected) {
     let id = newId(now);
     while (snap.items.some((i) => i.id === id)) id = newId(now);
     const stored = mediaFiles(mediaPath(id, media.ext), media);
-    const title = clip(from.alt, 80) || clip(from.pageTitle, 80) || "未命名";
-    const note = [
-      from.remark && `${REMARK}${clip(from.remark, 300)}`,
-      from.pageTitle && `采集自「${clip(from.pageTitle, 200)}」`,
-      from.alt && `图片说明：${clip(from.alt, 300)}`,
-    ]
-      .filter(Boolean)
-      .join("\n");
+    const own = collectedFields(snap, from, now);
+    const title = own.title;
     const item = {
       id,
-      title,
-      // a guess made while collecting; the picture stays in the inbox until it is filed
-      category: from.category && snap.site.categories.some((c) => c.id === from.category) ? from.category : "",
+      ...own,
+      category: own.category ?? "",
       tags: [],
       media: stored.media,
-      ...(from.pageUrl || from.imageUrl ? { source: from.pageUrl || from.imageUrl } : {}),
-      ...(note ? { note } : {}),
       ...(from.imageUrl ? { imageUrl: from.imageUrl } : {}),
       inbox: true,
-      createdAt: now.toISOString(),
     } as Item;
     return {
       items: [item, ...snap.items],
@@ -314,6 +327,67 @@ export async function discardCollected(ids: string[]) {
 
 /* ------------------------------------------------------------------- sets */
 
+type Origin = NonNullable<Media["origin"]>;
+/** An item's own fields, kept on its picture when it joins a set. */
+function originOf(item: Item): Origin {
+  return {
+    title: item.title,
+    ...(item.category ? { category: item.category } : {}),
+    ...(item.tags.length ? { tags: item.tags } : {}),
+    ...(item.note ? { note: item.note } : {}),
+    ...(item.source ? { source: item.source } : {}),
+    ...(item.color ? { color: item.color } : {}),
+    createdAt: item.createdAt,
+  };
+}
+
+/** The same item gives the same print however its keys were ordered (it is compared after a round trip
+ * through the stored JSON). */
+const canonical = (v: unknown): unknown =>
+  Array.isArray(v)
+    ? v.map(canonical)
+    : v && typeof v === "object"
+      ? Object.fromEntries(Object.keys(v).filter((k) => (v as Record<string, unknown>)[k] !== undefined).sort().map((k) => [k, canonical((v as Record<string, unknown>)[k])]))
+      : v;
+const fingerprint = (item: Item) => createHash("sha256").update(JSON.stringify(canonical(item))).digest("base64url").slice(0, 16);
+
+/**
+ * A signed way back from a change made on the extension's inbox page: the items as they were, and the
+ * items the change made (by fingerprint, so an undo after further changes is refused). Valid 15 minutes.
+ */
+function undoToken(before: Item[], after: Item[]) {
+  return createUploadToken({ undo: true, restore: before, expect: after.map((i) => [i.id, fingerprint(i)]) }, 15 * 60);
+}
+
+/** Puts back what an undo token holds (inbox pictures only, as the token was only handed out for those). */
+export async function undoCollected(token: string) {
+  let payload: { undo?: boolean; restore?: Item[]; expect?: [string, string][] };
+  try {
+    payload = readUploadToken(token) as typeof payload;
+  } catch {
+    throw new Error("撤销已经过期了。");
+  }
+  if (!payload?.undo || !payload.restore || !payload.expect) throw new Error("撤销不了。");
+  const restore = payload.restore.map((i) => ItemSchemaStrict.parse(i));
+  const store = getStore();
+  const { result } = await store.mutate((snap) => {
+    for (const [id, print] of payload.expect!) {
+      const now = snap.items.find((i) => i.id === id);
+      if (!now || fingerprint(now) !== print) throw new Error("这之后又改动过，撤销不了。");
+    }
+    const gone = new Set(payload.expect!.map(([id]) => id));
+    const left = snap.items.filter((i) => !gone.has(i.id));
+    if (restore.some((r) => !r.inbox || left.some((i) => i.id === r.id))) throw new Error("撤销不了。");
+    const items = [...restore, ...left];
+    return {
+      items,
+      message: `inspair: collect undo (${restore.map((i) => i.id).join(", ")})`,
+      result: { restored: restore.map((i) => i.id), inbox: items.filter((i) => i.inbox).length },
+    };
+  });
+  return result;
+}
+
 /**
  * Works out a set made of several items: the first one keeps its title, category, notes and the rest; the
  * pictures of the others (their covers, then their own sets) follow its pictures in the order given, and
@@ -334,15 +408,19 @@ export function planGroup(snap: Snapshot, ids: string[]) {
   const notes = [...lines.filter((l) => l.startsWith(REMARK)), ...lines.filter((l) => !l.startsWith(REMARK))];
   // an inbox cover without a category takes the one picked for another picture of the set
   const category = cover.category || (cover.inbox ? parts.find((p) => p.category)?.category : undefined) || cover.category;
+  // each item's cover remembers the item (and a joining cover brings the address it was collected from),
+  // so taking it out of the set later gives it back as it was
+  const all = parts.flatMap((p) =>
+    picturesOf(p).map((m, k) =>
+      k ? m : { ...m, ...(p !== cover && p.imageUrl ? { imageUrl: p.imageUrl } : {}), origin: m.origin ?? originOf(p) },
+    ),
+  );
   const set: Item = {
     ...cover,
     category,
     tags: cleanTags(parts.flatMap((p) => p.tags)),
-    gallery: parts.flatMap(picturesOf).slice(1).map((m, k) => {
-      // a cover joining another set brings the address it was collected from
-      const from = k + 1 < picturesOf(cover).length ? undefined : rest.find((r) => r.media === m)?.imageUrl;
-      return from ? { ...m, imageUrl: from } : m;
-    }),
+    media: all[0],
+    gallery: all.slice(1),
     ...(cover.inbox && notes.length ? { note: notes.join("\n") } : {}),
     updatedAt: new Date().toISOString(),
   };
@@ -352,6 +430,7 @@ export function planGroup(snap: Snapshot, ids: string[]) {
   return {
     items: snap.items.filter((i) => !rest.includes(i)).map((i) => (i === cover ? set : i)),
     set,
+    parts,
     gone: rest.map((r) => r.id),
     warnings,
   };
@@ -375,7 +454,12 @@ export async function groupItems(ids: string[], { dryRun = false, collect = fals
     return {
       items: plan.items,
       message: `inspair: ${collect ? "collect " : ""}group ${ids.length} items into "${plan.set.title}" (${plan.set.id})`,
-      result: { applied: true, ...describe(plan), inbox: plan.items.filter((i) => i.inbox).length },
+      result: {
+        applied: true,
+        ...describe(plan),
+        inbox: plan.items.filter((i) => i.inbox).length,
+        ...(collect ? { undo: undoToken(plan.parts, [plan.set]) } : {}),
+      },
     };
   });
   return { ...result, commit };
@@ -390,7 +474,7 @@ export const ArrangeInput = z.object({
   split: z
     .array(z.number().int().min(0))
     .optional()
-    .describe("Positions of pictures to take out of the set, each becoming an item of its own with the set's title, category and tags"),
+    .describe("Positions of pictures to take out of the set, each becoming an item of its own: a picture that was an item before it joined gets its own title, note and category back, any other takes the set's"),
 }).strict();
 export type ArrangeSpec = z.infer<typeof ArrangeInput>;
 
@@ -420,14 +504,49 @@ export async function arrangeSet(spec: ArrangeSpec, { collect = false } = {}) {
     const restWithUrls = gallery.map((m) => (m === pics[0] && set.imageUrl ? { ...m, imageUrl: set.imageUrl } : m));
     if (restWithUrls.length) next.gallery = restWithUrls;
     else delete next.gallery;
+    const valid = new Set(snap.site.categories.map((c) => c.id));
+    const taken = new Set(snap.items.map((i) => i.id));
     const made: Item[] = split.map((k) => {
       let id = newId(now);
-      while (snap.items.some((i) => i.id === id)) id = newId(now);
-      const { imageUrl, ...media } = pics[k];
+      while (taken.has(id)) id = newId(now);
+      taken.add(id);
+      const { imageUrl, origin, ...media } = pics[k];
       const url = k === 0 ? set.imageUrl : imageUrl;
-      const { gallery: _g, imageUrl: _u, featured: _f, ...fields } = set;
-      return { ...fields, id, media, ...(url ? { imageUrl: url } : {}), createdAt: now.toISOString() } as Item;
+      const { gallery: _g, imageUrl: _u, featured: _f, note: _n, ...fields } = set;
+      // a picture that was an item of its own before gets its own title, note and category back
+      const own = origin
+        ? {
+            title: origin.title,
+            category: origin.category && valid.has(origin.category) ? origin.category : set.category,
+            tags: origin.tags ?? [],
+            ...(origin.note ? { note: origin.note } : {}),
+            ...(origin.source ? { source: origin.source } : {}),
+            ...(origin.color ? { color: origin.color } : {}),
+          }
+        : { ...(set.note ? { note: set.note } : {}) };
+      return { ...fields, ...own, id, media, ...(url ? { imageUrl: url } : {}), createdAt: origin?.createdAt ?? now.toISOString() } as Item;
     });
+    // an inbox set down to one picture is that picture again: it gets its own title and note back
+    const last = order.length === 1 ? pics[order[0]].origin : undefined;
+    if (set.inbox && last) {
+      next.title = last.title;
+      next.category = last.category && valid.has(last.category) ? last.category : set.category;
+      next.tags = last.tags ?? set.tags;
+      if (last.note) next.note = last.note;
+      else delete next.note;
+      if (last.source) next.source = last.source;
+      if (last.color) next.color = last.color;
+      const { origin: _o, ...bare } = next.media;
+      next.media = bare;
+    } else if (set.inbox && next.note) {
+      // an inbox set forgets what was said only about the pictures that left it
+      const linesOf = (ms: Media[]) => new Set(ms.flatMap((m) => m.origin?.note?.split("\n") ?? []));
+      const out = linesOf(split.map((k) => pics[k]));
+      const kept = linesOf(order.map((k) => pics[k]));
+      const note = next.note.split("\n").filter((l) => !out.has(l) || kept.has(l)).join("\n");
+      if (note) next.note = note;
+      else delete next.note;
+    }
     const items = snap.items.flatMap((i) => (i === set ? [next, ...made] : [i]));
     return {
       items,
@@ -439,6 +558,8 @@ export async function arrangeSet(spec: ArrangeSpec, { collect = false } = {}) {
         pictures: picturesOf(next).length,
         ...(made.length ? { split_out: made.map((m) => m.id) } : {}),
         ...(dropped.length ? { removed: dropped.length } : {}),
+        // dropped pictures lose their files, so only a change that keeps every picture can be undone
+        ...(collect && !dropped.length ? { undo: undoToken([set], [next, ...made]) } : {}),
       },
     };
   });

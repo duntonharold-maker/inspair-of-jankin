@@ -196,6 +196,15 @@ function render() {
   }
   layout(list);
   showPicks();
+  for (const id of landed) {
+    const el = tiles.get(id);
+    if (!el) continue;
+    el.classList.remove("landed");
+    void el.offsetWidth;
+    el.classList.add("landed");
+    setTimeout(() => el.classList.remove("landed"), 900);
+  }
+  landed.clear();
 }
 // what a tile shows; when it changes the tile is built again
 const signature = (i) => JSON.stringify([i.title, i.category, i.source, i.pictures, i.remarks, i.sizes?.[0]]);
@@ -238,6 +247,7 @@ function pictureTile(item) {
   el.querySelector(".info-title").textContent = item.title;
   src(el.querySelector(".src"), item);
   wirePick(el, item);
+  wireDrag(el, item);
   const del = el.querySelector(".del");
   del.setAttribute("aria-label", `删除：${item.title}`);
   armed(del, () => remove(item, el));
@@ -273,6 +283,7 @@ function folderTile(item) {
   el.querySelector(".fcat-text").textContent = label || "";
   el.querySelector(".fcat .dot").hidden = !item.remarks?.length;
   wirePick(el, item);
+  wireDrag(el, item);
   return el;
 }
 
@@ -320,20 +331,64 @@ $("bar-group").addEventListener("click", async () => {
   if (picked.length < 2 || !conn) return;
   grouping = true;
   showPicks();
-  try {
-    const data = await call("/group", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids: picked }) });
-    picked = [];
-    tiles.get(data.id)?.remove();
-    tiles.delete(data.id);
-    await connect(conn.site, conn.key, { quiet: true });
-    tiles.get(data.id)?.querySelector(".fcard")?.focus({ preventScroll: true });
-  } catch (e) {
-    toast(`没合成：${e.message}`);
-  } finally {
-    grouping = false;
-    showPicks();
-  }
+  await merge(picked);
+  grouping = false;
+  showPicks();
 });
+
+/** Make one set of these (the first is the cover), animate the others into it, offer undo. */
+async function merge(ids) {
+  const intoSet = ids.length === 2 && isSetId(ids[0]);
+  for (const id of ids.slice(1)) tiles.get(id)?.classList.add("joining");
+  try {
+    const data = await call("/group", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids }) });
+    picked = picked.filter((id) => !ids.includes(id));
+    for (const id of ids) forget(id);
+    landed.add(data.id);
+    await connect(conn.site, conn.key, { quiet: true });
+    toast(intoSet ? `放进了这一组，共 ${data.pictures} 张` : `合成了一组，共 ${data.pictures} 张`, data.undo);
+  } catch (e) {
+    for (const id of ids) tiles.get(id)?.classList.remove("joining");
+    toast(`没合成：${e.message}`);
+  }
+}
+const isSetId = (id) => isSet(items.find((i) => i.id === id) || {});
+
+/* ------------------------------------------------- drag one onto another */
+
+let dragged = null;
+function wireDrag(el, item) {
+  el.draggable = true;
+  el.addEventListener("dragstart", (e) => {
+    dragged = item.id;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", item.title);
+    requestAnimationFrame(() => el.classList.add("dragging"));
+    $("grid").classList.add("drag-on");
+  });
+  el.addEventListener("dragend", () => {
+    dragged = null;
+    el.classList.remove("dragging");
+    $("grid").classList.remove("drag-on");
+    for (const t of document.querySelectorAll(".drop-target")) t.classList.remove("drop-target");
+  });
+  el.addEventListener("dragover", (e) => {
+    if (!dragged || dragged === item.id) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    el.classList.add("drop-target");
+  });
+  el.addEventListener("dragleave", (e) => {
+    if (!el.contains(e.relatedTarget)) el.classList.remove("drop-target");
+  });
+  el.addEventListener("drop", (e) => {
+    e.preventDefault();
+    el.classList.remove("drop-target");
+    const from = dragged;
+    dragged = null;
+    if (from && from !== item.id) merge([item.id, from]);
+  });
+}
 
 /* ------------------------------------------------------------- delete */
 
@@ -373,14 +428,41 @@ async function remove(item, el) {
   }
 }
 
+/** A short note at the bottom; with an undo token it offers 撤销 for a while. */
 let toastTimer;
-function toast(text) {
-  const t = $("toast");
-  t.textContent = text;
-  t.hidden = false;
+let undoToken = null;
+function toast(text, undo = null) {
+  $("toast-text").textContent = text;
+  undoToken = undo;
+  $("toast-undo").hidden = !undo;
+  $("toast").hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (t.hidden = true), 3200);
+  toastTimer = setTimeout(() => ($("toast").hidden = true), undo ? 7000 : 3200);
 }
+$("toast-undo").addEventListener("click", async () => {
+  const token = undoToken;
+  if (!token) return;
+  undoToken = null;
+  $("toast-undo").hidden = true;
+  try {
+    const data = await call("/undo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) });
+    for (const id of data.restored || []) forget(id), landed.add(id);
+    if (openSet && !(data.restored || []).includes(openSet)) closeSet();
+    await connect(conn.site, conn.key, { quiet: true });
+    toast("已撤销");
+  } catch (e) {
+    toast(e.message);
+  }
+});
+
+/** Drop a tile and its cached pictures so it is built again from the site's answer. */
+function forget(id) {
+  for (const key of [...urls.keys()]) if (key.startsWith(`${id}/`)) (URL.revokeObjectURL(urls.get(key)), urls.delete(key));
+  tiles.get(id)?.remove();
+  tiles.delete(id);
+}
+/** Tiles that just came out of a change: they pop once when they appear. */
+const landed = new Set();
 
 /* ------------------------------------------------------------ a set */
 
@@ -432,33 +514,88 @@ function renderSet() {
     load(pic.querySelector("img"), item.id, n);
     const cover = el.querySelector(".cover");
     if (n === 0) cover.remove();
-    else cover.addEventListener("click", () => arrange(item, { order: [n, ...range(item.pictures).filter((k) => k !== n)] }, "已换封面"));
-    el.querySelector(".out").addEventListener("click", () => arrange(item, { split: [n] }, "已移出这一组"));
+    else cover.addEventListener("click", () => arrange(item, { order: moveTo(item.pictures, n, 0) }, "已换封面"));
+    el.querySelector(".out").addEventListener("click", () => {
+      el.classList.add("leaving");
+      arrange(item, { split: [n] }, "已移出这一组", { onFail: () => el.classList.remove("leaving") });
+    });
+    wireReorder(el, item, n);
     row.append(el);
   }
+}
+/** Positions 0…count-1 with the picture at `from` moved to `to`. */
+function moveTo(count, from, to) {
+  const order = range(count).filter((k) => k !== from);
+  order.splice(to, 0, from);
+  return order;
+}
+
+/** In a set: drag a picture before or after another; the first place is the cover. */
+let reordering = null;
+function wireReorder(el, item, n) {
+  el.draggable = true;
+  const clear = () => el.classList.remove("insert-before", "insert-after");
+  el.addEventListener("dragstart", (e) => {
+    reordering = n;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(n));
+    requestAnimationFrame(() => el.classList.add("dragging"));
+  });
+  el.addEventListener("dragend", () => {
+    reordering = null;
+    el.classList.remove("dragging");
+    for (const m of document.querySelectorAll(".insert-before, .insert-after")) m.classList.remove("insert-before", "insert-after");
+  });
+  el.addEventListener("dragover", (e) => {
+    if (reordering == null || reordering === n) return;
+    e.preventDefault();
+    const r = el.getBoundingClientRect();
+    const after = e.clientX > r.left + r.width / 2;
+    el.classList.toggle("insert-after", after);
+    el.classList.toggle("insert-before", !after);
+  });
+  el.addEventListener("dragleave", (e) => {
+    if (!el.contains(e.relatedTarget)) clear();
+  });
+  el.addEventListener("drop", (e) => {
+    e.preventDefault();
+    const after = el.classList.contains("insert-after");
+    clear();
+    const from = reordering;
+    reordering = null;
+    if (from == null || from === n) return;
+    // where it lands once it has left its own place
+    let to = n + (after ? 1 : 0);
+    if (from < to) to--;
+    if (to === from) return;
+    arrange(item, { order: moveTo(item.pictures, from, to) }, to === 0 ? "已换封面" : "已调整顺序");
+  });
 }
 const range = (n) => Array.from({ length: n }, (_, k) => k);
 
 $("set-split").addEventListener("click", () => {
   const item = items.find((i) => i.id === openSet);
-  if (item) arrange(item, { order: [0], split: range(item.pictures).slice(1) }, "已拆开", true);
+  if (item) arrange(item, { order: [0], split: range(item.pictures).slice(1) }, `已拆开成 ${item.pictures} 张`, { back: true });
 });
 armed($("set-del"), () => {
   const item = items.find((i) => i.id === openSet);
   if (item) remove(item, null);
 });
 
-async function arrange(item, spec, done, back = false) {
+async function arrange(item, spec, done, { back = false, onFail } = {}) {
   try {
-    await call("/arrange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: item.id, ...spec }) });
+    const data = await call("/arrange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: item.id, ...spec }) });
     // pictures moved: what was cached under this set no longer matches
-    for (const key of [...urls.keys()]) if (key.startsWith(`${item.id}/`)) (URL.revokeObjectURL(urls.get(key)), urls.delete(key));
-    tiles.get(item.id)?.remove();
-    tiles.delete(item.id);
-    if (back) closeSet();
+    forget(item.id);
+    for (const id of data.split_out || []) landed.add(id);
+    if (back) {
+      landed.add(item.id);
+      closeSet();
+    }
     await connect(conn.site, conn.key, { quiet: true });
-    toast(done);
+    toast(done, data.undo);
   } catch (e) {
+    onFail?.();
     toast(e.message);
   }
 }
