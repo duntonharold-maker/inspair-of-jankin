@@ -54,6 +54,8 @@ async function collect(info, tab) {
     const res = await fetch(`${site}/api/collect`, { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `网站返回了 ${res.status}`);
+    // an open 收件箱 page refreshes itself
+    chrome.runtime.sendMessage({ type: "inspair:collected" }).catch(() => {});
     await say(tabId, {
       state: "done",
       text: data.duplicate ? "这张之前收藏过了" : "已收进收件箱",

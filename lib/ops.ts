@@ -244,6 +244,26 @@ export async function deleteItems(ids: string[]) {
   });
 }
 
+/**
+ * Throw away pictures still waiting in the inbox (the browser extension's 收件箱 page). Filed items can't be
+ * removed this way. The commit message starts "inspair: collect", so Vercel skips the build: the site never
+ * showed them.
+ */
+export async function discardCollected(ids: string[]) {
+  const store = getStore();
+  return store.mutate((snap) => {
+    const gone = snap.items.filter((i) => ids.includes(i.id) && i.inbox);
+    if (!gone.length) throw new Error("收件箱里没有这些图片，可能已经整理上线或删掉了。");
+    const left = snap.items.filter((i) => !gone.includes(i));
+    return {
+      items: left,
+      deleteFiles: gone.flatMap((i) => filesOf(i.media)),
+      message: `inspair: collect discard ${gone.length} picture(s) (${gone.map((i) => i.id).join(", ")})`,
+      result: { deleted: gone.map((i) => i.id), inbox: left.filter((i) => i.inbox).length },
+    };
+  });
+}
+
 export async function upsertCategory(cat: { id: string; name: string; label: string }) {
   const store = getStore();
   return store.mutate((snap) => {

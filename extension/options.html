@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>inspair 采集设置</title>
+    <title>inspair 采集</title>
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
@@ -14,6 +14,19 @@
       </header>
       <p class="how">在网页图片上右键，选「收藏到 inspair」。图片会先进网站的收件箱，跟 Claude 说「整理收件箱」后上线。</p>
 
+      <section id="inbox" class="inbox" aria-labelledby="inbox-title" hidden>
+        <div class="inbox-head">
+          <h2 id="inbox-title">收件箱 <span id="count" class="count"></span></h2>
+          <button id="refresh" class="icon-btn" type="button" aria-label="刷新收件箱">
+            <!-- Lucide: rotate-cw -->
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /></svg>
+          </button>
+        </div>
+        <p id="empty" class="empty" hidden>收件箱是空的。</p>
+        <ul id="grid" class="grid"></ul>
+      </section>
+
+      <h2 class="settings-title">连接</h2>
       <form id="form" novalidate>
         <label for="site">网站地址</label>
         <input id="site" name="site" type="url" inputmode="url" autocomplete="url" spellcheck="false" required />
@@ -32,6 +45,37 @@
         <p id="status" class="status" role="status"></p>
       </form>
     </main>
+
+    <template id="tile">
+      <li class="tile">
+        <button class="pic" type="button"><img alt="" decoding="async" /></button>
+        <div class="meta">
+          <p class="title"></p>
+          <a class="src" target="_blank" rel="noopener noreferrer"
+            ><span></span
+            ><!-- Lucide: external-link --><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg
+          ></a>
+        </div>
+        <button class="del" type="button">
+          <!-- Lucide: trash -->
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 11v6" /><path d="M14 11v6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+          <span>删除</span>
+        </button>
+      </li>
+    </template>
+
+    <dialog id="viewer" aria-labelledby="viewer-title">
+      <figure>
+        <img id="viewer-img" alt="" />
+        <figcaption>
+          <p id="viewer-title"></p>
+          <button id="viewer-close" class="icon-btn" type="button" aria-label="关闭">
+            <!-- Lucide: x -->
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+          </button>
+        </figcaption>
+      </figure>
+    </dialog>
     <script src="options.js"></script>
   </body>
 </html>

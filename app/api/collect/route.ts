@@ -1,10 +1,12 @@
 /**
  * Where the browser extension sends what it collects (extension/).
  *
- *   GET  /api/collect   → checks the key, says how many pictures wait in the inbox
+ *   GET  /api/collect   → checks the key, lists the pictures waiting in the inbox (newest first)
  *   POST /api/collect   → multipart form: file (the picture, fetched by the browser) and/or image_url,
  *                         plus page_url, page_title and alt. The picture goes into the inbox, off the site
  *                         until an agent files it (organize_items).
+ *
+ * The pictures themselves, and throwing one away: /api/collect/[id].
  *
  * Authorization: Bearer <COLLECT_SECRET or MCP_SECRET>.
  */
@@ -23,7 +25,19 @@ const text = (v: FormDataEntryValue | null) => (typeof v === "string" && v.trim(
 export async function GET(req: Request) {
   if (!isCollectAuthorized(req)) return unauthorized();
   const { items, site } = await getStore().read();
-  return Response.json({ ok: true, site: site.name, inbox: items.filter((i) => i.inbox).length });
+  const inbox = items
+    .filter((i) => i.inbox)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((i) => ({
+      id: i.id,
+      title: i.title,
+      source: i.source,
+      createdAt: i.createdAt,
+      width: i.media.width,
+      height: i.media.height,
+      cutout: i.media.cutout,
+    }));
+  return Response.json({ ok: true, site: site.name, inbox: inbox.length, items: inbox });
 }
 
 export async function POST(req: Request) {

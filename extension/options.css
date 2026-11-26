@@ -9,7 +9,10 @@
   --muted: #5b6b75;
   --border: #d8e0e5;
   --field: #ebf0f3;
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --stage: #e4eaee;
+  --inverse-fg: #eef3f6;
+  --inverse-muted: #8796a0;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   color-scheme: light;
 }
 * { box-sizing: border-box; }
@@ -21,7 +24,8 @@ body {
   font: 15px/1.5 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
-main { max-width: 30rem; margin: 0 auto; padding: 4rem 1.25rem; }
+main { max-width: 58rem; margin: 0 auto; padding: 4rem 1.25rem; }
+.how, form, .settings-title { max-width: 30rem; }
 header { display: flex; align-items: center; gap: 0.625rem; }
 h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.02em; font-weight: 600; }
 .how { margin: 0.75rem 0 2rem; color: var(--muted); }
@@ -44,11 +48,8 @@ input {
 input:focus { outline: none; border-color: var(--blue); background: var(--surface); }
 .key { position: relative; }
 .key input { padding-right: 3rem; }
+.key .icon-btn { position: absolute; right: 0.375rem; top: 50%; translate: 0 -50%; }
 .icon-btn {
-  position: absolute;
-  right: 0.375rem;
-  top: 50%;
-  translate: 0 -50%;
   display: grid;
   place-items: center;
   width: 2.125rem;
@@ -61,7 +62,7 @@ input:focus { outline: none; border-color: var(--blue); background: var(--surfac
   cursor: pointer;
   transition: background-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.1s;
 }
-.icon-btn svg { width: 1.125rem; height: 1.125rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+svg { width: 1.125rem; height: 1.125rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .icon-btn .eye-off, .icon-btn[aria-pressed="true"] .eye { display: none; }
 .icon-btn[aria-pressed="true"] .eye-off { display: block; }
 .btn {
@@ -99,4 +100,107 @@ input:focus-visible { outline: none; }
 .status.ok { color: var(--fg); }
 .status.bad::before { background: var(--coral); }
 .status.bad { color: var(--fg); }
-@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }
+/* ------------------------------------------------------------ inbox */
+h2 { margin: 0; font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; }
+.settings-title { margin: 3rem 0 0.75rem; }
+.inbox { margin-top: 2.5rem; }
+.inbox-head { display: flex; align-items: center; gap: 0.25rem; margin-bottom: 1rem; }
+.count { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+.inbox-head .icon-btn.spin svg { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { rotate: 360deg; } }
+.empty { margin: 0; padding: 2.5rem 1rem; border: 1px dashed var(--border); border-radius: 1.25rem; color: var(--muted); text-align: center; }
+.grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 1.5rem 1rem; }
+.tile { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0.625rem 0.5rem; transition: opacity 0.25s var(--ease), transform 0.25s var(--ease); }
+.tile.busy { opacity: 0.4; pointer-events: none; }
+.tile.gone { opacity: 0; transform: scale(0.94); }
+.pic {
+  grid-column: 1 / -1;
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 0.625rem;
+  overflow: hidden;
+  background: var(--stage);
+  cursor: zoom-in;
+  transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease);
+}
+.pic img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s var(--ease), transform 0.3s var(--ease); }
+.pic img.ready { opacity: 1; }
+/* a piece with its own outline (icon, sticker) sits whole on the stage, as on the site */
+.tile.cutout .pic img { object-fit: contain; padding: 13%; }
+.meta { min-width: 0; }
+.title { margin: 0; font-size: 0.875rem; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.src {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  margin-top: 0.125rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.2em;
+  border-radius: 0.25rem;
+  transition: color 0.2s var(--ease), text-decoration-color 0.2s var(--ease);
+}
+.src span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.src svg { width: 0.8125rem; height: 0.8125rem; transition: transform 0.2s var(--ease); }
+.del {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2rem;
+  padding: 0 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease), transform 0.1s;
+}
+.del svg { width: 1rem; height: 1rem; }
+.del span { display: none; }
+/* first click arms it, the second throws the picture away */
+.del.armed { background: var(--ink); color: var(--inverse-fg); padding: 0 0.75rem 0 0.625rem; }
+.del.armed span { display: inline; }
+.del:active { transform: scale(0.96); }
+.pic:active { transform: scale(0.97); transition-duration: 0.1s; }
+@media (hover: hover) {
+  .pic:hover { box-shadow: 0 0.75rem 1.5rem -0.75rem rgba(2, 7, 10, 0.35); }
+  .pic:hover img { transform: scale(1.04); }
+  .src:hover { color: var(--fg); text-decoration-color: var(--blue); }
+  .src:hover svg { transform: translate(1px, -1px); }
+  .del:hover { background: var(--field); color: var(--fg); }
+  .del.armed:hover { background: var(--blue); color: var(--ink); }
+}
+
+/* ----------------------------------------------------------- viewer */
+dialog {
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 1.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--inverse-fg);
+}
+dialog[open] { display: grid; place-items: center; }
+dialog::backdrop { background: rgba(2, 7, 10, 0.86); }
+figure { margin: 0; display: grid; gap: 0.75rem; justify-items: center; max-width: 100%; }
+#viewer-img { display: block; max-width: min(92vw, 100%); max-height: calc(100vh - 7rem); border-radius: 0.625rem; background: var(--stage); object-fit: contain; }
+#viewer-img.cutout { padding: 6vmin; }
+figcaption { display: flex; align-items: center; gap: 0.75rem; max-width: 92vw; }
+#viewer-title { margin: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+figcaption .icon-btn { color: var(--inverse-muted); background: rgba(238, 243, 246, 0.08); }
+@media (hover: hover) {
+  figcaption .icon-btn:hover { color: var(--ink); background: var(--blue); }
+}
+
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
