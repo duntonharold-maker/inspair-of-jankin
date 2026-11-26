@@ -1,11 +1,26 @@
 [
   {
+    "id": "20261126-qxgi5b",
+    "title": "SimpleMagazine — Blog Template #3 by Tomasz Mazurczak for Studio Design on Dribb",
+    "category": "ui",
+    "note": "采集自「SimpleMagazine — Blog Template #3 by Tomasz Mazurczak for Studio Design on Dribbble」",
+    "source": "https://dribbble.com/shots/25753884-SimpleMagazine-Blog-Template-3",
+    "createdAt": "2026-11-26T09:00:55.365Z",
+    "tags": [],
+    "media": {
+      "src": "/media/20261126-qxgi5b.webp",
+      "type": "image",
+      "width": 2560,
+      "height": 1920,
+      "thumb": "/media/20261126-qxgi5b.thumb.webp"
+    },
+    "imageUrl": "https://cdn.dribbble.com/userupload/41539881/file/original-ad77312601367fce090b65df14cf6042.png",
+    "inbox": true
+  },
+  {
     "id": "20261126-ygk7dw",
     "title": "AI Workflow Automation Dashboard by EASIN ARAFAT🔥 on Dribbble",
     "category": "interface",
-    "note": "采集自「AI Workflow Automation Dashboard by EASIN ARAFAT🔥 on Dribbble」",
-    "source": "https://dribbble.com/shots/27919497-AI-Workflow-Automation-Dashboard",
-    "createdAt": "2026-11-26T08:59:08.835Z",
     "tags": [],
     "media": {
       "src": "/media/20261126-ygk7dw.webp",
@@ -14,8 +29,11 @@
       "height": 1920,
       "thumb": "/media/20261126-ygk7dw.thumb.webp"
     },
+    "source": "https://dribbble.com/shots/27919497-AI-Workflow-Automation-Dashboard",
+    "note": "采集自「AI Workflow Automation Dashboard by EASIN ARAFAT🔥 on Dribbble」",
+    "inbox": true,
     "imageUrl": "https://cdn.dribbble.com/userupload/49729598/file/317ae278a5905b7685aaed540b7206e7.png",
-    "inbox": true
+    "createdAt": "2026-11-26T08:59:08.835Z"
   },
   {
     "id": "20261126-o2my5x",
