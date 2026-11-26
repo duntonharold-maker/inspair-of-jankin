@@ -3,6 +3,7 @@
  *
  *   GET    /api/collect/<id>          → the picture's small copy (800px wide, or the file itself when smaller)
  *   GET    /api/collect/<id>?full=1   → the picture as collected
+ *   …&n=2                             → the third picture of a set (0 is the cover)
  *   DELETE /api/collect/<id>          → throw it away (inbox pictures only)
  *
  * Inbox pictures aren't on the deployed site (collecting skips the build), so they are read from the store.
@@ -11,6 +12,7 @@
 import { isCollectAuthorized } from "@/lib/auth";
 import { discardCollected } from "@/lib/ops";
 import { getStore } from "@/lib/store";
+import { picturesOf } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,8 +35,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   const { items } = await store.read();
   const item = items.find((i) => i.id === id && i.inbox);
   if (!item) return Response.json({ error: "收件箱里没有这张图片。" }, { status: 404 });
-  const full = new URL(req.url).searchParams.has("full");
-  const src = (!full && item.media.thumb) || item.media.src;
+  const params = new URL(req.url).searchParams;
+  const full = params.has("full");
+  const media = picturesOf(item)[Number(params.get("n") ?? 0)];
+  if (!media) return Response.json({ error: "这一组里没有这张。" }, { status: 404 });
+  const src = (!full && media.thumb) || media.src;
   const ext = src.split(".").pop()?.toLowerCase() ?? "";
   const body = await store.readFile(`public${src}`);
   return new Response(new Uint8Array(body), {

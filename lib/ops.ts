@@ -3,7 +3,7 @@ import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { fetchMedia, ingest, type Ingested } from "./media";
 import { MEDIA_DIR, getStore, type Snapshot } from "./store";
-import type { Item, Site } from "./types";
+import { picturesOf, type Item, type Media, type Site } from "./types";
 
 /* ------------------------------------------------------------- input schemas */
 
@@ -100,8 +100,16 @@ function mediaFiles(at: { repoPath: string; src: string }, media: Ingested) {
   };
 }
 
-/** Every file of an item's media, to delete. */
-const filesOf = (m: Item["media"]) => [repoPathOf(m.src), ...(m.thumb ? [repoPathOf(m.thumb)] : [])];
+/** Every file of one picture, to delete. */
+const filesOf = (m: Media) => [repoPathOf(m.src), ...(m.thumb ? [repoPathOf(m.thumb)] : [])];
+/** Every file of an item: its cover and the rest of its set. */
+const allFilesOf = (item: Item) => picturesOf(item).flatMap(filesOf);
+
+/** Where another picture of an item's set goes: next to the cover, with a short random tag. */
+const extraPath = (id: string, ext: string) => mediaPath(id, ext, `p${randomBytes(2).toString("hex")}`);
+
+/** The picture addresses an item was collected from (cover and set), to spot a picture collected twice. */
+const addressesOf = (item: Item) => [item.imageUrl, ...(item.gallery ?? []).map((m) => m.imageUrl)].filter(Boolean);
 
 function applyFields(base: Partial<Item>, f: Partial<ItemFieldsInput>): Partial<Item> {
   const out: Partial<Item> = { ...base };
@@ -134,7 +142,7 @@ export class AlreadyAdded extends Error {
 }
 
 /** Adds an item. `fixedId` (from an upload token) makes a repeated upload find the item it made. */
-export async function addItem(fields: ItemFieldsInput, media: Ingested, fixedId?: string) {
+export async function addItem(fields: ItemFieldsInput, media: Ingested, fixedId?: string, more: Ingested[] = []) {
   const store = getStore();
   const now = new Date();
   return store.mutate((snap) => {
@@ -144,15 +152,17 @@ export async function addItem(fields: ItemFieldsInput, media: Ingested, fixedId?
     let id = fixedId ?? newId(now);
     while (!fixedId && snap.items.some((i) => i.id === id)) id = newId(now);
     const stored = mediaFiles(mediaPath(id, media.ext), media);
+    const rest = more.map((m) => mediaFiles(extraPath(id, m.ext), m));
     const item = {
       id,
       ...applyFields({ tags: [] }, fields),
       media: stored.media,
+      ...(rest.length ? { gallery: rest.map((r) => r.media) } : {}),
       createdAt: now.toISOString(),
     } as Item;
     return {
       items: [item, ...snap.items],
-      addFiles: stored.files,
+      addFiles: [...stored.files, ...rest.flatMap((r) => r.files)],
       message: `inspair: add "${item.title}" (${id})`,
       result: item,
     };
@@ -194,6 +204,8 @@ export type Collected = {
   remark?: string;
   /** The category the collector guessed when collecting; the picture still waits in the inbox. */
   category?: string;
+  /** An inbox item to add this picture to, as the next picture of its set (「接上一张」). */
+  groupWith?: string;
 };
 
 /** The line of an inbox picture's note that holds what the collector said. */
@@ -211,8 +223,27 @@ export async function collectItem(media: Ingested, from: Collected) {
   const store = getStore();
   const now = new Date();
   return store.mutate((snap) => {
-    const same = from.imageUrl ? snap.items.find((i) => i.imageUrl === from.imageUrl) : undefined;
-    if (same) return { message: "", result: { item: same, duplicate: true, inbox: snap.items.filter((i) => i.inbox).length } };
+    const inboxCount = snap.items.filter((i) => i.inbox).length;
+    const same = from.imageUrl ? snap.items.find((i) => addressesOf(i).includes(from.imageUrl)) : undefined;
+    if (same) return { message: "", result: { item: same, duplicate: true, inbox: inboxCount } };
+    // 「接上一张」: the next picture of a set still in the inbox
+    const set = from.groupWith ? snap.items.find((i) => i.id === from.groupWith && i.inbox) : undefined;
+    if (set) {
+      const stored = mediaFiles(extraPath(set.id, media.ext), media);
+      const line = from.remark && `${REMARK}${clip(from.remark, 300)}`;
+      const next: Item = {
+        ...set,
+        gallery: [...(set.gallery ?? []), { ...stored.media, ...(from.imageUrl ? { imageUrl: from.imageUrl } : {}) }],
+        ...(line && !set.note?.split("\n").includes(line) ? { note: [line, set.note].filter(Boolean).join("\n") } : {}),
+        updatedAt: now.toISOString(),
+      };
+      return {
+        items: snap.items.map((i) => (i === set ? next : i)),
+        addFiles: stored.files,
+        message: `inspair: collect picture ${picturesOf(next).length} of "${set.title}" (${set.id})`,
+        result: { item: next, duplicate: false, inbox: inboxCount },
+      };
+    }
     let id = newId(now);
     while (snap.items.some((i) => i.id === id)) id = newId(now);
     const stored = mediaFiles(mediaPath(id, media.ext), media);
@@ -241,7 +272,7 @@ export async function collectItem(media: Ingested, from: Collected) {
       items: [item, ...snap.items],
       addFiles: stored.files,
       message: `inspair: collect "${title}" (${id})`,
-      result: { item, duplicate: false, inbox: snap.items.filter((i) => i.inbox).length + 1 },
+      result: { item, duplicate: false, inbox: inboxCount + 1 },
     };
   });
 }
@@ -254,7 +285,7 @@ export async function deleteItems(ids: string[]) {
     if (!gone.length) throw new Error(`No items found for: ${ids.join(", ")}`);
     return {
       items: snap.items.filter((i) => !ids.includes(i.id)),
-      deleteFiles: gone.flatMap((i) => filesOf(i.media)),
+      deleteFiles: gone.flatMap(allFilesOf),
       message: `inspair: delete ${gone.length} item(s)`,
       result: { deleted: gone.map((i) => i.id), missing },
     };
@@ -274,11 +305,142 @@ export async function discardCollected(ids: string[]) {
     const left = snap.items.filter((i) => !gone.includes(i));
     return {
       items: left,
-      deleteFiles: gone.flatMap((i) => filesOf(i.media)),
+      deleteFiles: gone.flatMap(allFilesOf),
       message: `inspair: collect discard ${gone.length} picture(s) (${gone.map((i) => i.id).join(", ")})`,
       result: { deleted: gone.map((i) => i.id), inbox: left.filter((i) => i.inbox).length },
     };
   });
+}
+
+/* ------------------------------------------------------------------- sets */
+
+/**
+ * Works out a set made of several items: the first one keeps its title, category, notes and the rest; the
+ * pictures of the others (their covers, then their own sets) follow its pictures in the order given, and
+ * those items go. Tags are merged. Notes of inbox pictures are merged too (what the collector said about
+ * each picture matters when it is filed); a filed item keeps its own note.
+ */
+export function planGroup(snap: Snapshot, ids: string[]) {
+  if (new Set(ids).size !== ids.length) throw new Error("An item is listed twice.");
+  if (ids.length < 2) throw new Error("Give at least two items: the cover first, then the others in order.");
+  const parts = ids.map((id) => {
+    const item = snap.items.find((i) => i.id === id);
+    if (!item) throw new Error(`No item with id "${id}".`);
+    return item;
+  });
+  const [cover, ...rest] = parts;
+  // what the collector said about any of the pictures leads the merged note
+  const lines = cover.inbox ? [...new Set(parts.flatMap((p) => p.note?.split("\n") ?? []).filter(Boolean))] : [];
+  const notes = [...lines.filter((l) => l.startsWith(REMARK)), ...lines.filter((l) => !l.startsWith(REMARK))];
+  // an inbox cover without a category takes the one picked for another picture of the set
+  const category = cover.category || (cover.inbox ? parts.find((p) => p.category)?.category : undefined) || cover.category;
+  const set: Item = {
+    ...cover,
+    category,
+    tags: cleanTags(parts.flatMap((p) => p.tags)),
+    gallery: parts.flatMap(picturesOf).slice(1).map((m, k) => {
+      // a cover joining another set brings the address it was collected from
+      const from = k + 1 < picturesOf(cover).length ? undefined : rest.find((r) => r.media === m)?.imageUrl;
+      return from ? { ...m, imageUrl: from } : m;
+    }),
+    ...(cover.inbox && notes.length ? { note: notes.join("\n") } : {}),
+    updatedAt: new Date().toISOString(),
+  };
+  const warnings = cover.inbox
+    ? rest.filter((r) => !r.inbox).map((r) => `"${r.id}" is on the site; it goes into the inbox with this set until the set is filed.`)
+    : rest.filter((r) => r.inbox).map((r) => `"${r.id}" was in the inbox; it goes onto the site with this set.`);
+  return {
+    items: snap.items.filter((i) => !rest.includes(i)).map((i) => (i === cover ? set : i)),
+    set,
+    gone: rest.map((r) => r.id),
+    warnings,
+  };
+}
+
+/** Makes one set of several items (see planGroup). `collect`: from the extension's inbox page, inbox only. */
+export async function groupItems(ids: string[], { dryRun = false, collect = false } = {}) {
+  const store = getStore();
+  const describe = (p: ReturnType<typeof planGroup>) => ({
+    id: p.set.id,
+    title: p.set.title,
+    pictures: picturesOf(p.set).length,
+    merged_in: p.gone,
+    warnings: p.warnings,
+  });
+  if (dryRun) return { applied: false, ...describe(planGroup(await store.read(), ids)) };
+  const { result, commit } = await store.mutate((snap) => {
+    if (collect && ids.some((id) => !snap.items.find((i) => i.id === id)?.inbox))
+      throw new Error("只能把收件箱里的图片合成一组。");
+    const plan = planGroup(snap, ids);
+    return {
+      items: plan.items,
+      message: `inspair: ${collect ? "collect " : ""}group ${ids.length} items into "${plan.set.title}" (${plan.set.id})`,
+      result: { applied: true, ...describe(plan), inbox: plan.items.filter((i) => i.inbox).length },
+    };
+  });
+  return { ...result, commit };
+}
+
+export const ArrangeInput = z.object({
+  id: z.string().describe("The set (an item with several pictures)"),
+  order: z
+    .array(z.number().int().min(0))
+    .optional()
+    .describe("The pictures' new order, by their current position (0 is the cover): [2, 0, 1] makes picture 2 the cover. Pictures left out (and not split) are removed."),
+  split: z
+    .array(z.number().int().min(0))
+    .optional()
+    .describe("Positions of pictures to take out of the set, each becoming an item of its own with the set's title, category and tags"),
+}).strict();
+export type ArrangeSpec = z.infer<typeof ArrangeInput>;
+
+/** Reorders a set, changes its cover, takes pictures out as items of their own, or drops pictures. */
+export async function arrangeSet(spec: ArrangeSpec) {
+  const store = getStore();
+  const now = new Date();
+  const { result, commit } = await store.mutate((snap) => {
+    const set = snap.items.find((i) => i.id === spec.id);
+    if (!set) throw new Error(`No item with id "${spec.id}".`);
+    const pics = picturesOf(set);
+    const split = [...new Set(spec.split ?? [])];
+    const order = spec.order ?? pics.map((_, k) => k).filter((k) => !split.includes(k));
+    for (const k of [...order, ...split]) if (k >= pics.length) throw new Error(`"${spec.id}" has ${pics.length} pictures (0–${pics.length - 1}); there is no ${k}.`);
+    if (new Set(order).size !== order.length) throw new Error("order lists a picture twice.");
+    if (order.some((k) => split.includes(k))) throw new Error("A picture can't be both kept in order and split out.");
+    if (!order.length) throw new Error("Keep at least one picture in the set (use delete_items to remove the whole item).");
+    const dropped = pics.map((_, k) => k).filter((k) => !order.includes(k) && !split.includes(k));
+    const [cover, ...gallery] = order.map((k) => pics[k]);
+    const coverUrl = order[0] === 0 ? set.imageUrl : cover.imageUrl;
+    const { imageUrl: _drop, ...coverMedia } = cover;
+    const next: Item = { ...set, media: coverMedia, updatedAt: now.toISOString() };
+    if (coverUrl) next.imageUrl = coverUrl;
+    else delete next.imageUrl;
+    // the old cover's address moves with it into the set
+    const restWithUrls = gallery.map((m) => (m === pics[0] && set.imageUrl ? { ...m, imageUrl: set.imageUrl } : m));
+    if (restWithUrls.length) next.gallery = restWithUrls;
+    else delete next.gallery;
+    const made: Item[] = split.map((k) => {
+      let id = newId(now);
+      while (snap.items.some((i) => i.id === id)) id = newId(now);
+      const { imageUrl, ...media } = pics[k];
+      const url = k === 0 ? set.imageUrl : imageUrl;
+      const { gallery: _g, imageUrl: _u, featured: _f, ...fields } = set;
+      return { ...fields, id, media, ...(url ? { imageUrl: url } : {}), createdAt: now.toISOString() } as Item;
+    });
+    const items = snap.items.flatMap((i) => (i === set ? [next, ...made] : [i]));
+    return {
+      items,
+      deleteFiles: dropped.flatMap((k) => filesOf(pics[k])),
+      message: `inspair: arrange "${set.title}" (${set.id})`,
+      result: {
+        id: set.id,
+        pictures: picturesOf(next).length,
+        ...(made.length ? { split_out: made.map((m) => m.id) } : {}),
+        ...(dropped.length ? { removed: dropped.length } : {}),
+      },
+    };
+  });
+  return { ...result, commit };
 }
 
 export async function upsertCategory(cat: { id: string; name: string; label: string }) {

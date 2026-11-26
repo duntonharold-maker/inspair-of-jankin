@@ -17,9 +17,10 @@ npm run check:scene  # 检查首页卡片场景：任何屏幕比例下卡片都
 
 - `content/site.json`、`content/items.json`：站点配置和所有条目。内容改动走 MCP 或直接改这两个文件，不要在组件里写死内容。
 - `public/media/`：媒体文件，文件名由 MCP 生成，不要手动改名。宽于 800 px 的静态图片收录时会另存一张 `<文件名>.thumb.webp`（`media.thumb`），卡片、分类缩略图和场景贴图用它，详情里看原图。
+- 一组图（`Item.gallery`）：一个设计有好几张图（预览图加细节图）时是一个条目，`media` 是封面，`gallery` 按顺序放其余的（`picturesOf(item)` 取全部）。卡片、分类、场景只用封面，卡片角上显示张数；详情（`ItemDetail.tsx`）在图上左右切换：两侧箭头、下方缩略图条、「n / N」、触屏左右滑；键盘 ← → 先在组内翻，到头才交给弹窗切换作品（window 上的捕获监听先于弹窗）。右栏的格式、尺寸、原文件跟着当前这张。MCP：`add_item` 的 `more_media_urls`、`group_items`（合并，第一个作封面）、`arrange_group`（排序、换封面、拆出、删图）。
 - `components/story/`：首页的滚动故事。`timeline.ts` 定义每一幕占多少屏和卡片场景各阶段的起止，`choreo.ts` 算出每张卡片在任一滚动位置的位置，`scene.ts` 用 three.js 把它们画出来（悬停、指针扰动、拖尾），`rays.ts` 把画好的场景沿放射方向拉出分光的拖影（屏幕边缘、圆环周围、鼠标划过的地方），`screens/` 里是每一幕的 DOM。
 - `lib/`：存储（GitHub / 本地）、媒体处理、MCP 工具、鉴权。
-- `extension/`：浏览器插件（Chrome MV3），右键图片「收藏到 inspair」，发到 `/api/collect`。菜单在页面任何位置都出现；不是直接右键在 `<img>` 上时（透明遮罩、背景图），`picker.js` 记下的右键位置交给 `background.js` 的 `findPicture` 找出下面的图。采集的条目带 `inbox: true`，进收件箱：已提交但不上网站（`lib/content.ts` 过滤掉），分类可以为空；智能体用 `organize_items` 给它分类即归档上线。采集提交的信息以 `inspair: collect` 开头，`scripts/vercel-ignore.sh` 让 Vercel 跳过这些构建。点菜单后页面里弹出小框（`background.js` 的 `showToast` 的 ask 状态），可选一个大概的分类、写一句话，随图片发出：分类存进 `category`（条目仍在收件箱），那句话存成笔记里以「我的想法：」开头的一行，MCP 说明要求整理时据此写笔记。插件的设置页（`options.html`）同时是收件箱画廊：`GET /api/collect` 列出收件箱，`/api/collect/[id]` 取图片（收件箱的图片没部署到网站上，从存储里读）和删除（只能删收件箱里的，提交信息同样以 `inspair: collect` 开头）。插件用 `COLLECT_SECRET`（只能采集、看和删收件箱），也接受 `MCP_SECRET`。
+- `extension/`：浏览器插件（Chrome MV3），右键图片「收藏到 inspair」，发到 `/api/collect`。菜单在页面任何位置都出现；不是直接右键在 `<img>` 上时（透明遮罩、背景图），`picker.js` 记下的右键位置交给 `background.js` 的 `findPicture` 找出下面的图。采集的条目带 `inbox: true`，进收件箱：已提交但不上网站（`lib/content.ts` 过滤掉），分类可以为空；智能体用 `organize_items` 给它分类即归档上线。采集提交的信息以 `inspair: collect` 开头，`scripts/vercel-ignore.sh` 让 Vercel 跳过这些构建。点菜单后页面里弹出小框（`background.js` 的 `showToast` 的 ask 状态），可选一个大概的分类、写一句话，随图片发出：分类存进 `category`（条目仍在收件箱），那句话存成笔记里以「我的想法：」开头的一行，MCP 说明要求整理时据此写笔记。小框里还有「接上一张」（15 分钟内采过图时出现）：打开后这张作为上一张所在组的下一张（`group_with`）。插件的设置页（`options.html`）同时是收件箱画廊（多选后「合成一组」，`POST /api/collect/group`，先选的作封面；大图里可翻组内的图）：`GET /api/collect` 列出收件箱，`/api/collect/[id]` 取图片（收件箱的图片没部署到网站上，从存储里读）和删除（只能删收件箱里的，提交信息同样以 `inspair: collect` 开头）。插件用 `COLLECT_SECRET`（只能采集、看和删收件箱），也接受 `MCP_SECRET`。
 - `app/globals.css`：顶部是颜色、字体、间距、缓动等设计变量，新样式一律使用这些变量。
 
 ## 要求

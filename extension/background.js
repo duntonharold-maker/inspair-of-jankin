@@ -8,6 +8,8 @@ const DEFAULT_SITE = "https://inspair-of-jankin.vercel.app";
 const MENU = "inspair-collect";
 /** What one request to the site may carry (Vercel takes about 4.5 MB); larger pictures are shrunk. */
 const LIMIT = 4 * 1024 * 1024;
+/** How long after collecting a picture the box offers to add the next one to its set. */
+const CHAIN_MS = 15 * 60 * 1000;
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   await chrome.contextMenus.removeAll();
@@ -22,7 +24,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());
 // the box in the page: 收藏 (with what was said) or Esc
 chrome.runtime.onMessage.addListener((msg, sender) => {
-  if (msg?.type === "inspair:send") send(msg.token, msg.job, sender.tab?.id, { remark: msg.remark, category: msg.category });
+  if (msg?.type === "inspair:send")
+    send(msg.token, msg.job, sender.tab?.id, { remark: msg.remark, category: msg.category, groupWith: msg.groupWith });
   if (msg?.type === "inspair:cancel") pending.delete(msg.token);
 });
 
@@ -54,7 +57,10 @@ async function collect(info, tab) {
   const token = crypto.randomUUID();
   pending.set(token, fetchPicture(job, tabId));
   const categories = await categoriesOf(site, key);
-  const asked = await say(tabId, { state: "ask", text: "收藏到 inspair", sub: job.alt || job.title, thumb: shown, token, job, categories });
+  // 「接上一张」: the picture collected last, if it was a little while ago, can take this one into its set
+  const { last } = await chrome.storage.session.get("last");
+  const chain = last && Date.now() - last.at < CHAIN_MS ? last : null;
+  const asked = await say(tabId, { state: "ask", text: "收藏到 inspair", sub: job.alt || job.title, thumb: shown, token, job, categories, chain });
   // pages the extension can't draw on (the web store, browser pages): collect straight away
   if (!asked) send(token, job, tabId, {});
 }
@@ -82,7 +88,7 @@ function fetchPicture(job, tabId) {
 }
 
 /** Send the picture, with what was said about it, to the site's inbox. */
-async function send(token, job, tabId, { remark = "", category = "" } = {}) {
+async function send(token, job, tabId, { remark = "", category = "", groupWith = "" } = {}) {
   const { site = DEFAULT_SITE, key = "" } = await chrome.storage.local.get(["site", "key"]);
   await say(tabId, { state: "busy", text: "正在收藏…", sub: remark, thumb: job.shown });
   try {
@@ -98,15 +104,18 @@ async function send(token, job, tabId, { remark = "", category = "" } = {}) {
     form.append("alt", job.alt || "");
     if (remark.trim()) form.append("remark", remark.trim());
     if (category) form.append("category", category);
+    if (groupWith) form.append("group_with", groupWith);
     const res = await fetch(`${site}/api/collect`, { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `网站返回了 ${res.status}`);
     // an open 收件箱 page refreshes itself
     chrome.runtime.sendMessage({ type: "inspair:collected" }).catch(() => {});
+    const set = !data.duplicate && data.pictures > 1;
+    if (!data.duplicate) await chrome.storage.session.set({ last: { id: data.id, title: data.title, thumb: job.shown, pictures: data.pictures, at: Date.now() } });
     await say(tabId, {
       state: "done",
-      text: data.duplicate ? "这张之前收藏过了" : "已收进收件箱",
-      sub: `收件箱里有 ${data.inbox} 张等 Claude 整理`,
+      text: data.duplicate ? "这张之前收藏过了" : set ? `已加到这一组，共 ${data.pictures} 张` : "已收进收件箱",
+      sub: set ? `「${data.title}」` : `收件箱里有 ${data.inbox} 张等 Claude 整理`,
       thumb: job.shown,
     });
   } catch (e) {
@@ -377,7 +386,7 @@ async function say(tabId, message) {
  * state "ask" is the box shown right after 收藏到 inspair: a rough category and a line about the picture,
  * sent with 收藏 (or Enter); Esc or the close button drops it. The other states report how sending went.
  */
-function showToast({ state, text, sub, thumb, token, job, categories }) {
+function showToast({ state, text, sub, thumb, token, job, categories, chain }) {
   // Lucide shapes: check, circle-alert, loader-circle, x, bookmark-plus
   const icons = {
     done: '<path d="M20 6 9 17l-5-5"/>',
@@ -439,6 +448,17 @@ function showToast({ state, text, sub, thumb, token, job, categories }) {
       .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; border: 0; }
       .chip { height: 28px; padding: 0 11px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--fg); font-size: 12px; }
       .chip[aria-pressed="true"] { background: var(--blue); border-color: var(--blue); color: var(--ink); font-weight: 600; }
+      .chain { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; padding: 6px 10px 6px 6px; border: 1px solid var(--line); border-radius: 10px;
+        background: transparent; color: var(--fg); text-align: left; font-size: 12px; }
+      .chain img { flex: none; width: 28px; height: 28px; border-radius: 6px; object-fit: cover; background: #1a2026; }
+      .chain b { display: block; font-weight: 600; }
+      .chain .of { display: block; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .chain .tick { flex: none; margin-left: auto; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; color: transparent; }
+      .chain .tick svg { width: 12px; height: 12px; }
+      .chain > span:not(.tick) { min-width: 0; }
+      .chain[aria-pressed="true"] { border-color: var(--blue); background: rgba(2, 151, 222, 0.14); }
+      .chain[aria-pressed="true"] .tick { background: var(--blue); border-color: var(--blue); color: var(--ink); }
+      .chained .chips { display: none; }
       .say { display: flex; gap: 6px; }
       input { flex: 1; min-width: 0; height: 36px; box-sizing: border-box; padding: 0 12px; border: 1px solid transparent; border-radius: 10px;
         background: rgba(238, 243, 246, 0.08); color: var(--fg); font: inherit; outline: none;
@@ -448,7 +468,7 @@ function showToast({ state, text, sub, thumb, token, job, categories }) {
       .go { flex: none; height: 36px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--blue); color: var(--ink); font-weight: 600; }
       @media (hover: hover) {
         .x:hover { background: rgba(238, 243, 246, 0.1); color: var(--fg); }
-        .chip:hover { border-color: var(--blue); }
+        .chip:hover, .chain:hover { border-color: var(--blue); }
         .chip[aria-pressed="true"]:hover { background: #33abe5; }
         .go:hover { background: #33abe5; transform: translateY(-1px); }
         .go:active { transform: scale(0.97); }
@@ -463,6 +483,7 @@ function showToast({ state, text, sub, thumb, token, job, categories }) {
       </div>
       ${state === "ask" ? `
       <form>
+        ${chain ? `<button class="chain" type="button" aria-pressed="false"><img alt=""><span><b>接上一张</b><span class="of"></span></span><span class="tick">${svg("done")}</span></button>` : ""}
         <fieldset class="chips" aria-label="大概是哪一类"></fieldset>
         <div class="say">
           <input name="remark" maxlength="300" autocomplete="off" placeholder="说一句，比如：这个按钮动效好看" aria-label="说一句这张图">
@@ -503,6 +524,19 @@ function showToast({ state, text, sub, thumb, token, job, categories }) {
     chips.append(b);
   }
   if (!chips.children.length) chips.remove();
+  // 「接上一张」: this picture joins the set of the one collected last (whose category it then shares)
+  let groupWith = "";
+  const link = root.querySelector(".chain");
+  if (link) {
+    if (/^https?:/.test(chain.thumb || "")) link.querySelector("img").src = chain.thumb;
+    else link.querySelector("img").remove();
+    link.querySelector(".of").textContent = `加到「${chain.title}」${chain.pictures > 1 ? `，现有 ${chain.pictures} 张` : ""}`;
+    link.addEventListener("click", () => {
+      groupWith = groupWith ? "" : chain.id;
+      link.setAttribute("aria-pressed", String(Boolean(groupWith)));
+      root.querySelector("form").classList.toggle("chained", Boolean(groupWith));
+    });
+  }
   const input = root.querySelector("input");
   root.querySelector(".t").addEventListener("keydown", (e) => {
     if (e.key === "Escape") gone();
@@ -510,7 +544,7 @@ function showToast({ state, text, sub, thumb, token, job, categories }) {
   root.querySelector("form").addEventListener("submit", (e) => {
     e.preventDefault();
     host._token = null;
-    chrome.runtime.sendMessage({ type: "inspair:send", token, job, remark: input.value, category }).catch(() => {});
+    chrome.runtime.sendMessage({ type: "inspair:send", token, job, remark: input.value, category: groupWith ? "" : category, groupWith }).catch(() => {});
   });
   input.focus({ preventScroll: true });
 }

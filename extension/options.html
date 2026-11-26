@@ -24,6 +24,11 @@
         </div>
         <p id="empty" class="empty" hidden>收件箱是空的。</p>
         <ul id="grid" class="grid"></ul>
+        <div id="bar" class="bar" hidden>
+          <p id="bar-text" role="status"></p>
+          <button id="bar-cancel" class="bar-btn" type="button">取消</button>
+          <button id="bar-group" class="bar-btn bar-btn--go" type="button">合成一组</button>
+        </div>
       </section>
 
       <h2 class="settings-title">连接</h2>
@@ -48,7 +53,12 @@
 
     <template id="tile">
       <li class="tile">
-        <button class="pic" type="button"><img alt="" decoding="async" /></button>
+        <button class="pic" type="button"><img alt="" decoding="async" /><span class="n" hidden></span></button>
+        <button class="pick" type="button" aria-pressed="false">
+          <!-- Lucide: check -->
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+          <span></span>
+        </button>
         <div class="meta">
           <p class="title"></p>
           <p class="remark"></p>
@@ -67,8 +77,19 @@
 
     <dialog id="viewer" aria-labelledby="viewer-title">
       <figure>
-        <img id="viewer-img" alt="" />
+        <div class="viewer-stage">
+          <img id="viewer-img" alt="" />
+          <button id="viewer-prev" class="icon-btn flip flip--prev" type="button" aria-label="这一组的上一张" hidden>
+            <!-- Lucide: chevron-left -->
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+          </button>
+          <button id="viewer-next" class="icon-btn flip flip--next" type="button" aria-label="这一组的下一张" hidden>
+            <!-- Lucide: chevron-right -->
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+          </button>
+        </div>
         <figcaption>
+          <span id="viewer-count" class="viewer-count" hidden></span>
           <p id="viewer-title"></p>
           <button id="viewer-close" class="icon-btn" type="button" aria-label="关闭">
             <!-- Lucide: x -->

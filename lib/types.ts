@@ -17,6 +17,8 @@ export const MediaSchema = z.object({
   /** Public path of a smaller copy of a still picture (800px wide WebP), made when it is added. Cards and
    * the scene show it; the detail view shows the full file. */
   thumb: z.string().optional(),
+  /** A picture of a set (Item.gallery) collected from a web page: its own address there, to spot it twice. */
+  imageUrl: z.string().optional(),
 });
 export type Media = z.infer<typeof MediaSchema>;
 
@@ -25,7 +27,11 @@ export const ItemSchema = z.object({
   title: z.string(),
   category: z.string(),
   tags: z.array(z.string()).default([]),
+  /** The cover: what cards, categories and the scene show. */
   media: MediaSchema,
+  /** The rest of a set (a design shown over several pictures: a preview, then the details), in order after
+   * the cover. The detail view flips through all of them. */
+  gallery: z.array(MediaSchema).optional(),
   /** The prompt used to generate this piece, if any. */
   prompt: z.string().optional(),
   negativePrompt: z.string().optional(),
@@ -66,3 +72,6 @@ export const SiteSchema = z.object({
   categories: z.array(CategorySchema),
 });
 export type Site = z.infer<typeof SiteSchema>;
+
+/** Every picture of an item: the cover, then the rest of its set. */
+export const picturesOf = (item: Pick<Item, "media" | "gallery">): Media[] => [item.media, ...(item.gallery ?? [])];

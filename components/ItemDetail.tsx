@@ -1,8 +1,9 @@
 "use client";
-import { ArrowUpRight, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Film } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import MediaView from "./MediaView";
 import { useCopy, useFramed } from "@/lib/hooks";
-import type { Item, Site } from "@/lib/types";
+import { picturesOf, type Item, type Site } from "@/lib/types";
 
 const TYPE_LABEL = { image: "图片", video: "视频", svg: "SVG", lottie: "Lottie" } as const;
 
@@ -21,13 +22,83 @@ export default function ItemDetail({ item, site, heading: Title = "h2" }: { item
       host = new URL(item.source!).host.replace(/^www\./, "");
     } catch {}
   }
-  const ext = item.media.src.split(".").pop()?.toUpperCase();
-  const dims = item.media.width && item.media.height ? ` · ${item.media.width}×${item.media.height}` : "";
+  // a set flips through its pictures here; the facts and 原文件 follow the one shown
+  const pictures = picturesOf(item);
+  const [at, setAt] = useState(0);
+  const media = pictures[at] ?? item.media;
+  const ext = media.src.split(".").pop()?.toUpperCase();
+  const dims = media.width && media.height ? ` · ${media.width}×${media.height}` : "";
+  const isSet = pictures.length > 1;
+  const go = (k: number) => setAt(Math.max(0, Math.min(pictures.length - 1, k)));
+
+  // ← → flip through the set first; at either end they fall through to the modal, which moves to the
+  // neighbouring item (a capturing listener on window runs before the modal's own)
+  const atRef = useRef(at);
+  atRef.current = at;
+  useEffect(() => {
+    if (!isSet) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      if (e.target instanceof HTMLElement && e.target.closest("input, textarea, video, [contenteditable]")) return;
+      const next = atRef.current + (e.key === "ArrowRight" ? 1 : -1);
+      if (next < 0 || next >= pictures.length) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setAt(next);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [isSet, pictures.length]);
+
+  // a swipe across the picture flips it on touch screens
+  const swipe = useRef<{ x: number; y: number } | null>(null);
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (isSet && e.pointerType !== "mouse") swipe.current = { x: e.clientX, y: e.clientY };
+  };
+  const onPointerUp = (e: React.PointerEvent) => {
+    const from = swipe.current;
+    swipe.current = null;
+    if (!from) return;
+    const dx = e.clientX - from.x;
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(e.clientY - from.y) * 1.5) go(at + (dx < 0 ? 1 : -1));
+  };
 
   return (
     <div className="detail">
-      <div className="detail-stage" style={item.color ? { ["--glow" as string]: item.color } : undefined}>
-        <MediaView item={item} fit="contain" eager controls={item.media.type === "video"} />
+      <div
+        className={`detail-stage${isSet ? " is-set" : ""}`}
+        style={item.color ? { ["--glow" as string]: item.color } : undefined}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => (swipe.current = null)}
+      >
+        <MediaView key={media.src} item={{ ...item, media }} fit="contain" eager controls={media.type === "video"} />
+        {isSet && (
+          <>
+            <p className="stage-count" aria-live="polite">
+              {at + 1} / {pictures.length}
+            </p>
+            <button className="icon-btn stage-prev" onClick={() => go(at - 1)} disabled={at === 0} aria-label="这一组的上一张">
+              <ChevronLeft />
+            </button>
+            <button className="icon-btn stage-next" onClick={() => go(at + 1)} disabled={at === pictures.length - 1} aria-label="这一组的下一张">
+              <ChevronRight />
+            </button>
+            <div className="stage-thumbs" role="group" aria-label="这一组的图片">
+              {pictures.map((m, k) => (
+                <button
+                  key={m.src}
+                  className={`stage-thumb${m.cutout ? " is-cutout" : ""}`}
+                  aria-current={k === at ? "true" : undefined}
+                  aria-label={`第 ${k + 1} 张`}
+                  onClick={() => setAt(k)}
+                >
+                  {m.type === "video" || m.type === "lottie" ? <Film /> : <img src={m.thumb ?? m.src} alt="" loading="lazy" decoding="async" draggable={false} />}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
       <aside className="detail-info" data-lenis-prevent>
         <p className="eyebrow">
@@ -78,9 +149,10 @@ export default function ItemDetail({ item, site, heading: Title = "h2" }: { item
           <div>
             <dt>格式</dt>
             <dd>
-              {TYPE_LABEL[item.media.type]}
-              {item.media.type === "image" || item.media.type === "video" ? ` (${ext})` : ""}
+              {TYPE_LABEL[media.type]}
+              {media.type === "image" || media.type === "video" ? ` (${ext})` : ""}
               {dims}
+              {isSet ? ` · 共 ${pictures.length} 张` : ""}
             </dd>
           </div>
           {item.color && (
@@ -118,7 +190,7 @@ export default function ItemDetail({ item, site, heading: Title = "h2" }: { item
             {copied === "link" ? "已复制链接" : "复制链接"}
           </button>
           {!inFrame && (
-            <a className="btn btn--line" href={item.media.src} target="_blank" rel="noopener">
+            <a className="btn btn--line" href={media.src} target="_blank" rel="noopener">
               原文件 <ArrowUpRight className="ic-out" />
             </a>
           )}

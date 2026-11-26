@@ -1,4 +1,5 @@
 "use client";
+import { Images } from "lucide-react";
 import MediaView from "./MediaView";
 import { useCopy } from "@/lib/hooks";
 import type { Category, Item } from "@/lib/types";
@@ -28,6 +29,12 @@ export default function Card({
           aria-label={`查看「${item.title}」`}
         >
           <MediaView item={item} fit={item.media.cutout ? "contain" : "cover"} small />
+          {item.gallery?.length ? (
+            <span className="card-count" aria-label={`一组 ${item.gallery.length + 1} 张`}>
+              <Images aria-hidden />
+              {item.gallery.length + 1}
+            </span>
+          ) : null}
         </button>
         {item.prompt && (
           <button className="card-copy" onClick={() => copy(item.prompt!)}>
