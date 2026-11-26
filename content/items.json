@@ -1,6 +1,35 @@
 [
   {
+    "id": "20261126-p2afwv",
+    "tags": [
+      "移动端UI",
+      "NFT应用",
+      "暗黑模式",
+      "引导页",
+      "玻璃拟态",
+      "胶囊导航",
+      "卡片设计",
+      "3D角色",
+      "滑动按钮"
+    ],
+    "title": "NFT 交易平台移动端双屏界面（引导页 + 暗黑首页）",
+    "category": "interface",
+    "source": "https://www.pinterest.com/pin/837106649513120415/",
+    "note": "NFT 交易与收藏 APP 移动端双屏界面设计（浅色引导页 + 暗黑首页）。左侧引导页以大圆角 3D 潮流刺猬角色卡片轮播搭配底部滑动解锁式胶囊按钮「Get Started >>>」；右侧暗黑模式首页采用胶囊分类标签（Recent / Trending / Popular）、大圆角 3D 藏品卡片叠加底部毛玻璃倒计时/报价条与圆形收藏/跳转按钮，底部悬浮毛玻璃胶囊导航栏，潮流感与交互细节兼备。",
+    "color": "#1C1C1E",
+    "media": {
+      "src": "/media/20261126-p2afwv.jpg",
+      "type": "image",
+      "width": 1080,
+      "height": 1440,
+      "thumb": "/media/20261126-p2afwv.thumb.webp"
+    },
+    "createdAt": "2026-11-26T02:50:58.986Z"
+  },
+  {
     "id": "20261126-n4astw",
+    "title": "MINI Electric 俯视构图电动汽车官网首屏",
+    "category": "interface",
     "tags": [
       "网页设计",
       "产品落地页",
@@ -11,17 +40,15 @@
       "极简现代",
       "数据卡片"
     ],
-    "title": "MINI Electric 俯视构图电动汽车官网首屏",
-    "category": "interface",
-    "source": "https://www.pinterest.com/pin/484137028710876169/",
-    "note": "MINI Electric 电动汽车官网首屏设计（设计师：Nicholas Ergemla）。以极具张力的正俯视实拍车身作为视觉中轴，搭配冷灰影棚光影背景；左侧采用轻重字重对比的「MINI ELECTRIC」标题、售价信息与亮钴蓝胶囊主按钮「BUILD YOUR MINI」；右侧以 2×2 毛玻璃核心参数卡片（极速/车重/续航/零百加速）叠加视频预览卡片，整体对称平衡、克制高级。",
-    "color": "#2553F0",
     "media": {
       "src": "/media/20261126-n4astw.jpg",
       "type": "image",
       "width": 749,
       "height": 562
     },
+    "source": "https://www.pinterest.com/pin/484137028710876169/",
+    "note": "MINI Electric 电动汽车官网首屏设计（设计师：Nicholas Ergemla）。以极具张力的正俯视实拍车身作为视觉中轴，搭配冷灰影棚光影背景；左侧采用轻重字重对比的「MINI ELECTRIC」标题、售价信息与亮钴蓝胶囊主按钮「BUILD YOUR MINI」；右侧以 2×2 毛玻璃核心参数卡片（极速/车重/续航/零百加速）叠加视频预览卡片，整体对称平衡、克制高级。",
+    "color": "#2553F0",
     "createdAt": "2026-11-26T02:48:29.931Z"
   },
   {
