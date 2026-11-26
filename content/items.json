@@ -3,9 +3,6 @@
     "id": "20261126-8doos2",
     "title": "秋日的柿子树，真的太治愈了！ - 小红书",
     "category": "photo",
-    "note": "采集自「秋日的柿子树，真的太治愈了！ - 小红书」",
-    "source": "https://www.xiaohongshu.com/explore/6af9b58e0000000018038b20?xsec_token=ABx69qNXNvcm4sIvploeZatIqU8bGTDrYgVK2MgjfXFh4=&xsec_source=pc_feed",
-    "createdAt": "2026-11-26T08:10:08.491Z",
     "tags": [],
     "media": {
       "src": "/media/20261126-8doos2.webp",
@@ -14,27 +11,11 @@
       "height": 1802,
       "thumb": "/media/20261126-8doos2.thumb.webp"
     },
-    "imageUrl": "https://sns-webpic-qc.xhscdn.com/202611261610/7ee661e50aefe9cc07edc251eb3fe9dc/notes_pre_post/1040g3k8327jheiql78eg5n51v3h5g2ifvfrevt0!nd_dft_wlteh_webp_3",
-    "inbox": true
-  },
-  {
-    "id": "20261126-syf4jr",
-    "title": "Image",
-    "category": "ui",
-    "tags": [],
-    "media": {
-      "src": "/media/20261126-syf4jr.jpg",
-      "type": "image",
-      "width": 1064,
-      "height": 2048,
-      "thumb": "/media/20261126-syf4jr.thumb.webp"
-    },
-    "source": "https://x.com/morrre_dsgn/status/2123935510276288717/photo/1",
-    "note": "采集自「morrre_dsgn on X: \"Backgrounds that take your design to the next level https://t.co/2rqbWsr7Cu\" / X」\n图片说明：Image",
+    "source": "https://www.xiaohongshu.com/explore/6af9b58e0000000018038b20?xsec_token=ABx69qNXNvcm4sIvploeZatIqU8bGTDrYgVK2MgjfXFh4=&xsec_source=pc_feed",
+    "note": "采集自「秋日的柿子树，真的太治愈了！ - 小红书」",
     "inbox": true,
-    "imageUrl": "https://pbs.twimg.com/media/HXm8EsAWQAAqwuG?format=jpg&name=orig",
-    "createdAt": "2026-11-26T07:32:00.758Z",
-    "updatedAt": "2026-11-26T07:40:30.121Z"
+    "imageUrl": "https://sns-webpic-qc.xhscdn.com/202611261610/7ee661e50aefe9cc07edc251eb3fe9dc/notes_pre_post/1040g3k8327jheiql78eg5n51v3h5g2ifvfrevt0!nd_dft_wlteh_webp_3",
+    "createdAt": "2026-11-26T08:10:08.491Z"
   },
   {
     "id": "20261126-2aaap8",
@@ -46,14 +27,38 @@
       "type": "image",
       "width": 1126,
       "height": 2004,
-      "thumb": "/media/20261126-57r8gw.thumb.webp"
+      "thumb": "/media/20261126-57r8gw.thumb.webp",
+      "origin": {
+        "title": "Image",
+        "category": "ui",
+        "note": "采集自「morrre_dsgn on X: \"Backgrounds that take your design to the next level https://t.co/2rqbWsr7Cu\" / X」\n图片说明：Image",
+        "source": "https://x.com/morrre_dsgn/status/2123935510276288717/photo/1",
+        "createdAt": "2026-11-26T07:40:30.121Z"
+      }
     },
     "source": "https://x.com/morrre_dsgn/status/2123935510276288717/photo/1",
     "note": "采集自「morrre_dsgn on X: \"Backgrounds that take your design to the next level https://t.co/2rqbWsr7Cu\" / X」\n图片说明：Image",
     "inbox": true,
     "imageUrl": "https://pbs.twimg.com/media/HXm8EsGWcAAu8AH?format=jpg&name=orig",
     "createdAt": "2026-11-26T07:40:30.121Z",
-    "updatedAt": "2026-11-26T07:37:31.172Z"
+    "updatedAt": "2026-11-26T08:19:42.166Z",
+    "gallery": [
+      {
+        "src": "/media/20261126-syf4jr.jpg",
+        "type": "image",
+        "width": 1064,
+        "height": 2048,
+        "thumb": "/media/20261126-syf4jr.thumb.webp",
+        "imageUrl": "https://pbs.twimg.com/media/HXm8EsAWQAAqwuG?format=jpg&name=orig",
+        "origin": {
+          "title": "Image",
+          "category": "ui",
+          "note": "采集自「morrre_dsgn on X: \"Backgrounds that take your design to the next level https://t.co/2rqbWsr7Cu\" / X」\n图片说明：Image",
+          "source": "https://x.com/morrre_dsgn/status/2123935510276288717/photo/1",
+          "createdAt": "2026-11-26T07:32:00.758Z"
+        }
+      }
+    ]
   },
   {
     "id": "20261126-gwc1fz",
