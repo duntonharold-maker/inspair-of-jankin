@@ -1,6 +1,25 @@
 [
   {
+    "id": "20261126-62anob",
+    "title": "故事 Pin 图图片",
+    "category": "",
+    "tags": [],
+    "media": {
+      "src": "/media/20261126-62anob.jpg",
+      "type": "image",
+      "width": 720,
+      "height": 720
+    },
+    "source": "https://www.pinterest.com/pin/1548181182025591/",
+    "note": "采集自「Videaste - Personal Videographer Portfolio Website! 🌔」\n图片说明：故事 Pin 图图片",
+    "imageUrl": "https://i.pinimg.com/originals/e5/df/73/e5df73506fcfa47611ea1aefb86e4b26.jpg",
+    "inbox": true,
+    "createdAt": "2026-11-26T03:01:04.351Z"
+  },
+  {
     "id": "20261126-yl8zgc",
+    "title": "Welcome to Saudi 黑金沉浸式文旅 APP 三屏界面",
+    "category": "interface",
     "tags": [
       "移动端UI",
       "旅行应用",
@@ -12,11 +31,6 @@
       "轻奢极简",
       "胶囊导航"
     ],
-    "title": "Welcome to Saudi 黑金沉浸式文旅 APP 三屏界面",
-    "category": "interface",
-    "source": "https://www.pinterest.com/pin/207658232812087209/",
-    "note": "沙特文旅与 NEOM 投资移动端 APP 三屏界面设计（设计师：@uxbymo）。整体以沙漠暖金 + 曜石黑营造电影级轻奢沉浸感：左屏欢迎页以全屏山脉实景渐隐入暗底搭配玻璃描边胶囊按钮「Get Started」；中屏以金黑渐变背景承载立体堆叠卡片组（「THE LINE」项目实景、暖金跳转圆钮与底部悬浮胶囊导航）；右屏「Magna City」详情页采用日落实景无缝过渡至纯黑文案区，搭配高对比纯白「Invest Now」主按钮，氛围克制高级。",
-    "color": "#C89B54",
     "media": {
       "src": "/media/20261126-yl8zgc.jpg",
       "type": "image",
@@ -24,6 +38,9 @@
       "height": 720,
       "thumb": "/media/20261126-yl8zgc.thumb.webp"
     },
+    "source": "https://www.pinterest.com/pin/207658232812087209/",
+    "note": "沙特文旅与 NEOM 投资移动端 APP 三屏界面设计（设计师：@uxbymo）。整体以沙漠暖金 + 曜石黑营造电影级轻奢沉浸感：左屏欢迎页以全屏山脉实景渐隐入暗底搭配玻璃描边胶囊按钮「Get Started」；中屏以金黑渐变背景承载立体堆叠卡片组（「THE LINE」项目实景、暖金跳转圆钮与底部悬浮胶囊导航）；右屏「Magna City」详情页采用日落实景无缝过渡至纯黑文案区，搭配高对比纯白「Invest Now」主按钮，氛围克制高级。",
+    "color": "#C89B54",
     "createdAt": "2026-11-26T02:54:02.512Z"
   },
   {
