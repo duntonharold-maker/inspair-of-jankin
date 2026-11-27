@@ -1,5 +1,25 @@
 [
   {
+    "id": "20261127-p4jh2i",
+    "title": "These cards are just so good",
+    "category": "ui",
+    "note": "作者：Sean Galt (@seanaiux)\n采集自「Home / X」\n原文：These cards are just so good",
+    "source": "https://x.com/seanaiux/status/2125943404009808260",
+    "createdAt": "2026-11-27T05:16:52.455Z",
+    "tags": [],
+    "media": {
+      "src": "/media/20261127-p4jh2i.mp4",
+      "type": "video",
+      "width": 1920,
+      "height": 1080,
+      "duration": 14,
+      "thumb": "/media/20261127-p4jh2i.thumb.webp",
+      "small": "/media/20261127-p4jh2i.small.mp4"
+    },
+    "imageUrl": "https://video.twimg.com/amplify_video/2125611093561380864/vid/avc1/1920x1080/L8MPMXnOoFynC3w9.mp4",
+    "inbox": true
+  },
+  {
     "id": "20261127-t19evi",
     "title": "Image",
     "category": "interface",
@@ -18,12 +38,6 @@
         "createdAt": "2026-11-27T05:03:57.688Z"
       }
     },
-    "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/2",
-    "note": "采集自「Home / X」\n图片说明：Image",
-    "inbox": true,
-    "imageUrl": "https://pbs.twimg.com/media/HX99RWFWgAAKiTq?format=jpg&name=orig",
-    "createdAt": "2026-11-27T05:03:57.688Z",
-    "updatedAt": "2026-11-27T05:13:26.281Z",
     "gallery": [
       {
         "src": "/media/20261127-5da863.webp",
@@ -40,7 +54,13 @@
           "createdAt": "2026-11-27T05:03:52.191Z"
         }
       }
-    ]
+    ],
+    "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/2",
+    "note": "采集自「Home / X」\n图片说明：Image",
+    "inbox": true,
+    "imageUrl": "https://pbs.twimg.com/media/HX99RWFWgAAKiTq?format=jpg&name=orig",
+    "createdAt": "2026-11-27T05:03:57.688Z",
+    "updatedAt": "2026-11-27T05:13:26.281Z"
   },
   {
     "id": "20261127-9dgi6t",
