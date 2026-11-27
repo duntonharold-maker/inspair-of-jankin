@@ -35,6 +35,7 @@ import {
   toShared,
   type Marks,
 } from "./choreo";
+import { deal } from "./deal";
 import type { Item } from "@/lib/types";
 
 export type SceneMarks = Marks;
@@ -238,13 +239,11 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
       },
     });
 
-  // Featured first, then newest. Pictures follow the card's cell on the wall, so neighbours differ.
-  const pool = [...items.filter((i) => i.featured), ...items.filter((i) => !i.featured)];
+  const shownBy = deal(items, choreo, N, mobile, window.innerWidth / Math.max(1, window.innerHeight));
   const rand = rng(11);
   const cards: Card[] = [];
   for (let k = 0; k < N; k++) {
-    const { row, col } = choreo.cellOf(k);
-    const item = pool[((row * COLS + col) * 5) % Math.max(1, pool.length)];
+    const item = shownBy[k] as Item; // none only when the library is empty
     const mesh = new Mesh(geometry, material(false));
     mesh.renderOrder = 1;
     mesh.frustumCulled = false; // its lens moves it on screen, so three cannot tell where it is
@@ -295,18 +294,18 @@ export function createStoryScene(canvas: HTMLCanvasElement, items: Item[]): Stor
     });
   }
 
-  // Textures: one per distinct item, shared by every card that shows it.
+  // Textures: one per distinct picture, shared by every card that shows it.
   const textures = new Map<string, CardTexture>();
   let disposed = false;
   (async () => {
-    const distinct = [...new Set(cards.map((c) => c.item))];
+    const distinct = [...new Map(cards.filter((c) => c.item).map((c) => [c.item.media.src, c.item])).values()];
     for (const item of distinct) {
       if (disposed) return;
       try {
         const t = await cardTexture(item, renderer);
         if (disposed) return t.dispose();
-        textures.set(item.id, t);
-        for (const c of cards.filter((c) => c.item === item)) {
+        textures.set(item.media.src, t);
+        for (const c of cards.filter((c) => c.item?.media.src === item.media.src)) {
           for (const m of [c.mesh, ...c.ghosts]) {
             m.material.uniforms.uMap.value = t.texture;
             m.material.uniforms.uHasMap.value = 1;
