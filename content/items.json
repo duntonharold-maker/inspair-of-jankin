@@ -1,16 +1,16 @@
 [
   {
     "id": "20261127-205y8k",
-    "title": "专辑封面手写标题字体《爱得飞行日记》·杰伦 - LiblibAI",
-    "category": "illustration",
-    "note": "作者：九山鸣\n采集自「专辑封面手写标题字体《爱得飞行日记》·杰伦 - LiblibAI」",
-    "source": "https://www.liblib.art/imageinfo/51626e911b2846aaae3f490574bf7c8b",
-    "createdAt": "2026-11-27T06:42:15.476Z",
-    "prompt": "黑色背景白色字,大师级排版,图片中央偏上是手写体的中文标题“爱的飞行日记”,字体笔触自由,流畅且带有书法韵味,部分字的笔画拉长,形成一个优美的弧线,整个标题显得艺术而富有动感,\r\n标题下方,有三行小字：第一行是普通的印刷体中文“周杰伦·《跨时代》”,第二行是年份“2010.5.18”,以及大写英文“Diary: Fly For Love”,字体是无衬线体,第三行是更小的英文字母“The border of the equator is cloudless for thousands of miles,and the sky is very clear....”,在标题的右侧,有一个小小的注册商标®符号,",
-    "negativePrompt": "ng_deepnegative_v1_75t,(badhandv4:1.2),EasyNegative,(worst quality:2),",
-    "model": "LiblibAI Qwen-Image + LoRA 【Dave】清新文艺手写字体｜专辑｜影视｜音乐｜综艺｜Logo等海报标题（♥中文控制）书法艺术创意字",
-    "params": "Steps: 35, Sampler: Euler, CFG scale: 5, Size: 1472x1140",
-    "tags": [],
+    "title": "「爱的飞行日记」手写书法标题",
+    "category": "poster",
+    "tags": [
+      "字体设计",
+      "手写字体",
+      "书法",
+      "专辑封面",
+      "黑白极简",
+      "版式设计"
+    ],
     "media": {
       "src": "/media/20261127-205y8k.webp",
       "type": "image",
@@ -18,14 +18,29 @@
       "height": 1140,
       "thumb": "/media/20261127-205y8k.thumb.webp"
     },
+    "prompt": "黑色背景白色字,大师级排版,图片中央偏上是手写体的中文标题“爱的飞行日记”,字体笔触自由,流畅且带有书法韵味,部分字的笔画拉长,形成一个优美的弧线,整个标题显得艺术而富有动感,\r\n标题下方,有三行小字：第一行是普通的印刷体中文“周杰伦·《跨时代》”,第二行是年份“2010.5.18”,以及大写英文“Diary: Fly For Love”,字体是无衬线体,第三行是更小的英文字母“The border of the equator is cloudless for thousands of miles,and the sky is very clear....”,在标题的右侧,有一个小小的注册商标®符号,",
+    "negativePrompt": "ng_deepnegative_v1_75t,(badhandv4:1.2),EasyNegative,(worst quality:2),",
+    "model": "LiblibAI Qwen-Image + LoRA 【Dave】清新文艺手写字体｜专辑｜影视｜音乐｜综艺｜Logo等海报标题（♥中文控制）书法艺术创意字",
+    "params": "Steps: 35, Sampler: Euler, CFG scale: 5, Size: 1472x1140",
+    "source": "https://www.liblib.art/imageinfo/51626e911b2846aaae3f490574bf7c8b",
+    "note": "用 LoRA 生成的手写书法标题：笔触自由，个别笔画拉长成弧线；下面配三行规整的印刷体小字（歌手与专辑、日期、英文副标题），一放一收形成对比。提示词逐行写明了文字内容、字体和位置，换成别的歌名就能套用。作者 九山鸣。",
     "imageUrl": "https://images-wm.liblib.cloud/img/68d5f9dc49de45cd8121fb13a20337f9/56658f8cdb36f7403f3198a1f5f8c293c7185fcf864dc05f3a7210df2ecc85f1.png",
-    "inbox": true
+    "createdAt": "2026-11-27T06:42:15.476Z",
+    "color": "#0B0B0B",
+    "updatedAt": "2026-11-27T06:44:49.404Z"
   },
   {
     "id": "20261127-c5j47x",
-    "title": "无线头戴式耳机产品广告 - 即梦",
-    "category": "interface",
-    "tags": [],
+    "title": "ARC ZENITH 头戴式耳机产品海报",
+    "category": "poster",
+    "tags": [
+      "产品海报",
+      "硬件产品",
+      "玻璃拟态",
+      "暗黑模式",
+      "黑白极简",
+      "发光字"
+    ],
     "media": {
       "src": "/media/20261127-c5j47x.webp",
       "type": "image",
@@ -37,10 +52,11 @@
     "model": "即梦 Seedream 5.0 Pro",
     "params": "Size: 2560x1440, Seed: 3012090303",
     "source": "https://jimeng.jianying.com/ai-tool/work-detail/7681561564192738585?workDetailType=Image&itemType=9",
-    "note": "作者：即梦AI\n采集自「无线头戴式耳机产品广告 - 即梦」",
-    "inbox": true,
+    "note": "苹果式的黑底产品海报：白色耳机居中偏右，背后一圈柔光，超大的半透明字「VERSE」垫在后面拉出层次；左侧叠一张毛玻璃播放器卡片，把产品和使用场景连在一起，底部三个图标加小字讲卖点。提示词把材质、角度、光线和每一行文字都写清楚了，换个硬件产品就能复用。作者 即梦AI。",
     "imageUrl": "https://p9-dreamina-sign.byteimg.com/tos-cn-i-tb4s082cfz/6f5ce0d60254472fa20744ea454e0ae1~tplv-tb4s082cfz-aigc_resize:0:0.png?lk3s=4fa96020&x-expires=1797552000&x-signature=qg5t5bQXeAdvJ4HsBiCHBGAIhoY%3D",
-    "createdAt": "2026-11-27T06:40:36.273Z"
+    "createdAt": "2026-11-27T06:40:36.273Z",
+    "color": "#C9D1D9",
+    "updatedAt": "2026-11-27T06:44:49.404Z"
   },
   {
     "id": "20261127-p4jh2i",
