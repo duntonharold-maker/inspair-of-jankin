@@ -38,12 +38,6 @@
         "createdAt": "2026-11-27T05:03:57.688Z"
       }
     },
-    "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/2",
-    "note": "采集自「Home / X」\n图片说明：Image",
-    "inbox": true,
-    "imageUrl": "https://pbs.twimg.com/media/HX99RWFWgAAKiTq?format=jpg&name=orig",
-    "createdAt": "2026-11-27T05:03:57.688Z",
-    "updatedAt": "2026-11-27T05:21:09.043Z",
     "gallery": [
       {
         "src": "/media/20261127-5da863.webp",
@@ -59,8 +53,29 @@
           "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/1",
           "createdAt": "2026-11-27T05:03:52.191Z"
         }
+      },
+      {
+        "src": "/media/20261127-84h58b.jpg",
+        "type": "image",
+        "width": 1600,
+        "height": 1200,
+        "thumb": "/media/20261127-84h58b.thumb.webp",
+        "imageUrl": "https://pbs.twimg.com/media/HYB0ERzbkAABjGz?format=jpg&name=orig",
+        "origin": {
+          "title": "Image",
+          "category": "ui",
+          "note": "采集自「Home / X」\n图片说明：Image",
+          "source": "https://x.com/uixsiam09/status/2125826652307599418/photo/1",
+          "createdAt": "2026-11-27T04:38:34.470Z"
+        }
       }
-    ]
+    ],
+    "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/2",
+    "note": "采集自「Home / X」\n图片说明：Image",
+    "inbox": true,
+    "imageUrl": "https://pbs.twimg.com/media/HX99RWFWgAAKiTq?format=jpg&name=orig",
+    "createdAt": "2026-11-27T05:03:57.688Z",
+    "updatedAt": "2026-11-27T05:21:14.753Z"
   },
   {
     "id": "20261127-9dgi6t",
@@ -104,25 +119,6 @@
     "imageUrl": "https://pbs.twimg.com/media/HYD8EmpW8AAQkTG?format=jpg&name=orig",
     "createdAt": "2026-11-27T04:36:33.946Z",
     "updatedAt": "2026-11-27T04:59:53.265Z"
-  },
-  {
-    "id": "20261127-al9k7c",
-    "title": "Image",
-    "category": "ui",
-    "tags": [],
-    "media": {
-      "src": "/media/20261127-84h58b.jpg",
-      "type": "image",
-      "width": 1600,
-      "height": 1200,
-      "thumb": "/media/20261127-84h58b.thumb.webp"
-    },
-    "source": "https://x.com/uixsiam09/status/2125826652307599418/photo/1",
-    "note": "采集自「Home / X」\n图片说明：Image",
-    "inbox": true,
-    "imageUrl": "https://pbs.twimg.com/media/HYB0ERzbkAABjGz?format=jpg&name=orig",
-    "createdAt": "2026-11-27T04:38:34.470Z",
-    "updatedAt": "2026-11-27T04:59:45.131Z"
   },
   {
     "id": "20261126-qxgi5b",
