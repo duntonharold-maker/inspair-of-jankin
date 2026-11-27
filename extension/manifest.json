@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "inspair 采集",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "在网页图片上右键「收藏到 inspair」，图片进入网站的收件箱，等 Claude 整理后上线。",
   "permissions": [
     "contextMenus",

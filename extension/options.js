@@ -1,6 +1,6 @@
 // The inbox: every picture collected and not yet filed by Claude. Look at them, throw some away, make sets
 // (shown as folders), rearrange a set. Connection settings sit behind the gear.
-const DEFAULT_SITE = "https://inspair-of-jankin.vercel.app";
+const DEFAULT_SITE = "https://jankin.new.tg";
 const $ = (id) => document.getElementById(id);
 
 let conn = null; // { site, key } once the connection works
