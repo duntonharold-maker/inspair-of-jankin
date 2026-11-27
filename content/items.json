@@ -1,5 +1,22 @@
 [
   {
+    "id": "20261127-hfxds7",
+    "title": "即梦AI - 一站式AI创作平台",
+    "category": "interface",
+    "note": "采集自「即梦AI - 一站式AI创作平台」",
+    "source": "https://jimeng.jianying.com/ai-tool/work-detail/7681561564192738585?workDetailType=Image&itemType=9",
+    "createdAt": "2026-11-27T05:10:47.914Z",
+    "tags": [],
+    "media": {
+      "src": "/media/20261127-hfxds7.webp",
+      "type": "image",
+      "width": 480,
+      "height": 270
+    },
+    "imageUrl": "https://p26-dreamina-sign.byteimg.com/tos-cn-i-tb4s082cfz/6f5ce0d60254472fa20744ea454e0ae1~tplv-tb4s082cfz-aigc_resize:480:480.webp?lk3s=4fa96020&x-expires=1797552000&x-signature=Py6pN%2F69g8fFwr5mDCEH2a3sPpU%3D",
+    "inbox": true
+  },
+  {
     "id": "20261127-t19evi",
     "title": "Image",
     "category": "interface",
@@ -18,11 +35,6 @@
         "createdAt": "2026-11-27T05:03:57.688Z"
       }
     },
-    "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/2",
-    "note": "采集自「Home / X」\n图片说明：Image",
-    "inbox": true,
-    "imageUrl": "https://pbs.twimg.com/media/HX99RWFWgAAKiTq?format=jpg&name=orig",
-    "createdAt": "2026-11-27T05:03:57.688Z",
     "gallery": [
       {
         "src": "/media/20261127-5da863.webp",
@@ -40,6 +52,11 @@
         }
       }
     ],
+    "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/2",
+    "note": "采集自「Home / X」\n图片说明：Image",
+    "inbox": true,
+    "imageUrl": "https://pbs.twimg.com/media/HX99RWFWgAAKiTq?format=jpg&name=orig",
+    "createdAt": "2026-11-27T05:03:57.688Z",
     "updatedAt": "2026-11-27T05:05:55.053Z"
   },
   {
