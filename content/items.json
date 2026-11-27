@@ -9,33 +9,38 @@
       "type": "image",
       "width": 2560,
       "height": 2926,
-      "thumb": "/media/20261127-t19evi.thumb.webp"
+      "thumb": "/media/20261127-t19evi.thumb.webp",
+      "origin": {
+        "title": "Image",
+        "category": "interface",
+        "note": "采集自「Home / X」\n图片说明：Image",
+        "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/2",
+        "createdAt": "2026-11-27T05:03:57.688Z"
+      }
     },
     "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/2",
     "note": "采集自「Home / X」\n图片说明：Image",
     "inbox": true,
     "imageUrl": "https://pbs.twimg.com/media/HX99RWFWgAAKiTq?format=jpg&name=orig",
     "createdAt": "2026-11-27T05:03:57.688Z",
-    "updatedAt": "2026-11-27T05:13:20.558Z"
-  },
-  {
-    "id": "20261127-qifej2",
-    "title": "Image",
-    "category": "interface",
-    "tags": [],
-    "media": {
-      "src": "/media/20261127-5da863.webp",
-      "type": "image",
-      "width": 2560,
-      "height": 2926,
-      "thumb": "/media/20261127-5da863.thumb.webp"
-    },
-    "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/1",
-    "inbox": true,
-    "createdAt": "2026-11-27T05:03:52.191Z",
-    "updatedAt": "2026-11-27T05:05:55.053Z",
-    "note": "采集自「Home / X」\n图片说明：Image",
-    "imageUrl": "https://pbs.twimg.com/media/HX99HvgWsAAOKvl?format=jpg&name=orig"
+    "updatedAt": "2026-11-27T05:13:26.281Z",
+    "gallery": [
+      {
+        "src": "/media/20261127-5da863.webp",
+        "type": "image",
+        "width": 2560,
+        "height": 2926,
+        "thumb": "/media/20261127-5da863.thumb.webp",
+        "imageUrl": "https://pbs.twimg.com/media/HX99HvgWsAAOKvl?format=jpg&name=orig",
+        "origin": {
+          "title": "Image",
+          "category": "interface",
+          "note": "采集自「Home / X」\n图片说明：Image",
+          "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/1",
+          "createdAt": "2026-11-27T05:03:52.191Z"
+        }
+      }
+    ]
   },
   {
     "id": "20261127-9dgi6t",
