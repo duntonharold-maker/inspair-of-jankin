@@ -1,14 +1,28 @@
 [
   {
+    "id": "20261127-utzp3e",
+    "url": "https://shadcnuikit.com",
+    "name": "Shadcn UI Kit",
+    "category": "components",
+    "pros": [],
+    "tags": [],
+    "icon": "/media/link-20261127-utzp3e.png",
+    "excerpt": "标题：Shadcn UI Kit: Admin Dashboards, UI Blocks, Components & Website Templates\n简介：Shadcn UI Kit is a collection of admin dashboards, website templates, components, UI blocks and Figma UI kit. Built with Tailwind CSS and React. It helps save time by minimizing development time.\nAdmin Dashboards Figma Kit Blocks Components Templates Tools Resources # Build your next admin dashboard, SaaS app, landing page or online store in hours with Shadcn UI Kit. 1,073 0 1 2 3 4 5 6 7 8 9 0 , 0 1 2 3 4 5 6 7 8 9 0 0 1 2 3 4 5 6 7 8 9 0 0 1 2 3 4 5 6 7 8 9 0 components 655 0 1 2 3 4 5 6 7 8 9 0 0 1 2 3 4 5 6 7 8 9 0 0 1 2 3 4 5 6 7 8 9 0 blocks 18 0 1 2 3 4 5 6 7 8 9 0 0 1 2 3 4 5 6 7 8 9 0 admin dashboards 6 0 1 2 3 4 5 6 7 8 9 0 templates # Everything You Need to Ship Your Next Project Admin dashboards, website templates, components, blocks and real-world examples in one kit. Pick what you need and launch in days instead of weeks. # Admin Dashboards and Apps 18 dashboards, 17 web apps and 40+ pages built on shadcn/ui. # Components, Blocks and Examples 1070+ components, 650+ blocks and 70+ ready-to-use examples. # Shadcn UI Kit for Figma Every component, block and dashboard as a Figma design system with variables, variants and dark mode. Design in Figma, ship the same UI in code. Pro plan Unlock every block Button # Beautiful & Functional Website Templates # Admin Dashboard Templates # Hundreds of Production-Ready Blocks & Components # Ready-to-Use UI Illustrations A growing collection of animated bento cards, motion effects, and interactive UI illustrations. Built with shadcn/ui, Motion, and Tailwind CSS. Copy and paste or install via the CLI. # KYC Submitted STEVEN KIRK, LONDON, UK # USD Deposit (ACH) $500,000 FROM J. KIRK # +$500 PYUSD FROM U80A...7D0A # 1,000,000 USDC TO EXTERNAL WALLET CREDIT SCORE # Credit Score Growth # Build with the Kit from Your AI Edi",
+    "inbox": true,
+    "createdAt": "2026-11-27T06:58:17.185Z"
+  },
+  {
     "id": "20261127-bztilq",
     "url": "https://kinetics.colorion.co",
     "name": "Kinetics",
     "category": "motion",
+    "pitch": "CSS / React 弹簧动效示例库",
     "pros": [
       "162 个界面动效示例，可预览、复制 CSS 代码",
       "99 个有 React 版本，153 个附 AI 提示词",
       "覆盖磁吸按钮、标签胶囊滑动、拖拽关闭等常见交互"
     ],
+    "price": "free",
     "tags": [
       "弹簧动画",
       "CSS",
@@ -16,8 +30,6 @@
     ],
     "icon": "/media/link-20261127-bztilq.png",
     "createdAt": "2026-11-27T00:55:11.770Z",
-    "pitch": "CSS / React 弹簧动效示例库",
-    "price": "free",
     "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
@@ -25,6 +37,7 @@
     "url": "https://www.morphicons.com",
     "name": "morphicons",
     "category": "icons",
+    "pitch": "SVG 图标变形动画库",
     "pros": [
       "任意两个 SVG 图标之间平滑变形，弹簧物理驱动",
       "支持 Lucide、Tabler、Heroicons、Material Symbols，描边和填充都行",
@@ -36,7 +49,6 @@
     ],
     "icon": "/media/link-20261127-rvy8o3.png",
     "createdAt": "2026-11-27T00:55:04.585Z",
-    "pitch": "SVG 图标变形动画库",
     "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
@@ -44,6 +56,7 @@
     "url": "https://www.rewampui.com/components/pill-expand-navbar",
     "name": "RewampUI",
     "category": "components",
+    "pitch": "带动效的 React 组件库",
     "pros": [
       "组件可在线预览交互，比如可展开的胶囊导航",
       "用 npx rewampui add 把源码直接加进项目",
@@ -55,7 +68,6 @@
     ],
     "icon": "/media/link-20261127-kg3bfy.png",
     "createdAt": "2026-11-27T00:54:56.159Z",
-    "pitch": "带动效的 React 组件库",
     "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
@@ -63,6 +75,7 @@
     "url": "https://lucianlabs.dev/en/uxui-prompt",
     "name": "lucianLabs",
     "category": "components",
+    "pitch": "能直接交给 AI 生成的 UI 元素库",
     "pros": [
       "480 个可交互的 UI 元素，深浅两种主题",
       "每个元素附提示词，复制给 Claude 或 Codex 就能做进项目，也附代码",
@@ -74,7 +87,6 @@
     ],
     "icon": "/media/link-20261127-a1vc2e.png",
     "createdAt": "2026-11-27T00:54:50.429Z",
-    "pitch": "能直接交给 AI 生成的 UI 元素库",
     "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
@@ -82,19 +94,19 @@
     "url": "https://designeer.xyz",
     "name": "Designeer",
     "category": "inspiration",
+    "pitch": "人工筛选的设计灵感与资源目录",
     "pros": [
       "分灵感、资源、工具、作品集四类，每条都经人工审核",
       "首页持续更新设计师和开发者分享的作品",
       "可以建文件夹收藏"
     ],
+    "price": "free",
     "tags": [
       "灵感",
       "资源导航"
     ],
     "icon": "/media/link-20261127-cz8j7z.png",
     "createdAt": "2026-11-27T00:54:41.384Z",
-    "pitch": "人工筛选的设计灵感与资源目录",
-    "price": "free",
     "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
@@ -102,19 +114,19 @@
     "url": "https://lucide.dev/icons",
     "name": "Lucide",
     "category": "icons",
+    "pitch": "开源线性图标库",
     "pros": [
       "一千多个图标，统一 2px 描边",
       "按分类浏览，可在线调颜色、粗细、尺寸后复制 SVG",
       "React、Vue 等都有现成的包，本站的图标就用它"
     ],
+    "price": "free",
     "tags": [
       "图标",
       "开源"
     ],
     "icon": "/media/link-20261127-h3fh7o.png",
     "createdAt": "2026-11-27T00:54:12.108Z",
-    "pitch": "开源线性图标库",
-    "price": "free",
     "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
@@ -122,11 +134,13 @@
     "url": "https://remocn.dev/docs/typography",
     "name": "Remocn",
     "category": "motion",
+    "pitch": "Remotion 视频文字动效合集",
     "pros": [
       "256 个免费文字动效（MIT 协议）：逐字出现、高亮、换词、数字滚动、故障等",
       "按用途和视觉效果挑选",
       "一行 shadcn 命令安装"
     ],
+    "price": "free",
     "tags": [
       "Remotion",
       "文字动效",
@@ -134,8 +148,6 @@
     ],
     "icon": "/media/link-20261127-vp7v03.png",
     "createdAt": "2026-11-27T00:54:01.500Z",
-    "pitch": "Remotion 视频文字动效合集",
-    "price": "free",
     "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
@@ -143,6 +155,7 @@
     "url": "https://motionsites.ai",
     "name": "MotionSites",
     "category": "inspiration",
+    "pitch": "带动效的网站灵感与 AI 建站提示词",
     "pros": [
       "收录大量带动效的网站首屏：3D、粒子、卡片隧道等",
       "每个设计配可以直接拿去让 AI 生成的提示词",
@@ -154,7 +167,6 @@
     ],
     "icon": "/media/link-20261127-hf3bgf.png",
     "createdAt": "2026-11-27T00:53:47.613Z",
-    "pitch": "带动效的网站灵感与 AI 建站提示词",
     "updatedAt": "2026-11-27T00:58:27.111Z"
   }
 ]
