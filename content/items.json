@@ -53,21 +53,6 @@
           "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/1",
           "createdAt": "2026-11-27T05:03:52.191Z"
         }
-      },
-      {
-        "src": "/media/20261127-84h58b.jpg",
-        "type": "image",
-        "width": 1600,
-        "height": 1200,
-        "thumb": "/media/20261127-84h58b.thumb.webp",
-        "imageUrl": "https://pbs.twimg.com/media/HYB0ERzbkAABjGz?format=jpg&name=orig",
-        "origin": {
-          "title": "Image",
-          "category": "ui",
-          "note": "采集自「Home / X」\n图片说明：Image",
-          "source": "https://x.com/uixsiam09/status/2125826652307599418/photo/1",
-          "createdAt": "2026-11-27T04:38:34.470Z"
-        }
       }
     ],
     "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/2",
@@ -75,7 +60,26 @@
     "inbox": true,
     "imageUrl": "https://pbs.twimg.com/media/HX99RWFWgAAKiTq?format=jpg&name=orig",
     "createdAt": "2026-11-27T05:03:57.688Z",
-    "updatedAt": "2026-11-27T05:21:14.753Z"
+    "updatedAt": "2026-11-27T05:21:16.912Z"
+  },
+  {
+    "id": "20261127-j3bsjm",
+    "title": "Image",
+    "category": "ui",
+    "tags": [],
+    "media": {
+      "src": "/media/20261127-84h58b.jpg",
+      "type": "image",
+      "width": 1600,
+      "height": 1200,
+      "thumb": "/media/20261127-84h58b.thumb.webp"
+    },
+    "source": "https://x.com/uixsiam09/status/2125826652307599418/photo/1",
+    "inbox": true,
+    "createdAt": "2026-11-27T04:38:34.470Z",
+    "updatedAt": "2026-11-27T05:21:14.753Z",
+    "note": "采集自「Home / X」\n图片说明：Image",
+    "imageUrl": "https://pbs.twimg.com/media/HYB0ERzbkAABjGz?format=jpg&name=orig"
   },
   {
     "id": "20261127-9dgi6t",
