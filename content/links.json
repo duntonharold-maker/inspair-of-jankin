@@ -1,5 +1,18 @@
 [
   {
+    "id": "20261127-rvy8o3",
+    "url": "https://www.morphicons.com",
+    "name": "morphicons",
+    "category": "",
+    "pros": [],
+    "tags": [],
+    "note": "Icon",
+    "icon": "/media/link-20261127-rvy8o3.png",
+    "excerpt": "标题：morphicons — SVG icon morphing library for React, Vue & Svelte\n简介：Morph any SVG icon into any other with spring physics: Lucide, Tabler, Heroicons, Material Symbols, stroked or filled. React, Vue, Svelte, React Native, Astro or vanilla JS. Zero dependencies.\n# Morph any SVG icon into any other. Lucide, Tabler, Heroicons or any icon set, stroked or filled. Spring physics, zero dependencies, nothing to configure. Click an icon to add it to your set. Any icon morphs into any other: across libraries, grids, and outline to fill. That is the whole thing, in React, Vue, Svelte, React Native or Astro. No wrappers, keys or configuration. Swap the pair for any two icons above. # Closed-form math, no config. morphicons solves the rotation, scale and translation that best map one icon onto the other, in closed form. Shapes that match under rotation simply rotate, and filled icons morph as filled shapes. Icons are consumed as data, not components: a d attribute or Lucide’s IconNode format. No per-library setup. Works with any icon set, stroked or filled, on any grid via fitIcon. Lucide Tabler Heroicons Iconoir Material Symbols Phosphor Hugeicons shadcn registry",
+    "inbox": true,
+    "createdAt": "2026-11-27T00:55:04.585Z"
+  },
+  {
     "id": "20261127-kg3bfy",
     "url": "https://www.rewampui.com/components/pill-expand-navbar",
     "name": "RewampUI",
