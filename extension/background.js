@@ -4,7 +4,7 @@
  * and sends it with the page it came from to the site's /api/collect. There it waits in the inbox, off
  * the site, until Claude gives it a title, category, tags and a note.
  */
-const DEFAULT_SITE = "https://jankin.new.tg";
+const DEFAULT_SITE = "https://inspair-of-jankin.vercel.app";
 const MENU = "inspair-collect";
 const MENU_SITE = "inspair-site";
 /** What one request to the site may carry (Vercel takes about 4.5 MB); larger pictures are shrunk. */
