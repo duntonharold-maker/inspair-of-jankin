@@ -208,6 +208,12 @@ svg { width: 1.125rem; height: 1.125rem; flex: none; fill: none; stroke: current
 .tile:focus-within .pick, .tile:focus-within .del, .tile:focus-within .info { opacity: 1; transform: none; }
 .tile:focus-within .info .src { pointer-events: auto; }
 .tile:focus-within .mat > .dot { opacity: 0; }
+/* a video: its length */
+.mat > .len { position: absolute; right: 14px; bottom: 14px; display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px 0 7px;
+  border-radius: 999px; background: rgba(2, 7, 10, 0.6); color: #eef3f6; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
+  pointer-events: none; transition: opacity var(--dur-hover) var(--ease); }
+.mat > .len svg { width: 10px; height: 10px; fill: currentColor; stroke: none; }
+.tile:focus-within .mat > .len { opacity: 0; }
 
 /* ------------------------------------------------------- a set: folder */
 .folder { --s: 16px; --r: 20px; --tab: 62%; }
@@ -428,6 +434,8 @@ figure { margin: 0; display: grid; gap: 12px; justify-items: center; max-width: 
 .viewer-stage { position: relative; display: grid; place-items: center; max-width: 100%; }
 #viewer-img { display: block; max-width: min(92vw, 100%); max-height: calc(100vh - 112px); border-radius: 12px; background: var(--stage); object-fit: contain; }
 #viewer-img.cutout { padding: 6vmin; }
+#viewer-video { display: block; max-width: min(92vw, 100%); max-height: calc(100vh - 112px); border-radius: 12px; background: var(--stage); }
+#viewer-video[hidden], #viewer-img[hidden] { display: none; }
 .flip { position: absolute; top: 50%; translate: 0 -50%; }
 .flip--prev { left: 12px; }
 .flip--next { right: 12px; }
@@ -447,7 +455,7 @@ figcaption { display: flex; align-items: center; gap: 12px; max-width: 92vw; }
   .pill-btn:hover { border-color: var(--blue); }
   .tile:hover .pick, .tile:hover .del, .tile:hover .info { opacity: 1; transform: none; }
   .tile:hover .info .src { pointer-events: auto; }
-  .tile:hover .mat > .dot { opacity: 0; }
+  .tile:hover .mat > .dot, .tile:hover .mat > .len { opacity: 0; }
   .tile:hover .mat { transform: translateY(-3px); box-shadow: 0 16px 32px -18px rgba(2, 7, 10, 0.35); }
   .tile.picked:hover .mat { box-shadow: inset 0 0 0 2px var(--ink), 0 16px 32px -18px rgba(2, 7, 10, 0.35); }
   .tile:hover .pic img { transform: scale(1.035); }

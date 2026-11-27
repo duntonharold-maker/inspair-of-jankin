@@ -93,17 +93,28 @@ function thumbPath(p: { repoPath: string; src: string }) {
   return { repoPath: swap(p.repoPath), src: swap(p.src) };
 }
 
-/** A media file and its smaller copy, if it has one, to write. */
+/** Where a video's lighter copy for cards goes: next to it, as <name>.small.<ext>. */
+function smallPath(p: { repoPath: string; src: string }) {
+  const swap = (s: string) => s.replace(/\.([a-z0-9]+)$/i, ".small.$1");
+  return { repoPath: swap(p.repoPath), src: swap(p.src) };
+}
+
+/** A media file and its smaller copies (a picture's thumbnail, a video's poster and card copy), to write. */
 function mediaFiles(at: { repoPath: string; src: string }, media: Ingested) {
   const thumb = media.thumb ? thumbPath(at) : null;
+  const small = media.small ? smallPath(at) : null;
   return {
-    media: { src: at.src, ...media.media, ...(thumb && { thumb: thumb.src }) },
-    files: [{ path: at.repoPath, content: media.buffer }, ...(thumb ? [{ path: thumb.repoPath, content: media.thumb! }] : [])],
+    media: { src: at.src, ...media.media, ...(thumb && { thumb: thumb.src }), ...(small && { small: small.src }) },
+    files: [
+      { path: at.repoPath, content: media.buffer },
+      ...(thumb ? [{ path: thumb.repoPath, content: media.thumb! }] : []),
+      ...(small ? [{ path: small.repoPath, content: media.small! }] : []),
+    ],
   };
 }
 
 /** Every file of one picture, to delete. */
-const filesOf = (m: Media) => [repoPathOf(m.src), ...(m.thumb ? [repoPathOf(m.thumb)] : [])];
+const filesOf = (m: Media) => [m.src, m.thumb, m.small].filter((s): s is string => Boolean(s)).map(repoPathOf);
 /** Every file of an item: its cover and the rest of its set. */
 const allFilesOf = (item: Item) => picturesOf(item).flatMap(filesOf);
 
@@ -217,6 +228,8 @@ export type Collected = {
   params?: string;
   /** Who made it, on the page it came from. */
   author?: string;
+  /** The text of the post it came with (a tweet's words). */
+  caption?: string;
 };
 
 /** The line of an inbox picture's note that holds what the collector said. */
@@ -231,6 +244,7 @@ function collectedFields(snap: Snapshot, from: Collected, now: Date): Origin {
     from.author && `作者：${clip(from.author, 80)}`,
     from.pageTitle && `采集自「${clip(from.pageTitle, 200)}」`,
     from.alt && `图片说明：${clip(from.alt, 300)}`,
+    from.caption && `原文：${clip(from.caption, 500)}`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -238,7 +252,7 @@ function collectedFields(snap: Snapshot, from: Collected, now: Date): Origin {
   // a guess made while collecting; the picture stays in the inbox until it is filed
   const category = from.category && snap.site.categories.some((c) => c.id === from.category) ? from.category : undefined;
   return {
-    title: clip(from.alt, 80) || clip(from.pageTitle, 80) || "未命名",
+    title: clip(from.alt, 80) || clip(from.caption, 60) || clip(from.pageTitle, 80) || "未命名",
     ...(category ? { category } : {}),
     ...(note ? { note } : {}),
     ...(source ? { source } : {}),

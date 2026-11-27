@@ -1,6 +1,6 @@
 /**
  * Turns any library item into a 3:4 card picture for the WebGL scene.
- * Images and SVGs are drawn once; videos and Lottie animations redraw every frame.
+ * Images and SVGs are drawn once, and so is a video that has a poster; other videos and Lottie animations redraw every frame.
  */
 import { CanvasTexture, SRGBColorSpace, type WebGLRenderer } from "three";
 import type { Item } from "@/lib/types";
@@ -62,7 +62,8 @@ export async function cardTexture(item: Item, renderer: WebGLRenderer): Promise<
 
   const { type, src } = item.media;
 
-  if (type === "image" || type === "svg") {
+  // a video shows its poster: the scene never plays videos
+  if (type === "image" || type === "svg" || (type === "video" && item.media.thumb)) {
     try {
       // cards are 480×640: the picture's smaller copy is plenty, and far less to fetch and decode
       const img = await loadImage(item.media.thumb ?? src);

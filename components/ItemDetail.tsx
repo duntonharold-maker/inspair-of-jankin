@@ -2,7 +2,7 @@
 import { ArrowUpRight, ChevronLeft, ChevronRight, Film } from "lucide-react";
 import CopyButton from "./CopyButton";
 import { useEffect, useRef, useState } from "react";
-import MediaView from "./MediaView";
+import MediaView, { clock } from "./MediaView";
 import { useCopy, useFramed } from "@/lib/hooks";
 import { picturesOf, type Item, type Site } from "@/lib/types";
 
@@ -107,7 +107,7 @@ export default function ItemDetail({ item, site, heading: Title = "h2" }: { item
                   aria-label={`第 ${k + 1} 张`}
                   onClick={() => setAt(k)}
                 >
-                  {m.type === "video" || m.type === "lottie" ? <Film /> : <img src={m.thumb ?? m.src} alt="" loading="lazy" decoding="async" draggable={false} />}
+                  {(m.type === "video" && !m.thumb) || m.type === "lottie" ? <Film /> : <img src={m.thumb ?? m.src} alt="" loading="lazy" decoding="async" draggable={false} />}
                 </button>
               ))}
             </div>
@@ -141,6 +141,7 @@ export default function ItemDetail({ item, site, heading: Title = "h2" }: { item
               {TYPE_LABEL[media.type]}
               {media.type === "image" || media.type === "video" ? ` (${ext})` : ""}
               {dims}
+              {media.type === "video" && media.duration ? ` · ${clock(media.duration)}` : ""}
               {isSet ? ` · 共 ${pictures.length} 张` : ""}
             </dd>
           </div>

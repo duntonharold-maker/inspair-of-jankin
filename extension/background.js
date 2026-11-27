@@ -50,9 +50,10 @@ async function collect(info, tab) {
     chrome.runtime.openOptionsPage();
     return;
   }
-  // the browser saw an image: take it; otherwise look under the pointer (covered pictures, backgrounds)
+  // the browser saw an image: take it; otherwise look under the pointer (covered pictures, backgrounds, videos)
   const clicked = info.mediaType === "image" && info.srcUrl ? info.srcUrl : null;
   const page = clicked ? await describe(tabId, frameId, clicked) : await pickAt(tabId, frameId);
+  if (info.mediaType === "video" || page.video) return collectVideo(info, tab, page, { site, key });
   const shown = clicked || page.src;
   if (!shown) {
     await say(tabId, { state: "error", text: "这里没找到图片", sub: "在图片正上方右键再试；视频和画在 canvas 里的图暂时采不了。" });
@@ -78,6 +79,107 @@ async function collect(info, tab) {
 // for tests: the same entry points without the menu and the box
 self.collect = collect;
 self.send = send;
+
+/* ------------------------------------------------------------ 视频 */
+
+/**
+ * Right-click on a video. X plays its videos in pieces (a blob: address), so the post's own data says where
+ * the files are: X's embed service lists each video in several sizes with its poster. Other sites: a video
+ * whose address is a plain file. The site fetches the files itself, so a video can be larger than a picture.
+ */
+async function collectVideo(info, tab, page, { site, key }) {
+  const tabId = tab?.id;
+  const frameId = info.frameId ?? 0;
+  const pageUrl = tab?.url || info.pageUrl || "";
+  const src = page.video?.src || (info.mediaType === "video" ? info.srcUrl : "") || "";
+  let video = null;
+  if (/^https:\/\/(x|twitter)\.com\//.test(pageUrl)) {
+    await say(tabId, { state: "busy", text: "正在找视频…", thumb: page.video?.poster });
+    const post = await run(tabId, frameId, postAt);
+    const id = post?.id || /\/status\/(\d+)/.exec(pageUrl)?.[1];
+    if (id) video = await fromX(id, page.video?.poster || post?.poster).catch(() => null);
+  } else if (/^https?:/.test(src)) {
+    video = { url: src, posterUrl: page.video?.poster || "", pageUrl: info.pageUrl || pageUrl };
+  }
+  if (!video) {
+    await say(tabId, {
+      state: "error",
+      text: "这个视频取不到",
+      sub: /^blob:/.test(src) ? "这个网站的视频是分段加载的，现在只支持 X 和直接的视频文件。" : "在视频正上方右键再试。",
+      thumb: page.video?.poster,
+    });
+    return;
+  }
+  const job = { video, shown: video.posterUrl || "", pageUrl: video.pageUrl || pageUrl, title: tab?.title || "", alt: "", frameId };
+  const token = crypto.randomUUID();
+  const categories = await categoriesOf(site, key);
+  const { last } = await chrome.storage.session.get("last");
+  const chain = last && Date.now() - last.at < CHAIN_MS ? last : null;
+  const asked = await say(tabId, { state: "ask", text: "收藏视频到 inspair", sub: video.caption || job.title, thumb: job.shown, token, job, categories, chain });
+  if (!asked) send(token, job, tabId, {});
+}
+
+/** Run a function in the page's frame; null when the page can't be reached. */
+async function run(tabId, frameId, func) {
+  if (tabId == null) return null;
+  try {
+    const [{ result }] = await chrome.scripting.executeScript({ target: { tabId, frameIds: [frameId] }, func });
+    return result ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Runs in the page: the X post under the right-click (its id), and the poster of its video there. */
+function postAt() {
+  const point = window.__inspairPoint;
+  const el = point && document.elementFromPoint(point.x, point.y);
+  const post = el?.closest("article");
+  if (!post) return null;
+  // the post's own link is the one on its time; a quoted post inside has its own article
+  const link = [...post.querySelectorAll('a[href*="/status/"]')].find((a) => a.querySelector("time") && a.closest("article") === post);
+  const id = /\/status\/(\d+)/.exec(link?.getAttribute("href") || "")?.[1];
+  const video = el.closest("[data-testid='videoComponent'], [data-testid='videoPlayer']")?.querySelector("video") || post.querySelector("video");
+  return { id: id || null, poster: video?.poster || "" };
+}
+
+/** X's embed data for a post: its video in the sizes X keeps, the poster, the words and who posted it. */
+async function fromX(id, poster) {
+  const token = ((Number(id) / 1e15) * Math.PI).toString(36).replace(/(0+|\.)/g, "");
+  const res = await fetch(`https://cdn.syndication.twimg.com/tweet-result?id=${id}&lang=en&token=${token}`, { credentials: "omit", signal: AbortSignal.timeout(10000) });
+  if (!res.ok) return null;
+  const post = await res.json();
+  const all = (post.mediaDetails || []).filter((m) => m.type === "video" || m.type === "animated_gif");
+  // the video right-clicked: its poster names its media
+  const key = /\/(\d{6,})\//.exec(poster || "")?.[1] || /tweet_video_thumb\/([^.?]+)/.exec(poster || "")?.[1];
+  const media = all.find((m) => key && (m.media_url_https || "").includes(key)) || all[0];
+  if (!media) return null;
+  const sizes = (media.video_info?.variants || [])
+    .filter((v) => v.content_type === "video/mp4")
+    .map((v) => {
+      const [, w, h] = /\/(\d+)x(\d+)\//.exec(v.url) || [];
+      return { url: v.url, bitrate: v.bitrate || 0, w: Number(w) || 0, h: Number(h) || 0 };
+    })
+    .sort((a, b) => a.bitrate - b.bitrate);
+  if (!sizes.length) return null;
+  // the detail view: the largest up to 1080p; cards: the smallest that is still sharp on a card
+  const long = (v) => Math.max(v.w, v.h);
+  const main = [...sizes].reverse().find((v) => long(v) && long(v) <= 1920) || sizes[sizes.length - 1];
+  const small = sizes.find((v) => long(v) >= 560 && v.bitrate < main.bitrate);
+  const user = post.user || {};
+  return {
+    url: main.url,
+    smallUrl: small?.url || "",
+    posterUrl: media.media_url_https ? `${media.media_url_https}?name=medium` : "",
+    width: main.w || media.original_info?.width || 0,
+    height: main.h || media.original_info?.height || 0,
+    duration: (media.video_info?.duration_millis || 0) / 1000,
+    caption: (post.text || "").replace(/\s*https:\/\/t\.co\/\w+/g, "").trim(),
+    author: user.name ? `${user.name}${user.screen_name ? ` (@${user.screen_name})` : ""}` : "",
+    pageUrl: user.screen_name ? `https://x.com/${user.screen_name}/status/${post.id_str || id}` : "",
+  };
+}
+self.fromX = fromX;
 
 /* ------------------------------------------------------------ 生图网站：提示词 */
 
@@ -371,10 +473,19 @@ async function send(token, job, tabId, { remark = "", category = "", groupWith =
   const { site = DEFAULT_SITE, key = "" } = await chrome.storage.local.get(["site", "key"]);
   await say(tabId, { state: "busy", text: "正在收藏…", sub: remark, thumb: job.shown });
   try {
-    // the service worker may have been asleep while the box was open: then fetch the picture again
-    const { candidates, picture } = await (pending.get(token) ?? fetchPicture(job, tabId));
-    pending.delete(token);
     const form = new FormData();
+    // a video: the site fetches it (and its card copy and poster) itself
+    const { candidates, picture } = job.video
+      ? { candidates: [], picture: null }
+      : // the service worker may have been asleep while the box was open: then fetch the picture again
+        await (pending.get(token) ?? fetchPicture(job, tabId));
+    pending.delete(token);
+    if (job.video) {
+      const v = job.video;
+      form.append("video_url", v.url);
+      for (const [field, value] of [["video_small_url", v.smallUrl], ["poster_url", v.posterUrl], ["width", v.width], ["height", v.height], ["duration", v.duration], ["caption", v.caption], ["author", v.author]])
+        if (value) form.append(field, String(value));
+    }
     if (picture) form.append("file", picture.blob, fileName(picture.url, picture.blob.type));
     const address = picture?.url || candidates[0];
     if (/^https?:/.test(address)) form.append("image_url", address);
@@ -401,7 +512,7 @@ async function send(token, job, tabId, { remark = "", category = "", groupWith =
     if (!data.duplicate) await chrome.storage.session.set({ last: { id: data.id, title: data.title, thumb: job.shown, pictures: data.pictures, at: Date.now() } });
     await say(tabId, {
       state: "done",
-      text: data.duplicate ? "这张之前收藏过了" : set ? `已加到这一组，共 ${data.pictures} 张` : "已收进收件箱",
+      text: data.duplicate ? (job.video ? "这个视频之前收藏过了" : "这张之前收藏过了") : set ? `已加到这一组，共 ${data.pictures} 张` : "已收进收件箱",
       sub: set ? `「${data.title}」` : `收件箱里有 ${data.inbox} 张等 Claude 整理`,
       thumb: job.shown,
     });
@@ -459,9 +570,15 @@ function findPicture() {
   };
   stack.forEach((el, depth) => {
     if (el instanceof HTMLImageElement) add(el, el.currentSrc || el.src, depth);
-    else if (el instanceof HTMLVideoElement && el.poster) add(el, abs(el.poster), depth);
+    else if (el instanceof HTMLVideoElement) add(el, el.poster ? abs(el.poster) : el.currentSrc || el.src, depth);
     else add(el, background(el), depth);
   });
+  // a video under layers (players cover theirs with controls) shows in the stack below them
+  for (const video of document.querySelectorAll("video")) {
+    if (!inside(video.getBoundingClientRect())) continue;
+    const holder = stack.findIndex((el) => el.contains(video));
+    add(video, video.poster ? abs(video.poster) : video.currentSrc || video.src, holder === -1 ? stack.length : holder + 0.5);
+  }
   // pictures set to ignore the pointer don't show up in the stack: find them by their box
   for (const img of document.images) {
     if (!inside(img.getBoundingClientRect())) continue;
@@ -482,7 +599,8 @@ function findPicture() {
         if (url && size > bestSize) (bestSize = size), (best = abs(url));
       }
   }
-  return { src: pick.src, best, alt: pick.el.alt || pick.el.title || pick.el.getAttribute("aria-label") || "", title: document.title };
+  const video = pick.el instanceof HTMLVideoElement ? { src: pick.el.currentSrc || pick.el.src, poster: pick.el.poster ? abs(pick.el.poster) : "" } : null;
+  return { src: pick.src, best, alt: pick.el.alt || pick.el.title || pick.el.getAttribute("aria-label") || "", title: document.title, ...(video && { video }) };
 }
 
 /** The picture's description, its largest source (srcset, <picture>) and the page title, read in the page. */

@@ -25,6 +25,9 @@ const TYPES: Record<string, string> = {
   gif: "image/gif",
   avif: "image/avif",
   svg: "image/svg+xml",
+  mp4: "video/mp4",
+  webm: "video/webm",
+  mov: "video/quicktime",
 };
 const unauthorized = () => Response.json({ error: "密钥不对：在插件设置里填 COLLECT_SECRET 或 MCP_SECRET。" }, { status: 401 });
 

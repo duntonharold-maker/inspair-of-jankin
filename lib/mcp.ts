@@ -329,7 +329,12 @@ export function registerTools(server: McpServer, ctx: Ctx) {
             }
             if (all_pictures && pics.length > 1) content.push({ type: "text", text: `picture ${k}${k === 0 ? " (cover)" : ""}` });
             try {
-              const pic = await preview(await store.readFile(`public${media.src}`), media.type, size ?? 512);
+              // a video shows its poster
+              const still = media.type === "video" && media.thumb;
+              if (still) content.push({ type: "text", text: `视频${media.duration ? ` ${media.duration} 秒` : ""}，下面是它的封面` });
+              const pic = still
+                ? await preview(await store.readFile(`public${still}`), "image", size ?? 512)
+                : await preview(await store.readFile(`public${media.src}`), media.type, size ?? 512);
               content.push("note" in pic ? { type: "text", text: pic.note } : { type: "image", data: pic.data, mimeType: pic.mimeType });
               shown++;
             } catch (e) {

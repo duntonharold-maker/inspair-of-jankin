@@ -6,8 +6,11 @@ import { imageSize } from "image-size";
 import type { Media, MediaType } from "./types";
 
 export const MAX_FETCH_BYTES = 20 * 1024 * 1024;
+/** Videos may be larger: a minute of 1080p is about 30 MB. */
+export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 
-export type Ingested = { buffer: Buffer; ext: string; media: Omit<Media, "src" | "thumb">; thumb?: Buffer };
+/** `thumb`: a still picture's smaller copy, or a video's poster. `small`: a video's lighter copy for cards. */
+export type Ingested = { buffer: Buffer; ext: string; media: Omit<Media, "src" | "thumb" | "small">; thumb?: Buffer; small?: Buffer };
 
 /** Width of the copy cards show (enough for the widest card on a 2x screen). */
 export const THUMB_WIDTH = 800;
@@ -183,11 +186,112 @@ export async function ingest(
     buffer = Buffer.from(JSON.stringify(json), "utf8");
   }
 
+  let duration: number | undefined;
+  if (kind.type === "video") {
+    const info = mp4Info(buffer);
+    width ??= info.width;
+    height ??= info.height;
+    duration = info.duration;
+  }
+
   const round = (n?: number) => (n && n > 0 ? Math.round(n) : undefined);
-  return { buffer, ext, thumb, media: { type: kind.type, width: round(width), height: round(height), ...(cutout && { cutout }) } };
+  return {
+    buffer,
+    ext,
+    thumb,
+    media: { type: kind.type, width: round(width), height: round(height), ...(cutout && { cutout }), ...(duration && { duration }) },
+  };
 }
 
-export async function fetchMedia(url: string): Promise<{ buffer: Buffer; filename: string }> {
+/**
+ * An MP4's picture size and length, read from its boxes (moov → mvhd, trak → tkhd). Unknown for other
+ * containers or files that keep moov somewhere unusual.
+ */
+export function mp4Info(buf: Buffer): { width?: number; height?: number; duration?: number } {
+  const out: { width?: number; height?: number; duration?: number } = {};
+  const walk = (start: number, end: number) => {
+    for (let at = start; at + 8 <= end; ) {
+      let size = buf.readUInt32BE(at);
+      const type = buf.subarray(at + 4, at + 8).toString("latin1");
+      let head = 8;
+      if (size === 1) {
+        if (at + 16 > end) return;
+        size = Number(buf.readBigUInt64BE(at + 8));
+        head = 16;
+      } else if (size === 0) size = end - at;
+      if (size < head || at + size > end) return;
+      const body = at + head;
+      if (type === "moov" || type === "trak") walk(body, at + size);
+      else if (type === "mvhd") {
+        const v1 = buf[body] === 1;
+        const scale = buf.readUInt32BE(body + (v1 ? 20 : 12));
+        const length = v1 ? Number(buf.readBigUInt64BE(body + 24)) : buf.readUInt32BE(body + 16);
+        if (scale) out.duration = Math.round((length / scale) * 10) / 10;
+      } else if (type === "tkhd" && !out.width) {
+        // the last 8 bytes are width and height, 16.16 fixed point; sound tracks have 0
+        const w = buf.readUInt32BE(at + size - 8) / 65536;
+        const h = buf.readUInt32BE(at + size - 4) / 65536;
+        if (w && h) Object.assign(out, { width: Math.round(w), height: Math.round(h) });
+      }
+      at += size;
+    }
+  };
+  try {
+    walk(0, buf.length);
+  } catch {
+    /* a box we couldn't read: keep what we have */
+  }
+  return out;
+}
+
+/** The poster of a video as a WebP for cards and the scene, no wider than a card needs. */
+async function posterOf(buffer: Buffer) {
+  try {
+    const { default: sharp } = await import("sharp");
+    const image = sharp(buffer).rotate();
+    const { width, height } = await image.metadata();
+    const webp = await image.resize({ width: THUMB_WIDTH, withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
+    return { webp, width, height };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A video from the web: the file itself, a lighter copy for cards (when the site offers one, as X does with
+ * its smaller sizes) and a poster. Size and length come from the caller when it knows them, else from the file.
+ */
+export async function ingestVideo(src: {
+  url: string;
+  smallUrl?: string;
+  posterUrl?: string;
+  width?: number;
+  height?: number;
+  duration?: number;
+}): Promise<Ingested> {
+  const [main, small, poster] = await Promise.all([
+    fetchMedia(src.url, MAX_VIDEO_BYTES),
+    src.smallUrl && src.smallUrl !== src.url ? fetchMedia(src.smallUrl, MAX_VIDEO_BYTES).catch(() => null) : null,
+    src.posterUrl ? fetchMedia(src.posterUrl).catch(() => null) : null,
+  ]);
+  const got = await ingest(main.buffer, { filename: main.filename, width: src.width, height: src.height });
+  if (got.media.type !== "video") throw new Error("这个地址不是视频文件。");
+  const still = poster && (await posterOf(poster.buffer));
+  const smallOk = small && detect(small.buffer).type === "video" && small.buffer.length < got.buffer.length;
+  return {
+    ...got,
+    media: {
+      ...got.media,
+      width: got.media.width ?? still?.width,
+      height: got.media.height ?? still?.height,
+      ...(src.duration ? { duration: Math.round(src.duration * 10) / 10 } : {}),
+    },
+    ...(still ? { thumb: still.webp } : {}),
+    ...(smallOk ? { small: small.buffer } : {}),
+  };
+}
+
+export async function fetchMedia(url: string, max = MAX_FETCH_BYTES): Promise<{ buffer: Buffer; filename: string }> {
   let u: URL;
   try {
     u = new URL(url);
@@ -197,12 +301,12 @@ export async function fetchMedia(url: string): Promise<{ buffer: Buffer; filenam
   if (u.protocol !== "https:" && u.protocol !== "http:") throw new Error("Only http(s) URLs can be fetched.");
   const res = await fetch(u, {
     redirect: "follow",
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(max > MAX_FETCH_BYTES ? 50_000 : 30_000),
     headers: { "User-Agent": "Mozilla/5.0 (compatible; inspair-bot/1.0)", Accept: "image/*,video/*,application/json,*/*" },
   });
   if (!res.ok || !res.body) throw new Error(`Download failed: HTTP ${res.status} for ${url}`);
   const declared = Number(res.headers.get("content-length") || 0);
-  if (declared > MAX_FETCH_BYTES) throw new Error(`File is larger than ${MAX_FETCH_BYTES / 1048576} MB.`);
+  if (declared > max) throw new Error(`File is larger than ${max / 1048576} MB.`);
 
   const chunks: Uint8Array[] = [];
   let total = 0;
@@ -211,9 +315,9 @@ export async function fetchMedia(url: string): Promise<{ buffer: Buffer; filenam
     const { done, value } = await reader.read();
     if (done) break;
     total += value.byteLength;
-    if (total > MAX_FETCH_BYTES) {
+    if (total > max) {
       await reader.cancel();
-      throw new Error(`File is larger than ${MAX_FETCH_BYTES / 1048576} MB.`);
+      throw new Error(`File is larger than ${max / 1048576} MB.`);
     }
     chunks.push(value);
   }

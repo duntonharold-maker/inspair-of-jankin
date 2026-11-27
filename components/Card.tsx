@@ -1,6 +1,6 @@
 "use client";
-import { Images } from "lucide-react";
-import MediaView from "./MediaView";
+import { Images, Play } from "lucide-react";
+import MediaView, { clock } from "./MediaView";
 import { useCopy } from "@/lib/hooks";
 import type { Category, Item } from "@/lib/types";
 
@@ -33,6 +33,11 @@ export default function Card({
             <span className="card-count" aria-label={`一组 ${item.gallery.length + 1} 张`}>
               <Images aria-hidden />
               {item.gallery.length + 1}
+            </span>
+          ) : item.media.type === "video" ? (
+            <span className="card-count" aria-label={item.media.duration ? `视频 ${clock(item.media.duration)}` : "视频"}>
+              <Play aria-hidden />
+              {item.media.duration ? clock(item.media.duration) : null}
             </span>
           ) : null}
         </button>

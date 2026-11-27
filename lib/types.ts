@@ -15,8 +15,13 @@ export const MediaSchema = z.object({
    * anything else fills its card. */
   cutout: z.boolean().optional(),
   /** Public path of a smaller copy of a still picture (800px wide WebP), made when it is added. Cards and
-   * the scene show it; the detail view shows the full file. */
+   * the scene show it; the detail view shows the full file. For a video: its poster, the still shown
+   * before it plays (and in the scene, which never plays videos). */
   thumb: z.string().optional(),
+  /** A video's lighter copy for cards, played while a card is on screen; the detail view plays `src`. */
+  small: z.string().optional(),
+  /** A video's length in seconds. */
+  duration: z.number().positive().optional(),
   /** A picture of a set (Item.gallery) collected from a web page: its own address there, to spot it twice. */
   imageUrl: z.string().optional(),
   /** What this picture was on its own before it joined a set (title, note, category…), so taking it out of

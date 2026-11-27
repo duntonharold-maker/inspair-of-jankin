@@ -5,7 +5,7 @@
  * app/api/media (a fallback rewrite in next.config.ts), so the site, the scene and SVG sandboxing work the
  * same whichever place a file lives in.
  */
-import { del, get, put } from "@vercel/blob";
+import { del, get, head, put } from "@vercel/blob";
 
 export const blobOn = () => Boolean(process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN);
 
@@ -46,6 +46,16 @@ export async function blobGet(repoPath: string) {
     const got = await get(nameOf(repoPath), { access: "public" });
     if (!got || got.statusCode !== 200) return null;
     return { stream: got.stream, type: got.blob.contentType || typeOf(repoPath), size: got.blob.size };
+  } catch {
+    return null;
+  }
+}
+
+/** A stored file's own public address on the store's CDN, or null when the store doesn't have it. */
+export async function blobUrl(repoPath: string) {
+  if (!blobOn()) return null;
+  try {
+    return (await head(nameOf(repoPath))).url;
   } catch {
     return null;
   }

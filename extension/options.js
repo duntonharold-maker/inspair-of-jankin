@@ -249,6 +249,9 @@ new ResizeObserver(() => {
   if (n !== lastCols && !$("inbox-view").hidden) layout();
 }).observe($("grid"));
 
+/** A video's length as 0:08. */
+const clock = (t) => `${Math.floor(t / 60)}:${String(Math.round(t % 60)).padStart(2, "0")}`;
+
 function pictureTile(item) {
   const el = $("tile").content.firstElementChild.cloneNode(true);
   el.dataset.id = item.id;
@@ -261,6 +264,12 @@ function pictureTile(item) {
   pic.addEventListener("click", () => view(item, 0));
   load(pic.querySelector("img"), item.id, 0);
   el.querySelector(".dot").hidden = !item.remarks?.length;
+  if (s.video) {
+    const len = el.querySelector(".len");
+    len.hidden = false;
+    len.querySelector("span").textContent = s.duration ? clock(s.duration) : "";
+    pic.setAttribute("aria-label", `播放视频：${item.title}`);
+  }
   el.querySelector(".info-title").textContent = item.title;
   src(el.querySelector(".src"), item);
   wirePick(el, item);
@@ -668,6 +677,12 @@ async function view(item, at = 0) {
   const count = item.pictures || 1;
   current = { item, at };
   const img = $("viewer-img");
+  const video = $("viewer-video");
+  const moving = Boolean(item.sizes?.[at]?.video);
+  video.pause();
+  video.removeAttribute("src");
+  video.hidden = true;
+  img.hidden = false;
   img.src = urls.get(`${item.id}/${at}`) || "";
   img.alt = count > 1 ? `${item.title}（第 ${at + 1} 张）` : item.title;
   img.classList.toggle("cutout", Boolean(item.sizes?.[at]?.cutout));
@@ -681,7 +696,15 @@ async function view(item, at = 0) {
   if (!viewer.open) viewer.showModal();
   try {
     const full = await picture(item.id, at, true);
-    if (token === viewing) img.src = full;
+    if (token !== viewing) return;
+    if (moving) {
+      // the poster stays until the video can play
+      video.poster = img.src;
+      video.src = full;
+      video.hidden = false;
+      img.hidden = true;
+      video.play().catch(() => {});
+    } else img.src = full;
   } catch {
     // the small copy stays up
   }
@@ -698,6 +721,7 @@ viewer.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight") flip(1);
 });
 $("viewer-close").addEventListener("click", () => viewer.close());
+viewer.addEventListener("close", () => $("viewer-video").pause());
 viewer.addEventListener("click", (e) => e.target === viewer && viewer.close());
 viewer.addEventListener("close", () => {
   viewing++;

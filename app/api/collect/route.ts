@@ -6,18 +6,21 @@
  *                         plus page_url, page_title, alt, and what the collector added: remark (a line
  *                         about it), category (a rough guess) and group_with (an inbox item: this picture
  *                         becomes the next picture of its set, 「接上一张」); from an image generator also
- *                         prompt, negative_prompt, model, params and author, as the page tells them. The picture goes into the inbox, off the site
- *                         until an agent files it (organize_items).
+ *                         prompt, negative_prompt, model, params and author, as the page tells them.
+ *                         A video instead of a picture: video_url (fetched here), with video_small_url (a
+ *                         lighter copy for cards), poster_url, width, height, duration, and caption (the
+ *                         post's text). It goes into the inbox, off the site until an agent files it
+ *                         (organize_items).
  *
  * The pictures themselves, and throwing one away: /api/collect/[id]. Making a set: /api/collect/group.
  *
  * Authorization: Bearer <COLLECT_SECRET or MCP_SECRET>.
  */
 import { isCollectAuthorized } from "@/lib/auth";
-import { fetchMedia, ingest } from "@/lib/media";
+import { fetchMedia, ingest, ingestVideo } from "@/lib/media";
 import { REMARK, collectItem } from "@/lib/ops";
 import { getStore } from "@/lib/store";
-import { picturesOf } from "@/lib/types";
+import { picturesOf, type Item } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,7 +47,12 @@ export async function GET(req: Request) {
       cutout: i.media.cutout,
       pictures: picturesOf(i).length,
       // every picture's shape, so a set can be laid out before its pictures load
-      sizes: picturesOf(i).map((m) => ({ width: m.width, height: m.height, cutout: m.cutout })),
+      sizes: picturesOf(i).map((m) => ({
+        width: m.width,
+        height: m.height,
+        cutout: m.cutout,
+        ...(m.type === "video" ? { video: true, duration: m.duration } : {}),
+      })),
       remarks: (i.note ?? "").split("\n").filter((l) => l.startsWith(REMARK)).map((l) => l.slice(REMARK.length)),
     }));
   const categories = site.categories.map((c) => ({ id: c.id, label: c.label }));
@@ -74,7 +82,21 @@ export async function POST(req: Request) {
       model: text(form.get("model")),
       params: text(form.get("params")),
       author: text(form.get("author")),
+      caption: text(form.get("caption")),
     };
+    const video = text(form.get("video_url"));
+    if (video) {
+      const num = (k: string) => Number(text(form.get(k))) || undefined;
+      const media = await ingestVideo({
+        url: video,
+        smallUrl: text(form.get("video_small_url")),
+        posterUrl: text(form.get("poster_url")),
+        width: num("width"),
+        height: num("height"),
+        duration: num("duration"),
+      });
+      return done((await collectItem(media, { ...from, imageUrl: video })).result);
+    }
     let buffer: Buffer;
     let filename: string | undefined;
     if (file instanceof File && file.size) {
@@ -86,16 +108,18 @@ export async function POST(req: Request) {
       return Response.json({ error: "没有收到图片：需要 file 或 image_url。" }, { status: 400 });
     }
     const media = await ingest(buffer, { filename });
-    const { result } = await collectItem(media, from);
-    return Response.json({
-      ok: true,
-      id: result.item.id,
-      title: result.item.title,
-      duplicate: result.duplicate,
-      pictures: picturesOf(result.item).length,
-      inbox: result.inbox,
-    });
+    return done((await collectItem(media, from)).result);
   } catch (e) {
     return Response.json({ error: e instanceof Error ? e.message : String(e) }, { status: 400 });
   }
 }
+
+const done = (result: { item: Item; duplicate: boolean; inbox: number }) =>
+  Response.json({
+    ok: true,
+    id: result.item.id,
+    title: result.item.title,
+    duplicate: result.duplicate,
+    pictures: picturesOf(result.item).length,
+    inbox: result.inbox,
+  });

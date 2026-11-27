@@ -106,6 +106,8 @@
         <div class="mat">
           <button class="pic" type="button"><img alt="" decoding="async" draggable="false" /></button>
           <span class="dot" hidden></span>
+          <!-- play -->
+          <span class="len" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" /></svg><span></span></span>
           <span class="drop-hint" aria-hidden="true">合成一组</span>
           <div class="info">
             <p class="info-title"></p>
@@ -195,6 +197,7 @@
       <figure>
         <div class="viewer-stage">
           <img id="viewer-img" alt="" />
+          <video id="viewer-video" muted loop playsinline controls hidden></video>
           <button id="viewer-prev" class="icon-btn flip flip--prev" type="button" aria-label="上一张" hidden>
             <!-- chevron-left -->
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
