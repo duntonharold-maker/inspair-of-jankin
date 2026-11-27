@@ -1,11 +1,18 @@
 "use client";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Film } from "lucide-react";
+import CopyButton from "./CopyButton";
 import { useEffect, useRef, useState } from "react";
 import MediaView from "./MediaView";
 import { useCopy, useFramed } from "@/lib/hooks";
 import { picturesOf, type Item, type Site } from "@/lib/types";
 
 const TYPE_LABEL = { image: "图片", video: "视频", svg: "SVG", lottie: "Lottie" } as const;
+
+/** What 复制提示词 copies: the prompt with its parameters, and the negative prompt the way the tools read it. */
+const fullPrompt = (item: Item) =>
+  [item.params ? `${item.prompt} ${item.params}` : item.prompt, item.negativePrompt && `Negative prompt: ${item.negativePrompt}`]
+    .filter(Boolean)
+    .join("\n");
 
 /** `heading` is the title's level: h1 on the item's own page, h2 inside the modal over the home page. */
 export default function ItemDetail({ item, site, heading: Title = "h2" }: { item: Item; site: Site; heading?: "h1" | "h2" }) {
@@ -113,30 +120,13 @@ export default function ItemDetail({ item, site, heading: Title = "h2" }: { item
           </ul>
         )}
 
-        {item.prompt ? (
-          <section className="prompt">
-            <header>
-              <span className="prompt-label">Prompt</span>
-              {item.model && <span className="prompt-model">{item.model}</span>}
-              <button className="prompt-copy" onClick={() => copy(item.prompt!, "prompt")}>
-                {copied === "prompt" ? "已复制" : "复制"}
-              </button>
-            </header>
-            <p className="prompt-text">{item.prompt}</p>
-            {item.params && <code className="prompt-params">{item.params}</code>}
-            {item.negativePrompt && (
-              <details className="prompt-neg">
-                <summary>
-                  <ChevronRight className="ic-fold" />
-                  Negative prompt
-                </summary>
-                <p>{item.negativePrompt}</p>
-              </details>
-            )}
-          </section>
-        ) : item.model ? (
-          <p className="muted">工具：{item.model}</p>
-        ) : null}
+        {item.prompt && (
+          // the prompt itself is long and often code-like: it is copied, not shown
+          <div className="prompt-bar">
+            <span className="prompt-label">Prompt</span>
+            <CopyButton text={fullPrompt(item)} label="复制提示词" what="提示词" />
+          </div>
+        )}
 
         {item.note && (
           <section className="detail-note">
@@ -155,6 +145,12 @@ export default function ItemDetail({ item, site, heading: Title = "h2" }: { item
               {isSet ? ` · 共 ${pictures.length} 张` : ""}
             </dd>
           </div>
+          {item.model && (
+            <div>
+              <dt>工具</dt>
+              <dd>{item.model}</dd>
+            </div>
+          )}
           {item.color && (
             <div>
               <dt>主色</dt>

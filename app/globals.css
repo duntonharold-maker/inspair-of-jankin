@@ -766,18 +766,10 @@ input { font: inherit; color: inherit; }
 .tags { display: flex; flex-wrap: wrap; gap: 0.375rem; }
 .tags li { font-size: 0.8125rem; padding: 0.25rem 0.625rem; border-radius: 999px; border: 1px solid var(--border); color: var(--fg-2); background: var(--surface); }
 
-.prompt { background: var(--surface); border: 1px solid var(--border); border-radius: 0.875rem; padding: 1rem 1rem 1.125rem; }
-.prompt header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.625rem; }
+/* the prompt is copied, not shown: a slim bar with the prompt marker and the copy button */
+.prompt-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.5rem 0.5rem 0.75rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); }
+.prompt-bar .copy-btn { margin-left: auto; }
 .prompt-label { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--coral); color: var(--ink); }
-.prompt-model { font-size: 0.75rem; font-weight: 500; padding: 0.125rem 0.5rem; border-radius: 999px; background: var(--track); }
-.prompt-copy { margin-left: auto; height: 1.75rem; padding: 0 0.75rem; border-radius: 999px; font-size: 0.8125rem; font-weight: 500; background: var(--ink); color: var(--inverse-fg); }
-.prompt-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9375rem; line-height: 1.55; }
-.prompt-params { display: block; margin-top: 0.75rem; padding: 0.5rem 0.625rem; border-radius: 0.5rem; background: var(--field); font-family: var(--mono); font-size: 0.78rem; overflow-wrap: anywhere; }
-.prompt-neg { margin-top: 0.75rem; font-size: 0.875rem; color: var(--fg-2); }
-.prompt-neg summary { display: inline-flex; align-items: center; gap: 0.25rem; list-style: none; cursor: pointer; color: var(--muted); transition: color var(--dur-hover) var(--ease), opacity var(--dur-press); }
-.prompt-neg summary::-webkit-details-marker { display: none; }
-.prompt-neg[open] > summary .ic-fold { transform: rotate(90deg); }
-.prompt-neg p { margin-top: 0.375rem; white-space: pre-wrap; }
 
 .detail-note :is(h2, h3) { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.375rem; }
 .detail-note p { font-size: 0.9375rem; white-space: pre-wrap; }
@@ -795,7 +787,7 @@ input { font: inherit; color: inherit; }
 a, button, summary, label, [role="button"], [role="radio"], [role="tab"] { -webkit-tap-highlight-color: transparent; }
 .modal-scrim { cursor: zoom-out; }
 
-.icon-btn, .chip-btn, .toggle, .seg button, .card-copy, .prompt-copy, .nav-brand, .copy-btn, .ask, .search-clear {
+.icon-btn, .chip-btn, .toggle, .seg button, .card-copy, .nav-brand, .copy-btn, .ask, .search-clear {
   transition-property: transform, background-color, border-color, color, box-shadow, opacity;
   transition-duration: var(--dur-hover);
   transition-timing-function: var(--ease);
@@ -832,14 +824,12 @@ a, button, summary, label, [role="button"], [role="radio"], [role="tab"] { -webk
   .link:hover, .nav-links a:hover, .footer-links a:hover, .back:hover { background-size: 100% 1px; color: var(--fg); }
   .footer-links a:hover { color: var(--inverse-fg); opacity: 1; }
   .facts a:hover { color: var(--ink); text-decoration-thickness: 2px; }
-  .prompt-neg summary:hover { color: var(--fg); }
   .card:hover .card-media { transform: translateY(-3px); box-shadow: 0 1rem 2rem -1.25rem rgba(2, 7, 10, 0.35), 0 0 0 1px rgba(2, 7, 10, 0.04); }
   .card:hover .card-media .media { transform: scale(1.035); }
   .card:hover .card-copy { opacity: 1; transform: none; }
   .stage-thumb:hover { opacity: 1; transform: translateY(-2px); }
   .stage-thumb:not([aria-current="true"]):hover { box-shadow: 0 0 0 1px var(--blue); }
   .card-copy:hover { background: var(--surface); }
-  .prompt-copy:hover { background: var(--blue); color: var(--ink); transform: translateY(-1px); }
   .copy-btn:hover { background: var(--blue); color: var(--ink); transform: translateY(-1px); }
   .band-dark .copy-btn:hover { background: var(--fg); }
   .band-dark .seg button.is-on:hover { background: #3aade6; }
@@ -854,14 +844,12 @@ a, button, summary, label, [role="button"], [role="radio"], [role="tab"] { -webk
 .toggle:active,
 .seg button:active,
 .card-copy:active,
-.prompt-copy:active,
 .copy-btn:active,
 .nav-brand:active { transform: scale(0.97); transition-duration: var(--dur-press); }
 .ask:active { transform: scale(0.985); transition-duration: var(--dur-press); }
 :is(a, button):active > .ic-go { transform: translateX(5px); }
 :is(a, button):active > .ic-back { transform: translateX(-5px); }
 .search-clear:active { transform: scale(0.96); background: var(--border); transition-duration: var(--dur-press); }
-.prompt-neg summary:active { opacity: 0.6; }
 .card .card-media:active { transform: scale(0.985); box-shadow: 0 0 0 1px rgba(2, 7, 10, 0.06); transition-duration: var(--dur-press); }
 /* the copy button is shown by its card's hover, whose `transform: none` would otherwise win over the press */
 .card:hover .card-copy:active, .card .card-copy:active { transform: scale(0.97); transition-duration: var(--dur-press); }
