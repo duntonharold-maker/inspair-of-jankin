@@ -1,5 +1,17 @@
 [
   {
+    "id": "20261127-bztilq",
+    "url": "https://kinetics.colorion.co",
+    "name": "Kinetics",
+    "category": "components",
+    "pros": [],
+    "tags": [],
+    "icon": "/media/link-20261127-bztilq.png",
+    "excerpt": "标题：Kinetics — CSS & React Spring Animation Examples\n简介：Explore 162 animated UI examples with CSS snippets, 99 React examples, and 153 AI prompts. Preview, learn, and copy the code.\n# SPRING ANIMATION EXAMPLES FOR CSS AND REACT. Motion that has weight. Explore 162 interface animations, from spring-like CSS easing to interactive JavaScript effects. Preview each pattern and copy its snippets, with 99 React examples and 153 AI prompts available across the library. No effects match “”. Production-ready React versions of these effects are coming. Typed, accessible, reduced-motion ready, and installed with one command. Buttondown opens in a new tab to confirm. Unsubscribe anytime. # INTERACTION & INPUT # Card Resize # Magnetic Button # Number Counter # Toast Overshoot # Tab Pill Glide Springs respond to interruption naturally — duration-based easing can't. Pure CSS, no layout thrash, GPU-composited. # Accordion Spring # Drag to Dismiss # Ripple Feedback # Hold to Confirm # Rubber-band Slider # Like Burst # Cursor Trail # Push Button # Star Rating # Floating Label # Copy Button # Quantity Stepper # Choice Chips # PIN Input # Password Meter # Pointer Tooltip # Swipe to Reveal # Rotary Knob # Reorderable List # Expanding Search # Squish Button # Toggle Pills # Value Scrubber # Speed-Dial FAB # Swatch Picker # Slide to Unlock # Tag Input # Keycap Press # Orbital Action Menu # Contextual Dock # Inertial Dial # Elastic Lasso # Hover Intent Gate # Gesture Chord # Liquid Glass Press # Bento Expand # Snap Rail # Kinetic XY Pad # Command Palette Bloom # Momentum Picker # Prompt Composer # Filmstrip Scrubber press & drag # Drag Stack Collect # Focus Relay # Hold to Talk # Lattice Snap # Velocity Button # Directional Hover # Gesture Compass # FEEDBACK & STATE # Scramble",
+    "inbox": true,
+    "createdAt": "2026-11-27T00:55:11.770Z"
+  },
+  {
     "id": "20261127-rvy8o3",
     "url": "https://www.morphicons.com",
     "name": "morphicons",
