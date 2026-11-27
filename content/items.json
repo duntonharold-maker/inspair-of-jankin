@@ -1,5 +1,25 @@
 [
   {
+    "id": "20261127-pa9u0i",
+    "title": "无线头戴式耳机产品广告 - 即梦",
+    "category": "interface",
+    "note": "作者：即梦AI\n采集自「无线头戴式耳机产品广告 - 即梦」",
+    "source": "https://jimeng.jianying.com/ai-tool/work-detail/7681561564192738585?workDetailType=Image&itemType=9",
+    "createdAt": "2026-11-27T06:39:12.629Z",
+    "prompt": "16:9 横构图，高端无线头戴式耳机产品广告海报。纯黑色 / 深炭灰色背景，整体色调为低明度的黑灰色系，营造静谧高奢的极简科技感氛围。画面中央偏右放置一副纯白色头戴式耳机，耳机头梁为白色编织网面材质，耳罩为哑光陶瓷白 / 珍珠白色金属质感外壳，耳垫为浅灰白色透气网布。耳机以微微倾斜的 3/4 侧面角度悬浮展示，头梁朝上呈佩戴姿态。耳机背后有一层柔和的银白色辉光 / 光晕向外扩散，增加产品的悬浮感和聚焦效果。耳机后方叠加超大号半透明深灰色立体字 \"VERSE\" 作为背景装饰文字，字体为粗黑体 / 无衬线加粗，带有轻微的玻璃拟态质感和模糊效果。耳机左侧叠加一个毛玻璃效果的圆角矩形音乐播放器 UI 界面卡片 —— 深色半透明玻璃质感，内含专辑封面缩略图、歌曲名 \"Velvet Horizon\"、艺术家名 \"LYRA\"、播放进度条（白色细线 + 圆点指示器）、播放 / 前进 / 后退按钮图标（白色）。画面顶部居中位置印有品牌名 \"Dreamina\"（白色细体无衬线字体）和产品系列名 \"ARC\"（白色粗体大号无衬线字体），系列名下方为型号名 \"ZENITH\"（超大号半透明发光字，带有白色辉光描边效果）。画面底部横向排列三个功能图标 + 说明文字：电池图标 +\"60H ENDURANCE\"、降噪波形图标 +\"ADAPTIVE SILENCE\"、音频波形图标 +\"IMMERSIVE DEPTH\"，均为浅灰白色小号无衬线字体。最底部居中一行小字 \"ENGINEERED BY DREAMINA LABS\" 配品牌小图标。整体设计风格：苹果式极简科技美学，毛玻璃拟态 UI 元素融合产品实物，纯黑背景衬托白色产品形成强烈明暗对比，光效克制仅用于聚焦产品。光线：产品本身有来自正面偏上的柔和冷调环境光照明，白色金属外壳呈现细腻的珠光反射质感，边缘有微妙的轮廓光勾勒产品线条，背景辉光为后期合成效果。",
+    "model": "即梦 Seedream 5.0 Pro",
+    "params": "Size: 2560x1440, Seed: 3012090303",
+    "tags": [],
+    "media": {
+      "src": "/media/20261127-pa9u0i.webp",
+      "type": "image",
+      "width": 480,
+      "height": 270
+    },
+    "imageUrl": "https://p26-dreamina-sign.byteimg.com/tos-cn-i-tb4s082cfz/eddee805529d4fd8a3f61ca25eada36d~tplv-tb4s082cfz-aigc_resize:480:480.webp?lk3s=4fa96020&x-expires=1797552000&x-signature=PppEiAq7CXc%2FV%2F5rBIXp9%2FshVRU%3D",
+    "inbox": true
+  },
+  {
     "id": "20261127-p4jh2i",
     "title": "手表风格的信息小组件",
     "category": "ui",
@@ -21,9 +41,9 @@
     },
     "source": "https://x.com/seanaiux/status/2125943404009808260",
     "note": "一组圆角方形的小组件：时间、行程、心率、天气、倒计时，每张卡片只讲一件事，大号数字做主角。黑、白、灰的底色之间只点一块荧光黄绿，统一的圆角和网格让风格各异的卡片排在一起依然整齐；视频里卡片逐个切换内容，适合参考小组件的动效节奏。作者 Sean Galt（@seanaiux）。",
+    "color": "#D4F542",
     "imageUrl": "https://video.twimg.com/amplify_video/2125611093561380864/vid/avc1/1920x1080/L8MPMXnOoFynC3w9.mp4",
     "createdAt": "2026-11-27T05:16:52.455Z",
-    "color": "#D4F542",
     "updatedAt": "2026-11-27T06:36:57.866Z"
   },
   {
@@ -70,10 +90,10 @@
     ],
     "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/2",
     "note": "摄影作品集的单张展示页：左下角压着大号无衬线标题，右侧方形大图，顶部是细小的导航和编号分页。同一套布局给出深色和浅色两个版本，页面本身几乎无色，橙色苔藓和青绿水面撑起全部色彩。设计 @ItsPeterDesign。",
+    "color": "#F07A2B",
     "imageUrl": "https://pbs.twimg.com/media/HX99RWFWgAAKiTq?format=jpg&name=orig",
     "createdAt": "2026-11-27T05:03:57.688Z",
-    "updatedAt": "2026-11-27T06:36:57.866Z",
-    "color": "#F07A2B"
+    "updatedAt": "2026-11-27T06:36:57.866Z"
   },
   {
     "id": "20261127-j3bsjm",
@@ -96,10 +116,10 @@
     },
     "source": "https://x.com/uixsiam09/status/2125826652307599418/photo/1",
     "note": "理发店预约 App：首页用「Find your barber」大标题配一张暖棕色的预约卡，日程页按时间轴排出每位客人；浅灰底、黑色圆形按钮和悬浮的胶囊底栏，深浅之间只用一种暖棕点缀。来自 @uixsiam09。",
+    "color": "#9C6B3F",
     "imageUrl": "https://pbs.twimg.com/media/HYB0ERzbkAABjGz?format=jpg&name=orig",
     "createdAt": "2026-11-27T04:38:34.470Z",
-    "updatedAt": "2026-11-27T06:36:57.866Z",
-    "color": "#9C6B3F"
+    "updatedAt": "2026-11-27T06:36:57.866Z"
   },
   {
     "id": "20261127-9dgi6t",
@@ -144,10 +164,10 @@
     ],
     "source": "https://pbs.twimg.com/media/HYD8EmpW8AAQkTG?format=jpg&name=4096x4096",
     "note": "大面积深蓝海面上只留一块跳板和一只小小的史努比，极端的留白和比例对比带出安静又孤独的情绪；同一画面有竖版和横版两种裁切，分别适合手机和桌面壁纸。",
+    "color": "#1B2F5A",
     "imageUrl": "https://pbs.twimg.com/media/HYD8EmpW8AAQkTG?format=jpg&name=orig",
     "createdAt": "2026-11-27T04:36:33.946Z",
-    "updatedAt": "2026-11-27T06:36:57.866Z",
-    "color": "#1B2F5A"
+    "updatedAt": "2026-11-27T06:36:57.866Z"
   },
   {
     "id": "20261126-qxgi5b",
