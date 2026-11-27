@@ -297,9 +297,11 @@ export async function collectItem(media: Ingested, from: Collected) {
     const stored = mediaFiles(mediaPath(id, media.ext), media);
     const own = collectedFields(snap, from, now);
     const title = own.title;
+    // Windows line breaks (some sites keep them) become plain ones
+    const lines = (t: string) => t.replace(/\r\n?/g, "\n").trim();
     const made = {
-      ...(from.prompt?.trim() ? { prompt: from.prompt.trim().slice(0, 8000) } : {}),
-      ...(from.negativePrompt?.trim() ? { negativePrompt: from.negativePrompt.trim().slice(0, 4000) } : {}),
+      ...(from.prompt?.trim() ? { prompt: lines(from.prompt).slice(0, 8000) } : {}),
+      ...(from.negativePrompt?.trim() ? { negativePrompt: lines(from.negativePrompt).slice(0, 4000) } : {}),
       ...(from.model?.trim() ? { model: clip(from.model, 120) } : {}),
       ...(from.params?.trim() ? { params: clip(from.params, 500) } : {}),
     };
