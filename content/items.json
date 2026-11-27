@@ -1,5 +1,23 @@
 [
   {
+    "id": "20261127-u7ko27",
+    "title": "HYD8Em2WcAA9zKE (2464×1856)",
+    "category": "photo",
+    "note": "采集自「HYD8Em2WcAA9zKE (2464×1856)」",
+    "source": "https://pbs.twimg.com/media/HYD8Em2WcAA9zKE?format=jpg&name=4096x4096",
+    "createdAt": "2026-11-27T04:36:07.639Z",
+    "tags": [],
+    "media": {
+      "src": "/media/20261127-u7ko27.webp",
+      "type": "image",
+      "width": 2464,
+      "height": 1856,
+      "thumb": "/media/20261127-u7ko27.thumb.webp"
+    },
+    "imageUrl": "https://pbs.twimg.com/media/HYD8Em2WcAA9zKE?format=jpg&name=orig",
+    "inbox": true
+  },
+  {
     "id": "20261126-qxgi5b",
     "title": "SimpleMagazine 博客模板 · 移动端阅读排版",
     "category": "ui",
@@ -18,9 +36,9 @@
     },
     "source": "https://dribbble.com/shots/25753884-SimpleMagazine-Blog-Template-3",
     "note": "Tomasz Mazurczak 为 Studio Design 做的博客模板：衬线大标题配小号正文，珊瑚橙只用在链接和引用强调上，橙色渐变插图让整套页面气质统一；文章页的引用框和作者信息的排法值得学。",
+    "color": "#E8733A",
     "imageUrl": "https://cdn.dribbble.com/userupload/41539881/file/original-ad77312601367fce090b65df14cf6042.png",
     "createdAt": "2026-11-26T09:00:55.365Z",
-    "color": "#E8733A",
     "updatedAt": "2026-11-27T00:58:06.868Z"
   },
   {
@@ -42,9 +60,9 @@
     },
     "source": "https://dribbble.com/shots/27919497-AI-Workflow-Automation-Dashboard",
     "note": "EASIN ARAFAT 的作品：深色底只用一种橙色做强调，柱状图只把当前时段标橙，运行状态用小胶囊标出，热力图展示一周负载；信息很密，但层级清楚。",
+    "color": "#F26B1D",
     "imageUrl": "https://cdn.dribbble.com/userupload/49729598/file/317ae278a5905b7685aaed540b7206e7.png",
     "createdAt": "2026-11-26T08:59:08.835Z",
-    "color": "#F26B1D",
     "updatedAt": "2026-11-27T00:58:06.868Z"
   },
   {
@@ -66,9 +84,9 @@
     },
     "source": "https://dribbble.com/shots/27919658-Toggl-Track-Redesign-Concept-Time-Tracker-Calendar-Live-Time",
     "note": "Naimur Rahman 的重设计概念：顶部深色计时条突出正在计时的任务，周视图用浅绿色块表示时间段，右侧的月历和周目标进度环做补充信息。",
+    "color": "#C8E68F",
     "imageUrl": "https://cdn.dribbble.com/userupload/49730088/file/6e8c41edee2fcde87d9442be72086eab.png",
     "createdAt": "2026-11-26T08:58:03.677Z",
-    "color": "#C8E68F",
     "updatedAt": "2026-11-27T00:58:06.868Z"
   },
   {
@@ -114,10 +132,10 @@
     ],
     "source": "https://x.com/morrre_dsgn/status/2123935510276288717/photo/1",
     "note": "morrre_dsgn 分享的背景：细密网点叠加斜向光带渐变；第二张示范把它铺在深色应用界面后面，比纯色背景更有质感。",
+    "color": "#1B3A6B",
     "imageUrl": "https://pbs.twimg.com/media/HXm8EsGWcAAu8AH?format=jpg&name=orig",
     "createdAt": "2026-11-26T07:40:30.121Z",
-    "updatedAt": "2026-11-27T00:58:06.868Z",
-    "color": "#1B3A6B"
+    "updatedAt": "2026-11-27T00:58:06.868Z"
   },
   {
     "id": "20261126-gwc1fz",
@@ -138,9 +156,9 @@
     },
     "source": "https://x.com/morrre_dsgn/status/2125839711101214839/photo/1",
     "note": "可作提案和汇报 PPT 的参考：米白底配手绘人物插画，竖排大字和大号「Part 01 / 02」编号分章节，蓝、绿小色块做点缀。",
+    "color": "#2B6CC4",
     "imageUrl": "https://pbs.twimg.com/media/HYB_8rEW8AAGmyT?format=jpg&name=orig",
     "createdAt": "2026-11-26T07:30:37.645Z",
-    "color": "#2B6CC4",
     "updatedAt": "2026-11-27T00:58:06.868Z"
   },
   {
@@ -162,9 +180,9 @@
     },
     "source": "https://www.xiaohongshu.com/explore/69fb3721000000002300706f?xsec_token=ABWtNy8mQmXGShkZYVqdV67IyUl8s5RbyMuJMoO5aNpxI=&xsec_source=pc_search&source=web_explore_feed",
     "note": "左屏把骑行数据卡（距离、速度、时长）叠在实景照片上，右屏明黄底配叠放的彩色卡片和胶囊按钮；圆角和色块的节奏统一。",
+    "color": "#F2D64B",
     "imageUrl": "https://sns-webpic-qc.xhscdn.com/202611261437/d77e5499927f969b32cbb3471b388e06/spectrum/1040g0k031vr0c7dg2s105o17ie5g8hpflbcp9fg!nd_dft_wlteh_webp_3",
     "createdAt": "2026-11-26T06:37:22.371Z",
-    "color": "#F2D64B",
     "updatedAt": "2026-11-27T00:58:06.868Z"
   },
   {
@@ -186,9 +204,9 @@
     },
     "source": "https://www.xiaohongshu.com/explore/6b0555ad000000002a00d73e?xsec_token=ABbxG12XYVrW3dZLe-3jr6H7XssRiJMFZfuWm81bhlORY=&xsec_source=pc_feed",
     "note": "深色底上，横滑的故事卡用人物大图配粗体标题，「Special Offer」卡用柔和的多彩渐变，底部是悬浮的胶囊导航。",
+    "color": "#F06A4D",
     "imageUrl": "https://sns-webpic-qc.xhscdn.com/202611261122/ca981034fd50039ae7b88df13ba30c51/1040g008327urc09o78305oncmg4nom593cp6i60!nd_dft_wlteh_webp_3",
     "createdAt": "2026-11-26T03:22:22.936Z",
-    "color": "#F06A4D",
     "updatedAt": "2026-11-27T00:58:06.868Z"
   },
   {
@@ -209,9 +227,9 @@
     },
     "source": "https://www.pinterest.com/pin/1548181182025591/",
     "note": "超大粗体「visual poetry」和橙黄底人物图并排，两个大数字放在标题下方，图片用异形圆角容器，右上角是圆形图标按钮。",
+    "color": "#F4A62A",
     "imageUrl": "https://i.pinimg.com/originals/e5/df/73/e5df73506fcfa47611ea1aefb86e4b26.jpg",
     "createdAt": "2026-11-26T03:01:04.351Z",
-    "color": "#F4A62A",
     "updatedAt": "2026-11-27T00:58:06.868Z"
   },
   {
