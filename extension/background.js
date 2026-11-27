@@ -54,9 +54,20 @@ async function collect(info, tab) {
   const clicked = info.mediaType === "image" && info.srcUrl ? info.srcUrl : null;
   const page = clicked ? await describe(tabId, frameId, clicked) : await pickAt(tabId, frameId);
   if (info.mediaType === "video" || page.video) return collectVideo(info, tab, page, { site, key });
+  // X answers a right-click on a video with its own menu, so the post's words or blank space stand in for it:
+  // a post with a video, right-clicked anywhere but on a picture, gives its video
+  const onX = /^https:\/\/(x|twitter)\.com\//.test(tab?.url || "");
+  if (onX && !clicked && !page.big) {
+    const post = await run(tabId, frameId, postAt);
+    if (post?.video) return collectVideo(info, tab, { video: { src: "", poster: post.poster } }, { site, key });
+  }
   const shown = clicked || page.src;
   if (!shown) {
-    await say(tabId, { state: "error", text: "这里没找到图片", sub: "在图片正上方右键再试；视频和画在 canvas 里的图暂时采不了。" });
+    await say(tabId, {
+      state: "error",
+      text: "这里没找到图片",
+      sub: onX ? "X 的视频：在推文的文字或空白处右键。图片：在图片正上方右键。" : "在图片或视频正上方右键再试；画在 canvas 里的图暂时采不了。",
+    });
     return;
   }
   const job = { shown, best: page.best || shown, pageUrl: info.pageUrl || tab?.url || "", title: page.title || tab?.title || "", alt: page.alt || "", frameId };
@@ -140,7 +151,7 @@ function postAt() {
   const link = [...post.querySelectorAll('a[href*="/status/"]')].find((a) => a.querySelector("time") && a.closest("article") === post);
   const id = /\/status\/(\d+)/.exec(link?.getAttribute("href") || "")?.[1];
   const video = el.closest("[data-testid='videoComponent'], [data-testid='videoPlayer']")?.querySelector("video") || post.querySelector("video");
-  return { id: id || null, poster: video?.poster || "" };
+  return { id: id || null, poster: video?.poster || "", video: Boolean(video) };
 }
 
 /** X's embed data for a post: its video in the sizes X keeps, the poster, the words and who posted it. */
@@ -149,7 +160,9 @@ async function fromX(id, poster) {
   const res = await fetch(`https://cdn.syndication.twimg.com/tweet-result?id=${id}&lang=en&token=${token}`, { credentials: "omit", signal: AbortSignal.timeout(10000) });
   if (!res.ok) return null;
   const post = await res.json();
-  const all = (post.mediaDetails || []).filter((m) => m.type === "video" || m.type === "animated_gif");
+  // a post quoting another with a video: that video
+  const moving = (p) => (p?.mediaDetails || []).filter((m) => m.type === "video" || m.type === "animated_gif");
+  const all = [...moving(post), ...moving(post.quoted_tweet)];
   // the video right-clicked: its poster names its media
   const key = /\/(\d{6,})\//.exec(poster || "")?.[1] || /tweet_video_thumb\/([^.?]+)/.exec(poster || "")?.[1];
   const media = all.find((m) => key && (m.media_url_https || "").includes(key)) || all[0];
@@ -166,7 +179,9 @@ async function fromX(id, poster) {
   const long = (v) => Math.max(v.w, v.h);
   const main = [...sizes].reverse().find((v) => long(v) && long(v) <= 1920) || sizes[sizes.length - 1];
   const small = sizes.find((v) => long(v) >= 560 && v.bitrate < main.bitrate);
-  const user = post.user || {};
+  // a quoted post's video: its words and author are the quoted post's
+  const from = moving(post).includes(media) ? post : post.quoted_tweet;
+  const user = from.user || {};
   return {
     url: main.url,
     smallUrl: small?.url || "",
@@ -174,9 +189,9 @@ async function fromX(id, poster) {
     width: main.w || media.original_info?.width || 0,
     height: main.h || media.original_info?.height || 0,
     duration: (media.video_info?.duration_millis || 0) / 1000,
-    caption: (post.text || "").replace(/\s*https:\/\/t\.co\/\w+/g, "").trim(),
+    caption: (from.text || "").replace(/\s*https:\/\/t\.co\/\w+/g, "").trim(),
     author: user.name ? `${user.name}${user.screen_name ? ` (@${user.screen_name})` : ""}` : "",
-    pageUrl: user.screen_name ? `https://x.com/${user.screen_name}/status/${post.id_str || id}` : "",
+    pageUrl: user.screen_name ? `https://x.com/${user.screen_name}/status/${from.id_str || id}` : "",
   };
 }
 self.fromX = fromX;
@@ -600,7 +615,7 @@ function findPicture() {
       }
   }
   const video = pick.el instanceof HTMLVideoElement ? { src: pick.el.currentSrc || pick.el.src, poster: pick.el.poster ? abs(pick.el.poster) : "" } : null;
-  return { src: pick.src, best, alt: pick.el.alt || pick.el.title || pick.el.getAttribute("aria-label") || "", title: document.title, ...(video && { video }) };
+  return { src: pick.src, best, big: pick.big, alt: pick.el.alt || pick.el.title || pick.el.getAttribute("aria-label") || "", title: document.title, ...(video && { video }) };
 }
 
 /** The picture's description, its largest source (srcset, <picture>) and the page title, read in the page. */
