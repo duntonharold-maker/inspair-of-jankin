@@ -5,7 +5,8 @@
  *   POST /api/collect   → multipart form: file (the picture, fetched by the browser) and/or image_url,
  *                         plus page_url, page_title, alt, and what the collector added: remark (a line
  *                         about it), category (a rough guess) and group_with (an inbox item: this picture
- *                         becomes the next picture of its set, 「接上一张」). The picture goes into the inbox, off the site
+ *                         becomes the next picture of its set, 「接上一张」); from an image generator also
+ *                         prompt, negative_prompt, model, params and author, as the page tells them. The picture goes into the inbox, off the site
  *                         until an agent files it (organize_items).
  *
  * The pictures themselves, and throwing one away: /api/collect/[id]. Making a set: /api/collect/group.
@@ -68,6 +69,11 @@ export async function POST(req: Request) {
       remark: text(form.get("remark")),
       category: text(form.get("category")),
       groupWith: text(form.get("group_with")),
+      prompt: text(form.get("prompt")),
+      negativePrompt: text(form.get("negative_prompt")),
+      model: text(form.get("model")),
+      params: text(form.get("params")),
+      author: text(form.get("author")),
     };
     let buffer: Buffer;
     let filename: string | undefined;

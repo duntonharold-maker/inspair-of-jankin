@@ -29,7 +29,7 @@ chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());
 // the box in the page: 收藏 (with what was said) or Esc
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg?.type === "inspair:send")
-    send(msg.token, msg.job, sender.tab?.id, { remark: msg.remark, category: msg.category, groupWith: msg.groupWith });
+    send(msg.token, msg.job, sender.tab?.id, { remark: msg.remark, category: msg.category, groupWith: msg.groupWith, prompt: msg.prompt });
   if (msg?.type === "inspair:cancel") pending.delete(msg.token);
   if (msg?.type === "inspair:send-link") sendSite(msg.page, sender.tab?.id, { remark: msg.remark, category: msg.category });
 });
@@ -59,6 +59,12 @@ async function collect(info, tab) {
     return;
   }
   const job = { shown, best: page.best || shown, pageUrl: info.pageUrl || tab?.url || "", title: page.title || tab?.title || "", alt: page.alt || "", frameId };
+  // made with an image generator: its prompt, model and settings, and the full-size picture
+  const ai = await generated(tab?.url || job.pageUrl, shown, tabId, frameId);
+  if (ai) {
+    job.ai = ai;
+    if (ai.title) job.title = `${ai.title} - ${ai.site}`;
+  }
   const token = crypto.randomUUID();
   pending.set(token, fetchPicture(job, tabId));
   const categories = await categoriesOf(site, key);
@@ -72,6 +78,175 @@ async function collect(info, tab) {
 // for tests: the same entry points without the menu and the box
 self.collect = collect;
 self.send = send;
+
+/* ------------------------------------------------------------ 生图网站：提示词 */
+
+/**
+ * Image generators whose pages carry the work's data: the page is fetched again (so it is the work now on
+ * screen, also after the site changed pages without loading) and read for the prompt, the model, the
+ * settings, the author and the largest picture. Other pages: a prompt shown by a label next to the picture,
+ * or the text selected before right-clicking.
+ */
+const GENERATORS = [
+  { test: /^https:\/\/jimeng\.jianying\.com\/ai-tool\/work-detail\/\d+/, read: readJimeng },
+  { test: /^https:\/\/www\.liblib\.art\/imageinfo\/[0-9a-f]+/, read: readLiblib },
+];
+
+async function generated(tabUrl, shown, tabId, frameId) {
+  const site = GENERATORS.find((g) => g.test.test(tabUrl || ""));
+  if (site) {
+    await say(tabId, { state: "busy", text: "正在读提示词…", thumb: shown });
+    try {
+      const res = await fetch(tabUrl, { credentials: "include", signal: AbortSignal.timeout(8000) });
+      const got = res.ok ? site.read(await res.text(), shown) : null;
+      if (got?.prompt) return got;
+    } catch {
+      // the page changed or answered slowly: look in the page itself
+    }
+  }
+  if (tabId == null) return null;
+  try {
+    const [{ result }] = await chrome.scripting.executeScript({ target: { tabId, frameIds: [frameId] }, func: readPrompt });
+    return result?.prompt ? result : null;
+  } catch {
+    return null;
+  }
+}
+self.generated = generated;
+
+/** JSON a page embeds between `start` and the end of its script. */
+function embedded(html, start) {
+  const at = html.indexOf(start);
+  if (at < 0) return null;
+  const end = html.indexOf("</script>", at);
+  try {
+    return JSON.parse(html.slice(at + start.length, end).trim().replace(/;$/, ""));
+  } catch {
+    return null;
+  }
+}
+
+/** The key that names a picture whatever its size: the file name, without sizes or query. */
+const pictureKey = (url) => {
+  try {
+    return decodeURIComponent(new URL(url).pathname).split("/").pop().split("~")[0];
+  } catch {
+    return "";
+  }
+};
+
+const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+
+/** 即梦 work page: window._ROUTER_DATA holds the work. */
+function readJimeng(html, shown) {
+  const data = embedded(html, "window._ROUTER_DATA = ");
+  const work = data?.loaderData?.["ai-tool/work-detail/(id$)/page"]?.workDetail?.value;
+  if (!work) return null;
+  const t = work.text2imageParams || work.aigcImageParams?.text2imageParams || {};
+  const large = work.image?.largeImages || [];
+  const key = pictureKey(shown);
+  const pic = large.find((l) => key && pictureKey(l.imageUrl) === key) || large[0];
+  const size = pic?.width ? pic : t.largeImageInfo;
+  const model = work.modelInfo?.modelName || (work.modelInfo?.extra?.modelSource || "").replace(/^by\s+/i, "");
+  return {
+    site: "即梦",
+    prompt: t.prompt || "",
+    negativePrompt: t.userNegativePrompt || "",
+    model: ["即梦", model].filter(Boolean).join(" "),
+    params: [size?.width && `Size: ${size.width}x${size.height}`, t.seed > 0 && `Seed: ${t.seed}`].filter(Boolean).join(", "),
+    ratio: size?.width ? `${size.width / gcd(size.width, size.height)}:${size.height / gcd(size.width, size.height)}` : "",
+    author: work.author?.name || "",
+    title: work.commonAttr?.title || "",
+    // the original first, then the largest signed copies (each address is signed for its own host and size)
+    best: [
+      pic?.imageUrl,
+      ...Object.entries(work.commonAttr?.coverUrlMap || {})
+        .filter(([, url]) => !key || pictureKey(url) === key)
+        .sort(([a], [b]) => b - a)
+        .map(([, url]) => url),
+    ].filter(Boolean),
+  };
+}
+
+/** LiblibAI picture page: __NEXT_DATA__ holds the post and each picture's generation info. */
+function readLiblib(html, shown) {
+  const data = embedded(html, '<script id="__NEXT_DATA__" type="application/json">')?.props?.pageProps;
+  const images = data?.data?.images || [];
+  if (!images.length) return null;
+  const key = pictureKey(shown);
+  const pic = images.find((i) => key && [i.imageUrl, i.originalImageUrl, i.webpUrl].some((u) => u && pictureKey(u) === key)) || images[0];
+  const info = pic.generateInfo || {};
+  const models = (pic.models || []).map((m) => (/checkpoint/i.test(m.modelTypeLable || "") ? m.modelName : `${(m.modelTypeLable || "LoRA").replace(/^lora$/i, "LoRA")} ${m.modelName}`));
+  return {
+    site: "LiblibAI",
+    prompt: info.prompt || "",
+    negativePrompt: info.negativePrompt || "",
+    model: ["LiblibAI", models.join(" + ")].filter(Boolean).join(" "),
+    params: [
+      info.samplingStep && `Steps: ${info.samplingStep}`,
+      info.samplingMethod && `Sampler: ${info.samplingMethod}`,
+      info.cfgScale && `CFG scale: ${info.cfgScale}`,
+      info.seed > 0 && `Seed: ${info.seed}`,
+      pic.width && `Size: ${pic.width}x${pic.height}`,
+    ]
+      .filter(Boolean)
+      .join(", "),
+    ratio: pic.width ? `${pic.width / gcd(pic.width, pic.height)}:${pic.height / gcd(pic.width, pic.height)}` : "",
+    author: data.authorInfo?.userDetail?.nickname || "",
+    title: data.data.title || "",
+    // the picture as the site shows it to visitors
+    best: [pic.imageUrl].filter(Boolean),
+  };
+}
+
+/**
+ * Runs in the page: the text selected before right-clicking, or else the prompt the page shows under a label
+ * such as 提示词 / Prompt — the label nearest the right-click — with the negative prompt the same way.
+ */
+function readPrompt() {
+  const clean = (s) => (s || "").replace(/​/g, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+  const selected = clean(String(window.getSelection?.() || ""));
+  const point = window.__inspairPoint || { x: innerWidth / 2, y: innerHeight / 2 };
+  const PROMPT = /^(提示词|正向提示词|正面提示词|描述词|画面描述|图片描述|创意描述|prompt|positive prompt)\s*[:：]?$/i;
+  const NEGATIVE = /^(反向提示词|负向提示词|负面提示词|negative prompt)\s*[:：]?$/i;
+  const labels = { prompt: [], negative: [] };
+  const walker = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(), n = 0; node && n < 20000; node = walker.nextNode(), n++) {
+    const t = node.nodeValue.trim();
+    if (!t || t.length > 20) continue;
+    const kind = PROMPT.test(t) ? "prompt" : NEGATIVE.test(t) ? "negative" : null;
+    const el = node.parentElement;
+    if (kind && el && el.getClientRects().length) labels[kind].push(el);
+  }
+  // what follows a label: its next sibling with text, or its parent's next sibling, a few levels up
+  const after = (label) => {
+    for (let el = label, i = 0; el && i < 3; el = el.parentElement, i++) {
+      let next = el.nextElementSibling;
+      while (next && !clean(next.innerText)) next = next.nextElementSibling;
+      const t = clean(next?.innerText);
+      if (t.length >= 4 && t.length <= 8000) return t;
+    }
+    return "";
+  };
+  const nearest = (list) => {
+    const far = (el) => {
+      const r = el.getBoundingClientRect();
+      return Math.hypot(Math.max(r.left - point.x, 0, point.x - r.right), Math.max(r.top - point.y, 0, point.y - r.bottom));
+    };
+    for (const el of list.sort((a, b) => far(a) - far(b))) {
+      const t = after(el);
+      if (t) return t;
+    }
+    return "";
+  };
+  let prompt = selected.length >= 8 ? selected : nearest(labels.prompt);
+  let negativePrompt = selected.length >= 8 ? "" : nearest(labels.negative);
+  // Stable Diffusion's own form: prompt, "Negative prompt: …", then the settings
+  let params = "";
+  const sd = /^([\s\S]*?)\n?Negative prompt:\s*([\s\S]*?)(?:\n(Steps: [\s\S]*))?$/.exec(prompt);
+  if (sd) [, prompt, negativePrompt, params = ""] = sd;
+  return prompt ? { prompt: clean(prompt), negativePrompt: clean(negativePrompt), params: clean(params) } : null;
+}
 
 /* ------------------------------------------------------------ 收藏这个网站 */
 
@@ -183,7 +358,8 @@ async function categoriesOf(site, key) {
 
 /** The picture at its largest size, fetched the way its page would (see download). */
 function fetchPicture(job, tabId) {
-  const candidates = largest(job.best);
+  // a generator page's own list of sizes, largest first, then what the page showed
+  const candidates = [...new Set([...(job.ai?.best || []), ...largest(job.best)])];
   const run = download(candidates, job.pageUrl, tabId, job.frameId)
     .then((picture) => ({ candidates, picture }))
     .catch(() => ({ candidates, picture: null }));
@@ -191,7 +367,7 @@ function fetchPicture(job, tabId) {
 }
 
 /** Send the picture, with what was said about it, to the site's inbox. */
-async function send(token, job, tabId, { remark = "", category = "", groupWith = "" } = {}) {
+async function send(token, job, tabId, { remark = "", category = "", groupWith = "", prompt } = {}) {
   const { site = DEFAULT_SITE, key = "" } = await chrome.storage.local.get(["site", "key"]);
   await say(tabId, { state: "busy", text: "正在收藏…", sub: remark, thumb: job.shown });
   try {
@@ -208,6 +384,14 @@ async function send(token, job, tabId, { remark = "", category = "", groupWith =
     if (remark.trim()) form.append("remark", remark.trim());
     if (category) form.append("category", category);
     if (groupWith) form.append("group_with", groupWith);
+    // the prompt as found (or as corrected in the box), with what made the picture
+    const ai = job.ai || {};
+    const words = (prompt ?? ai.prompt ?? "").trim();
+    if (words) {
+      form.append("prompt", words);
+      for (const [field, value] of [["negative_prompt", ai.negativePrompt], ["model", ai.model], ["params", ai.params], ["author", ai.author]])
+        if (value) form.append(field, value);
+    }
     const res = await fetch(`${site}/api/collect`, { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `网站返回了 ${res.status}`);
@@ -561,7 +745,14 @@ function showToast({ state, text, sub, thumb, token, job, categories, chain, pag
       .chain > span:not(.tick) { min-width: 0; }
       .chain[aria-pressed="true"] { border-color: var(--blue); background: rgba(2, 151, 222, 0.14); }
       .chain[aria-pressed="true"] .tick { background: var(--blue); border-color: var(--blue); color: var(--ink); }
-      .chained .chips { display: none; }
+      .chained .chips, .chained .made { display: none; }
+      .made { display: grid; gap: 5px; min-width: 0; }
+      textarea { display: block; width: 100%; min-height: 66px; max-height: 132px; box-sizing: border-box; padding: 8px 10px 8px 13px; resize: vertical;
+        border: 1px solid transparent; border-radius: 10px; background: rgba(238, 243, 246, 0.08); box-shadow: inset 3px 0 0 var(--coral);
+        color: var(--fg); font-family: inherit; font-size: 12px; line-height: 1.5; outline: none;
+        transition: border-color 0.2s ${ease}, background-color 0.2s ${ease}; }
+      textarea:focus { border-color: var(--blue); background: rgba(238, 243, 246, 0.04); }
+      .meta { color: var(--muted); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .say { display: flex; gap: 6px; }
       input { flex: 1; min-width: 0; height: 36px; box-sizing: border-box; padding: 0 12px; border: 1px solid transparent; border-radius: 10px;
         background: rgba(238, 243, 246, 0.08); color: var(--fg); font: inherit; outline: none;
@@ -576,7 +767,7 @@ function showToast({ state, text, sub, thumb, token, job, categories, chain, pag
         .go:hover { background: #33abe5; transform: translateY(-1px); }
         .go:active { transform: scale(0.97); }
       }
-      @media (prefers-reduced-motion: reduce) { .t, .busy .mark svg { animation: none; } button, input { transition-duration: 0.01ms; } }
+      @media (prefers-reduced-motion: reduce) { .t, .busy .mark svg { animation: none; } button, input, textarea { transition-duration: 0.01ms; } }
     </style>
     <div class="t ${state}${host._shown ? " again" : ""}" role="${state === "ask" ? "dialog" : "status"}" aria-label="${state === "ask" ? "收藏到 inspair" : ""}">
       <div class="row">
@@ -588,6 +779,7 @@ function showToast({ state, text, sub, thumb, token, job, categories, chain, pag
       <form>
         ${chain ? `<button class="chain" type="button" aria-pressed="false"><img alt=""><span><b>接上一张</b><span class="of"></span></span><span class="tick">${svg("done")}</span></button>` : ""}
         <fieldset class="chips" aria-label="大概是哪一类"></fieldset>
+        ${job?.ai ? `<div class="made"><textarea name="prompt" rows="3" spellcheck="false" aria-label="提示词"></textarea><div class="meta"></div></div>` : ""}
         <div class="say">
           <input name="remark" maxlength="300" autocomplete="off" placeholder="${page ? "说一句，比如：找竞品流程先来这里" : "说一句，比如：这个按钮动效好看"}" aria-label="${page ? "说一句这个网站" : "说一句这张图"}">
           <button class="go" type="submit">收藏</button>
@@ -640,6 +832,16 @@ function showToast({ state, text, sub, thumb, token, job, categories, chain, pag
       root.querySelector("form").classList.toggle("chained", Boolean(groupWith));
     });
   }
+  // a generator's prompt, as found: it can be corrected (or emptied) before sending
+  const words = root.querySelector("textarea");
+  if (words) {
+    words.value = job.ai.prompt;
+    const meta = [job.ai.model, job.ai.ratio, job.ai.author].filter(Boolean).join(" · ");
+    const line = root.querySelector(".meta");
+    line.textContent = meta;
+    line.title = meta;
+    if (!meta) line.remove();
+  }
   const input = root.querySelector("input");
   root.querySelector(".t").addEventListener("keydown", (e) => {
     if (e.key === "Escape") gone();
@@ -648,7 +850,7 @@ function showToast({ state, text, sub, thumb, token, job, categories, chain, pag
     e.preventDefault();
     host._token = null;
     if (page) chrome.runtime.sendMessage({ type: "inspair:send-link", page, remark: input.value, category }).catch(() => {});
-    else chrome.runtime.sendMessage({ type: "inspair:send", token, job, remark: input.value, category: groupWith ? "" : category, groupWith }).catch(() => {});
+    else chrome.runtime.sendMessage({ type: "inspair:send", token, job, remark: input.value, category: groupWith ? "" : category, groupWith, prompt: words?.value }).catch(() => {});
   });
   input.focus({ preventScroll: true });
 }

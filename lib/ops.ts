@@ -208,6 +208,15 @@ export type Collected = {
   category?: string;
   /** An inbox item to add this picture to, as the next picture of its set (「接上一张」). */
   groupWith?: string;
+  /** For a picture from an image generator: how it was made, as the page tells it. */
+  prompt?: string;
+  negativePrompt?: string;
+  /** The tool and model, e.g. 即梦 Seedream 4.7 */
+  model?: string;
+  /** Parameters in prompt form, e.g. --ar 9:16 --seed 742204343 */
+  params?: string;
+  /** Who made it, on the page it came from. */
+  author?: string;
 };
 
 /** The line of an inbox picture's note that holds what the collector said. */
@@ -219,6 +228,7 @@ const clip = (s: string | undefined, n: number) => (s ? s.replace(/\s+/g, " ").t
 function collectedFields(snap: Snapshot, from: Collected, now: Date): Origin {
   const note = [
     from.remark && `${REMARK}${clip(from.remark, 300)}`,
+    from.author && `作者：${clip(from.author, 80)}`,
     from.pageTitle && `采集自「${clip(from.pageTitle, 200)}」`,
     from.alt && `图片说明：${clip(from.alt, 300)}`,
   ]
@@ -273,9 +283,16 @@ export async function collectItem(media: Ingested, from: Collected) {
     const stored = mediaFiles(mediaPath(id, media.ext), media);
     const own = collectedFields(snap, from, now);
     const title = own.title;
+    const made = {
+      ...(from.prompt?.trim() ? { prompt: from.prompt.trim().slice(0, 8000) } : {}),
+      ...(from.negativePrompt?.trim() ? { negativePrompt: from.negativePrompt.trim().slice(0, 4000) } : {}),
+      ...(from.model?.trim() ? { model: clip(from.model, 120) } : {}),
+      ...(from.params?.trim() ? { params: clip(from.params, 500) } : {}),
+    };
     const item = {
       id,
       ...own,
+      ...made,
       category: own.category ?? "",
       tags: [],
       media: stored.media,

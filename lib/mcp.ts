@@ -65,6 +65,8 @@ and a note line starting "我的想法：" (their own words on what caught their
    names), a category, tags in the library's existing wording, a note on what is worth learning from it
    (replacing the collected note, keeping the designer or studio if the page names one; when there is a
    "我的想法" line, build the note on that point — say what makes it work — and leave out the label), and a colour.
+   A picture from an image generator may already carry its prompt, model and parameters (and the author in
+   the note): keep them as they are; the note can say what the prompt does well.
    Giving an inbox picture a category files it onto the site. Show the plan (dry_run) first; apply after
    the user agrees. Pictures that aren't worth keeping can be deleted with delete_items instead.
    Several inbox pictures of one design (same page, a preview and its details) belong together: propose

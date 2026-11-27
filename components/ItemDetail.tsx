@@ -9,10 +9,17 @@ import { picturesOf, type Item, type Site } from "@/lib/types";
 const TYPE_LABEL = { image: "图片", video: "视频", svg: "SVG", lottie: "Lottie" } as const;
 
 /** What 复制提示词 copies: the prompt with its parameters, and the negative prompt the way the tools read it. */
-const fullPrompt = (item: Item) =>
-  [item.params ? `${item.prompt} ${item.params}` : item.prompt, item.negativePrompt && `Negative prompt: ${item.negativePrompt}`]
+/** Midjourney's "--ar 9:16" goes after the prompt; settings like "Steps: 30, Seed: 1" go last, as Stable Diffusion writes them. */
+const fullPrompt = (item: Item) => {
+  const inline = item.params?.trim().startsWith("--");
+  return [
+    inline ? `${item.prompt} ${item.params}` : item.prompt,
+    item.negativePrompt && `Negative prompt: ${item.negativePrompt}`,
+    !inline && item.params,
+  ]
     .filter(Boolean)
     .join("\n");
+};
 
 /** `heading` is the title's level: h1 on the item's own page, h2 inside the modal over the home page. */
 export default function ItemDetail({ item, site, heading: Title = "h2" }: { item: Item; site: Site; heading?: "h1" | "h2" }) {
