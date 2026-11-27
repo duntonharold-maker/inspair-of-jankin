@@ -38,5 +38,43 @@
       "name": "Web Design",
       "label": "网页设计"
     }
+  ],
+  "linkCategories": [
+    {
+      "id": "inspiration",
+      "label": "灵感图库"
+    },
+    {
+      "id": "components",
+      "label": "UI 组件与模板"
+    },
+    {
+      "id": "tools",
+      "label": "设计工具"
+    },
+    {
+      "id": "ai",
+      "label": "AI 工具"
+    },
+    {
+      "id": "fonts",
+      "label": "字体"
+    },
+    {
+      "id": "icons",
+      "label": "图标与插画"
+    },
+    {
+      "id": "color",
+      "label": "配色"
+    },
+    {
+      "id": "motion",
+      "label": "动效"
+    },
+    {
+      "id": "learn",
+      "label": "学习"
+    }
   ]
 }

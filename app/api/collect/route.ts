@@ -27,7 +27,7 @@ const text = (v: FormDataEntryValue | null) => (typeof v === "string" && v.trim(
 
 export async function GET(req: Request) {
   if (!isCollectAuthorized(req)) return unauthorized();
-  const { items, site } = await getStore().read();
+  const { items, site, links } = await getStore().read();
   const inbox = items
     .filter((i) => i.inbox)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -47,7 +47,12 @@ export async function GET(req: Request) {
       remarks: (i.note ?? "").split("\n").filter((l) => l.startsWith(REMARK)).map((l) => l.slice(REMARK.length)),
     }));
   const categories = site.categories.map((c) => ({ id: c.id, label: c.label }));
-  return Response.json({ ok: true, site: site.name, inbox: inbox.length, items: inbox, categories });
+  // websites saved with 收藏这个网站 wait in the same inbox
+  const sites = links
+    .filter((l) => l.inbox)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((l) => ({ id: l.id, name: l.name, url: l.url, icon: l.icon, category: l.category || undefined, note: l.note, createdAt: l.createdAt }));
+  return Response.json({ ok: true, site: site.name, inbox: inbox.length, items: inbox, categories, links: sites, linkCategories: site.linkCategories });
 }
 
 export async function POST(req: Request) {

@@ -5,6 +5,8 @@ const $ = (id) => document.getElementById(id);
 
 let conn = null; // { site, key } once the connection works
 let items = []; // the inbox, newest first
+let sites = []; // websites saved with 收藏这个网站, waiting in the inbox too
+let siteLabels = new Map(); // link category id → label
 let labels = new Map(); // category id → label
 let filter = "all";
 let picked = []; // ids in the order they were picked: the first is the cover
@@ -134,6 +136,9 @@ async function connect(site, key, { quiet = false } = {}) {
     labels = new Map((data.categories || []).map((c) => [c.id, c.label]));
     if (data.categories) chrome.storage.local.set({ categories: data.categories });
     items = data.items || [];
+    sites = (data.links || []).map((l) => ({ ...l, kind: "site" }));
+    siteLabels = new Map((data.linkCategories || []).map((c) => [c.id, c.label]));
+    if (data.linkCategories) chrome.storage.local.set({ linkCategories: data.linkCategories });
     if (first && !settings.hidden) showSettings(false);
     render();
   } catch (e) {
@@ -163,10 +168,22 @@ const host = (u) => {
   }
 };
 const isSet = (item) => (item.pictures || 1) > 1;
+const isSite = (e) => e.kind === "site";
+const everything = () => [...items, ...sites];
 const shown = () =>
-  items.filter((i) =>
-    filter === "remark" ? i.remarks?.length : filter === "set" ? isSet(i) : filter === "none" ? !i.category : true,
-  );
+  everything()
+    .filter((e) =>
+      filter === "remark"
+        ? isSite(e) ? e.note : e.remarks?.length
+        : filter === "set"
+          ? !isSite(e) && isSet(e)
+          : filter === "site"
+            ? isSite(e)
+            : filter === "none"
+              ? !e.category
+              : true,
+    )
+    .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 
 for (const b of document.querySelectorAll(".seg button")) {
   b.addEventListener("click", () => {
@@ -178,18 +195,18 @@ for (const b of document.querySelectorAll(".seg button")) {
 
 function render() {
   // forget the pictures of items that are gone
-  for (const [id, el] of tiles) if (!items.some((i) => i.id === id)) (tiles.delete(id), el.remove());
+  for (const [id, el] of tiles) if (!everything().some((i) => i.id === id)) (tiles.delete(id), el.remove());
   for (const key of [...urls.keys()]) if (!items.some((i) => key.startsWith(`${i.id}/`))) (URL.revokeObjectURL(urls.get(key)), urls.delete(key));
   picked = picked.filter((id) => items.some((i) => i.id === id));
   if (openSet && !items.some((i) => i.id === openSet && isSet(i))) closeSet();
   if (openSet) renderSet();
   const list = shown();
-  $("empty").textContent = items.length ? "没有图片" : "收件箱是空的";
+  $("empty").textContent = everything().length ? "这里是空的" : "收件箱是空的";
   $("empty").hidden = list.length > 0;
   for (const item of list) {
     const old = tiles.get(item.id);
     if (!old || old.dataset.sig !== signature(item)) {
-      const el = isSet(item) ? folderTile(item) : pictureTile(item);
+      const el = isSite(item) ? siteTile(item) : isSet(item) ? folderTile(item) : pictureTile(item);
       if (old) old.replaceWith(el);
       tiles.set(item.id, el);
     }
@@ -207,7 +224,7 @@ function render() {
   landed.clear();
 }
 // what a tile shows; when it changes the tile is built again
-const signature = (i) => JSON.stringify([i.title, i.category, i.source, i.pictures, i.remarks, i.sizes?.[0]]);
+const signature = (i) => JSON.stringify([i.kind, i.title, i.name, i.icon, i.note, i.category, i.source, i.pictures, i.remarks, i.sizes?.[0]]);
 
 /** Masonry: each tile goes into the shortest column (estimated from the picture's shape). */
 let lastCols = 0;
@@ -221,7 +238,7 @@ function layout(list = shown()) {
   for (const item of list) {
     const k = heights.indexOf(Math.min(...heights));
     const s = item.sizes?.[0] || {};
-    heights[k] += isSet(item) ? 1.25 : (s.height && s.width ? s.height / s.width : 1) + 0.06;
+    heights[k] += isSite(item) ? 0.5 : isSet(item) ? 1.25 : (s.height && s.width ? s.height / s.width : 1) + 0.06;
     cols[k].append(tiles.get(item.id));
   }
   grid.replaceChildren(...cols);
@@ -285,6 +302,47 @@ function folderTile(item) {
   wirePick(el, item);
   wireDrag(el, item);
   return el;
+}
+
+/** A website saved with 收藏这个网站: its icon, name and address, the category and what I said. */
+function siteTile(link) {
+  const el = $("site-tile").content.firstElementChild.cloneNode(true);
+  el.dataset.id = link.id;
+  el.dataset.sig = signature(link);
+  const a = el.querySelector(".site-card");
+  a.href = link.url;
+  a.setAttribute("aria-label", `打开 ${link.name}（${host(link.url)}）`);
+  const icon = el.querySelector(".site-icon");
+  if (link.icon && conn) icon.src = `${conn.site}${link.icon}`;
+  else icon.replaceWith(Object.assign(document.createElement("span"), { className: "site-icon site-icon--letter", textContent: link.name.slice(0, 1).toUpperCase() }));
+  el.querySelector(".site-name").textContent = link.name;
+  el.querySelector(".site-domain").textContent = host(link.url);
+  const note = el.querySelector(".site-note");
+  if (link.note) note.textContent = link.note;
+  else note.remove();
+  const cat = el.querySelector(".site-cat");
+  const label = siteLabels.get(link.category);
+  if (label) cat.textContent = label;
+  else cat.remove();
+  const del = el.querySelector(".del");
+  del.setAttribute("aria-label", `删除：${link.name}`);
+  armed(del, () => removeSite(link, el));
+  return el;
+}
+
+async function removeSite(link, el) {
+  el.classList.add("busy");
+  try {
+    await call(`/links/${encodeURIComponent(link.id)}`, { method: "DELETE" });
+    sites = sites.filter((s) => s.id !== link.id);
+    el.classList.add("gone");
+    await new Promise((r) => setTimeout(r, 250));
+    render();
+    toast(`已删除「${link.name}」`);
+  } catch (e) {
+    el.classList.remove("busy");
+    toast(`没删掉：${e.message}`);
+  }
 }
 
 function src(a, item) {

@@ -27,7 +27,7 @@ function useHideOnScroll() {
   return hidden;
 }
 
-export default function Nav({ site, onRandom }: { site: Site; onRandom?: () => void }) {
+export default function Nav({ site, onRandom, current }: { site: Site; onRandom?: () => void; current?: "links" }) {
   const hidden = useHideOnScroll();
   return (
     <header className={`nav${hidden ? " is-hidden" : ""}`}>
@@ -39,6 +39,9 @@ export default function Nav({ site, onRandom }: { site: Site; onRandom?: () => v
         <a href="/#fresh">最新</a>
         <a href="/#categories">分类</a>
         <a href="/#all">全部</a>
+        <a href="/links" aria-current={current === "links" ? "page" : undefined}>
+          网站
+        </a>
       </nav>
       {onRandom ? (
         <button className="btn btn--dark nav-cta" onClick={onRandom}>

@@ -9,22 +9,25 @@
  */
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { ItemSchema, SiteSchema, type Item, type Site } from "./types";
+import { ItemSchema, LinkSchema, SiteSchema, type Item, type Link, type Site } from "./types";
 import { blobDel, blobGet, blobOn, blobPut, isMediaPath } from "./blob";
 
 export const ITEMS_PATH = "content/items.json";
 export const SITE_PATH = "content/site.json";
+export const LINKS_PATH = "content/links.json";
 export const MEDIA_DIR = "public/media";
 
 export type FileWrite = { path: string; content: Buffer };
 
-export type Snapshot = { items: Item[]; site: Site };
+export type Snapshot = { items: Item[]; site: Site; links: Link[] };
 
 export type Change<T> = {
   /** New full item list; omit to leave items.json untouched. */
   items?: Item[];
   /** New site config; omit to leave site.json untouched. */
   site?: Site;
+  /** New full list of saved websites; omit to leave links.json untouched. */
+  links?: Link[];
   addFiles?: FileWrite[];
   deleteFiles?: string[];
   message: string;
@@ -44,10 +47,11 @@ export interface Store {
   mutate<T>(mutator: Mutator<T>): Promise<{ result: T; commit?: string }>;
 }
 
-function parseSnapshot(itemsText: string, siteText: string): Snapshot {
+function parseSnapshot(itemsText: string, siteText: string, linksText: string | null): Snapshot {
   const items = ItemSchema.array().parse(JSON.parse(itemsText));
   const site = SiteSchema.parse(JSON.parse(siteText));
-  return { items, site };
+  const links = linksText ? LinkSchema.array().parse(JSON.parse(linksText)) : [];
+  return { items, site, links };
 }
 
 export const serialize = (v: unknown) => JSON.stringify(v, null, 2) + "\n";
@@ -66,11 +70,12 @@ class LocalStore implements Store {
   }
 
   async read(): Promise<Snapshot> {
-    const [items, site] = await Promise.all([
+    const [items, site, links] = await Promise.all([
       fs.readFile(this.p(ITEMS_PATH), "utf8"),
       fs.readFile(this.p(SITE_PATH), "utf8"),
+      fs.readFile(this.p(LINKS_PATH), "utf8").catch(() => null),
     ]);
-    return parseSnapshot(items, site);
+    return parseSnapshot(items, site, links);
   }
 
   readFile(rel: string) {
@@ -91,6 +96,7 @@ class LocalStore implements Store {
     for (const f of change.deleteFiles ?? []) await fs.rm(this.p(f), { force: true });
     if (change.items) await fs.writeFile(this.p(ITEMS_PATH), serialize(change.items));
     if (change.site) await fs.writeFile(this.p(SITE_PATH), serialize(change.site));
+    if (change.links) await fs.writeFile(this.p(LINKS_PATH), serialize(change.links));
     return { result: change.result };
   }
 }
@@ -140,8 +146,13 @@ class GitHubStore implements Store {
   }
 
   private async readAt(ref: string) {
-    const [items, site] = await Promise.all([this.file(ITEMS_PATH, ref), this.file(SITE_PATH, ref)]);
-    return parseSnapshot(items, site);
+    const [items, site, links] = await Promise.all([
+      this.file(ITEMS_PATH, ref),
+      this.file(SITE_PATH, ref),
+      // the file appears with the first saved website
+      this.file(LINKS_PATH, ref).catch((e) => (String(e).includes("→ 404") ? null : Promise.reject(e))),
+    ]);
+    return parseSnapshot(items, site, links);
   }
 
   async read() {
@@ -209,6 +220,7 @@ class GitHubStore implements Store {
       for (const p of repoDeletes) tree.push({ path: p, mode: "100644", type: "blob", sha: null });
       if (change.items) tree.push({ path: ITEMS_PATH, mode: "100644", type: "blob", content: serialize(change.items) });
       if (change.site) tree.push({ path: SITE_PATH, mode: "100644", type: "blob", content: serialize(change.site) });
+      if (change.links) tree.push({ path: LINKS_PATH, mode: "100644", type: "blob", content: serialize(change.links) });
       if (!tree.length) {
         await blobDel(blobDeletes);
         return { result: change.result };

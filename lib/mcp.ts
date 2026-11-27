@@ -19,6 +19,7 @@ import {
   updateItem,
   upsertCategory,
 } from "./ops";
+import { LinkFields, LinkUpdate, addLink, deleteLinks, searchLinks, updateLink, upsertLinkCategory } from "./links";
 import { getStore } from "./store";
 import { picturesOf, type Item } from "./types";
 
@@ -33,6 +34,13 @@ Workflow:
   cover as media_url and the rest, in order, as more_media_urls. The detail view flips through them.
 - Always record the generation prompt verbatim in "prompt" when the user gives one, and the model/tool in "model".
 - Changes are committed to GitHub; the public site shows them after the next deploy (usually 1–2 minutes).
+
+Websites worth keeping (the /links page, separate from the pictures; never on the home page):
+- add_link with the address, a link category (list_categories → link_categories), a one-line pitch of
+  what the site is, 3–5 concrete strengths ("pros") from what it actually offers, its price (free /
+  freemium / paid) and a few tags — all in Chinese, product names kept. Look at the site first (fetch the
+  page) so the strengths are true; the user's own words go in "note".
+- update_link changes one; search_links finds them; delete_links removes them (confirm first).
 
 Sets (several pictures of one design in one item): search results show "pictures" when there is more
 than one; view_items with all_pictures: true shows each. group_items makes one set of several items (the
@@ -60,7 +68,11 @@ and a note line starting "我的想法：" (their own words on what caught their
    Giving an inbox picture a category files it onto the site. Show the plan (dry_run) first; apply after
    the user agrees. Pictures that aren't worth keeping can be deleted with delete_items instead.
    Several inbox pictures of one design (same page, a preview and its details) belong together: propose
-   group_items for them first (cover first), then file the set.`;
+   group_items for them first (cover first), then file the set.
+4. Websites saved with the extension wait in the inbox too: search_links with inbox: true shows each with
+   the page's own text (excerpt) and whatever the user said (note). For each, propose name, link category,
+   pitch, pros, price and tags (open the site when the excerpt is thin), show the plan, then apply with
+   update_link and inbox: false, which puts it on /links. Keep the user's note as it is.`;
 
 type Ctx = { origin: string };
 
@@ -115,14 +127,15 @@ export function registerTools(server: McpServer, ctx: Ctx) {
     "list_categories",
     {
       title: "List categories and tags",
-      description: "Lists the valid category ids (with Chinese labels and item counts), the most used tags, and how many collected pictures wait in the inbox.",
+      description: "Lists the valid category ids (with Chinese labels and item counts), the most used tags, how many collected pictures wait in the inbox, and the link categories of saved websites (with counts and how many sites wait in the inbox).",
       inputSchema: z.object({}).strict(),
       annotations: { readOnlyHint: true },
     },
     () =>
       guard(async () => {
-        const { items: all, site } = await getStore().read();
+        const { items: all, site, links } = await getStore().read();
         const items = all.filter((i) => !i.inbox);
+        const filed = links.filter((l) => !l.inbox);
         const tagCounts = new Map<string, number>();
         for (const i of items) for (const t of i.tags) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
         return {
@@ -130,6 +143,8 @@ export function registerTools(server: McpServer, ctx: Ctx) {
           inbox: all.length - items.length,
           categories: site.categories.map((c) => ({ ...c, count: items.filter((i) => i.category === c.id).length })),
           top_tags: [...tagCounts].sort((a, b) => b[1] - a[1]).slice(0, 40).map(([tag, count]) => ({ tag, count })),
+          link_categories: site.linkCategories.map((c) => ({ ...c, count: filed.filter((l) => l.category === c.id).length })),
+          links_inbox: links.length - filed.length,
         };
       }),
   );
@@ -395,6 +410,92 @@ export function registerTools(server: McpServer, ctx: Ctx) {
       guard(async () => {
         const out = await moveMediaToBlob({ dryRun: dry_run });
         return out.applied ? { ...out, note: liveNote() } : { ...out, note: "Dry run — call again with dry_run: false to move them." };
+      }),
+  );
+
+  server.registerTool(
+    "add_link",
+    {
+      title: "Save a website",
+      description:
+        "Saves a website onto the /links page (not the home page) with a one-line pitch, its main strengths, price and tags. Its icon is fetched automatically. Look at the site first so the strengths are accurate.",
+      inputSchema: LinkFields.strict(),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    (args) =>
+      guard(async () => {
+        const { result } = await addLink(args);
+        return { added: result, page: `${ctx.origin}/links`, note: liveNote() };
+      }),
+  );
+
+  server.registerTool(
+    "update_link",
+    {
+      title: "Change a saved website",
+      description:
+        "Changes a saved website: only the fields passed change (empty string clears pitch or note; pros and tags replace the lists). inbox: false files a website collected with the browser extension onto /links.",
+      inputSchema: LinkUpdate,
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    (args) =>
+      guard(async () => {
+        const { result } = await updateLink(args);
+        return { updated: result, note: liveNote() };
+      }),
+  );
+
+  server.registerTool(
+    "search_links",
+    {
+      title: "Search saved websites",
+      description:
+        "Searches saved websites by text (name, address, pitch, strengths, tags, note) and link category. inbox: true lists the ones collected with the extension and not filed yet, with the page text taken when they were saved (excerpt).",
+      inputSchema: z.object({
+        query: z.string().optional(),
+        category: z.string().optional(),
+        inbox: z.boolean().optional(),
+        limit: z.number().int().min(1).max(100).optional(),
+      }).strict(),
+      annotations: { readOnlyHint: true },
+    },
+    (q) =>
+      guard(async () => {
+        const out = searchLinks(await getStore().read(), q);
+        return { total: out.total, links: out.links.map((l) => (l.inbox ? l : (({ excerpt: _e, ...rest }) => rest)(l))) };
+      }),
+  );
+
+  server.registerTool(
+    "delete_links",
+    {
+      title: "Delete saved websites",
+      description: "Permanently removes saved websites. Confirm with the user before calling.",
+      inputSchema: z.object({ ids: z.array(z.string()).min(1).max(100) }).strict(),
+      annotations: { readOnlyHint: false, destructiveHint: true },
+    },
+    ({ ids }) =>
+      guard(async () => {
+        const { result } = await deleteLinks(ids);
+        return { ...result, note: liveNote() };
+      }),
+  );
+
+  server.registerTool(
+    "upsert_link_category",
+    {
+      title: "Add or rename a link category",
+      description: "Adds a category for saved websites, or renames one (matched by id).",
+      inputSchema: z.object({
+        id: z.string().regex(/^[a-z0-9-]+$/).describe('Lowercase id, e.g. "fonts"'),
+        label: z.string().min(1).max(12).describe("Chinese label, e.g. 字体"),
+      }).strict(),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    (cat) =>
+      guard(async () => {
+        const { result } = await upsertLinkCategory(cat);
+        return { link_categories: result, note: liveNote() };
       }),
   );
 

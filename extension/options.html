@@ -18,6 +18,7 @@
           <button type="button" data-filter="all" aria-pressed="true">全部</button>
           <button type="button" data-filter="remark" aria-pressed="false">有想法</button>
           <button type="button" data-filter="set" aria-pressed="false">成组</button>
+          <button type="button" data-filter="site" aria-pressed="false">网站</button>
           <button type="button" data-filter="none" aria-pressed="false">没分类</button>
         </div>
         <div class="tools">
@@ -147,6 +148,30 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
           <span class="n"></span>
         </button>
+      </article>
+    </template>
+
+    <template id="site-tile">
+      <article class="tile site">
+        <div class="mat site-mat">
+          <a class="site-card" target="_blank" rel="noopener noreferrer">
+            <span class="site-top">
+              <img class="site-icon" alt="" decoding="async" />
+              <span class="site-who"><span class="site-name"></span><span class="site-domain"></span></span>
+              <span class="site-go" aria-hidden="true">
+                <!-- arrow-up-right -->
+                <svg viewBox="0 0 24 24"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg>
+              </span>
+            </span>
+            <span class="site-note"></span>
+            <span class="site-cat"></span>
+          </a>
+          <button class="del icon-btn" type="button">
+            <!-- trash -->
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 11v6" /><path d="M14 11v6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+            <span>删除</span>
+          </button>
+        </div>
       </article>
     </template>
 

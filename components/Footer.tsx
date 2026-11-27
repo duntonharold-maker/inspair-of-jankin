@@ -20,6 +20,7 @@ export default function Footer({ site, repoUrl }: { site: Site; repoUrl?: string
             <a href="/#fresh">最新</a>
             <a href="/#categories">分类</a>
             <a href="/#all">全部</a>
+            <a href="/links">网站</a>
           </div>
           <div>
             <h2>更多</h2>

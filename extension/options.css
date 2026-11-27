@@ -248,6 +248,24 @@ svg { width: 1.125rem; height: 1.125rem; flex: none; fill: none; stroke: current
 .fgo svg { width: 16px; height: 16px; }
 .folder .pick { top: 20px; left: 20px; }
 
+/* ------------------------------------------------ a website (收藏这个网站) */
+.site-mat { padding: 0; }
+.site-card { display: grid; gap: 10px; padding: 16px; border-radius: 16px; color: var(--fg); }
+.site-top { display: flex; align-items: center; gap: 10px; padding-right: 38px; }
+.site-icon { flex: none; width: 34px; height: 34px; padding: 5px; border-radius: 9px; background: var(--stage); object-fit: contain; }
+.site-icon--letter { display: grid; place-items: center; padding: 0; font-size: 14px; font-weight: 600; }
+.site-who { flex: 1; min-width: 0; display: grid; }
+.site-name { font-size: 15px; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-domain { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-go { position: absolute; top: 19px; right: 16px; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; background: var(--glass); border: 1px solid var(--hairline); transition: transform var(--dur-hover) var(--ease), background-color var(--dur-hover) var(--ease), border-color var(--dur-hover) var(--ease); }
+.site-go svg { width: 13px; height: 13px; transition: transform var(--dur-hover) var(--ease); }
+.site-note { display: flex; align-items: baseline; gap: 7px; font-size: 13px; line-height: 1.45; }
+.site-note::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--coral); transform: translateY(-1px); }
+.site-cat { justify-self: start; display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; background: var(--track); color: var(--fg-2); font-size: 12px; font-weight: 500; }
+.tile.site .del { top: auto; bottom: 12px; right: 12px; }
+.site-card:active { transform: scale(0.985); }
+.site-card:focus-visible { outline-offset: -2px; }
+
 /* ----------------------------------------------------------- set view */
 .set-top { display: flex; align-items: center; gap: 8px; margin-top: 28px; }
 .set-top .grow { flex: 1; }
@@ -440,6 +458,9 @@ figcaption { display: flex; align-items: center; gap: 12px; max-width: 92vw; }
   .fcard:hover { transform: translateY(-3px); box-shadow: 0 24px 44px -16px rgba(2, 7, 10, 0.26); }
   .fcard:hover .fgo { border-color: var(--blue); background: var(--surface); }
   .set-mat:hover .acts { opacity: 1; }
+  .tile.site:hover .mat { box-shadow: inset 0 0 0 1px var(--blue), 0 16px 32px -18px rgba(2, 7, 10, 0.35); }
+  .tile.site:hover .site-go { background: var(--surface); border-color: var(--blue); transform: scale(1.06); }
+  .tile.site:hover .site-go svg { transform: translate(2px, -2px); }
   .toast-undo:hover { background: #33abe5; }
   .set-mat:hover .pic img { transform: scale(1.02); }
 }

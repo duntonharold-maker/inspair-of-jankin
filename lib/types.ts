@@ -78,13 +78,47 @@ export const CategorySchema = z.object({
 });
 export type Category = z.infer<typeof CategorySchema>;
 
+export const LinkCategorySchema = z.object({ id: z.string(), label: z.string() });
+export type LinkCategory = z.infer<typeof LinkCategorySchema>;
+
 export const SiteSchema = z.object({
   name: z.string(),
   owner: z.string(),
   description: z.string(),
   categories: z.array(CategorySchema),
+  /** The categories of saved websites (content/links.json), shown on /links. */
+  linkCategories: z.array(LinkCategorySchema).default([]),
 });
 export type Site = z.infer<typeof SiteSchema>;
 
 /** Every picture of an item: the cover, then the rest of its set. */
 export const picturesOf = (item: Pick<Item, "media" | "gallery">): Media[] => [item.media, ...(item.gallery ?? [])];
+
+export const LINK_PRICES = ["free", "freemium", "paid"] as const;
+export const PRICE_LABEL = { free: "免费", freemium: "部分付费", paid: "付费" } as const;
+
+/** A website worth keeping (/links): what it is, what it is good at, and what I thought of it. */
+export const LinkSchema = z.object({
+  id: z.string(),
+  url: z.string(),
+  name: z.string(),
+  /** A link category id (site.linkCategories); may be "" while the link waits in the inbox. */
+  category: z.string(),
+  /** One line: what the site is, e.g. 「真实 App 和网站的界面截图库」. */
+  pitch: z.string().optional(),
+  /** Its main strengths, 3–5 concrete points. */
+  pros: z.array(z.string()).default([]),
+  price: z.enum(LINK_PRICES).optional(),
+  tags: z.array(z.string()).default([]),
+  /** What I said about it (my own words). */
+  note: z.string().optional(),
+  /** Public path of its icon, e.g. /media/link-20261127-abc123.png */
+  icon: z.string().optional(),
+  /** Text taken from the page when it was collected (title, description, headings), for whoever files it. */
+  excerpt: z.string().optional(),
+  /** Collected with the browser extension and not filed yet: kept off /links. */
+  inbox: z.boolean().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string().optional(),
+});
+export type Link = z.infer<typeof LinkSchema>;

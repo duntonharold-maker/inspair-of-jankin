@@ -6,6 +6,7 @@
  */
 const DEFAULT_SITE = "https://inspair-of-jankin.vercel.app";
 const MENU = "inspair-collect";
+const MENU_SITE = "inspair-site";
 /** What one request to the site may carry (Vercel takes about 4.5 MB); larger pictures are shrunk. */
 const LIMIT = 4 * 1024 * 1024;
 /** How long after collecting a picture the box offers to add the next one to its set. */
@@ -15,11 +16,14 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   await chrome.contextMenus.removeAll();
   // everywhere, not only on <img>: many sites cover their pictures with a layer or paint them as backgrounds
   chrome.contextMenus.create({ id: MENU, title: "收藏到 inspair", contexts: ["image", "page", "link", "frame", "video"] });
+  // the page itself, for /links: what the site is and what it is good at
+  chrome.contextMenus.create({ id: MENU_SITE, title: "收藏这个网站", contexts: ["page", "image", "link", "frame", "video", "selection"] });
   const { key } = await chrome.storage.local.get("key");
   if (reason === "install" && !key) chrome.runtime.openOptionsPage();
 });
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === MENU) collect(info, tab);
+  if (info.menuItemId === MENU_SITE) collectSite(tab);
 });
 chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());
 // the box in the page: 收藏 (with what was said) or Esc
@@ -27,6 +31,7 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg?.type === "inspair:send")
     send(msg.token, msg.job, sender.tab?.id, { remark: msg.remark, category: msg.category, groupWith: msg.groupWith });
   if (msg?.type === "inspair:cancel") pending.delete(msg.token);
+  if (msg?.type === "inspair:send-link") sendSite(msg.page, sender.tab?.id, { remark: msg.remark, category: msg.category });
 });
 
 /** Pictures being fetched while the box waits for a word and a category, by token. */
@@ -67,6 +72,104 @@ async function collect(info, tab) {
 // for tests: the same entry points without the menu and the box
 self.collect = collect;
 self.send = send;
+
+/* ------------------------------------------------------------ 收藏这个网站 */
+
+/** Right-click → 「收藏这个网站」: read what the page says about itself, ask for a category and a line, send. */
+async function collectSite(tab) {
+  const tabId = tab?.id;
+  const { site = DEFAULT_SITE, key = "" } = await chrome.storage.local.get(["site", "key"]);
+  if (!key) {
+    await say(tabId, { state: "error", text: "还没填密钥", sub: "已打开插件设置，填好网站和密钥再试。" });
+    chrome.runtime.openOptionsPage();
+    return;
+  }
+  let page = { url: tab?.url || "", title: tab?.title || "" };
+  try {
+    const [{ result }] = await chrome.scripting.executeScript({ target: { tabId, frameIds: [0] }, func: readPage });
+    if (result?.url) page = result;
+  } catch {
+    // a page the extension can't read (browser pages, the web store): its address and title are enough
+  }
+  if (!/^https?:/.test(page.url)) {
+    await say(tabId, { state: "error", text: "这个页面收藏不了", sub: "只能收藏 http 或 https 开头的网页。" });
+    return;
+  }
+  const categories = await linkCategoriesOf(site, key);
+  const host = new URL(page.url).hostname.replace(/^www\./, "");
+  const asked = await say(tabId, { state: "ask", text: "收藏这个网站", sub: page.siteName || host, thumb: page.icons?.[0], token: crypto.randomUUID(), page, categories });
+  if (!asked) sendSite(page, tabId, {});
+}
+self.collectSite = collectSite;
+
+/** Runs in the page: its address, names, description, icons, and the text that says what it offers. */
+function readPage() {
+  const meta = (sel) => document.querySelector(sel)?.getAttribute("content")?.trim() || "";
+  const abs = (u) => {
+    try {
+      return new URL(u, location.href).href;
+    } catch {
+      return "";
+    }
+  };
+  // the biggest icons first
+  const icons = [...document.querySelectorAll('link[rel~="icon"], link[rel~="apple-touch-icon"], link[rel="mask-icon"]')]
+    .map((l) => ({ href: abs(l.getAttribute("href") || ""), size: parseInt((l.getAttribute("sizes") || "0").split("x")[0], 10) || (l.rel.includes("apple") ? 180 : 0) }))
+    .filter((i) => i.href)
+    .sort((a, b) => b.size - a.size)
+    .map((i) => i.href);
+  const seen = new Set();
+  const lines = [];
+  for (const el of document.querySelectorAll("h1, h2, h3, main p, header p, section p, li")) {
+    const t = (el.innerText || "").replace(/\s+/g, " ").trim();
+    if (t.length < 4 || t.length > 240 || seen.has(t)) continue;
+    seen.add(t);
+    lines.push(/^H/.test(el.tagName) ? `# ${t}` : t);
+    if (lines.join("\n").length > 1800) break;
+  }
+  return {
+    url: abs(document.querySelector('link[rel="canonical"]')?.getAttribute("href") || "") || location.href,
+    title: document.title,
+    siteName: meta('meta[property="og:site_name"]') || meta('meta[name="application-name"]'),
+    description: meta('meta[name="description"]') || meta('meta[property="og:description"]'),
+    icons: icons.slice(0, 4),
+    excerpt: lines.join("\n").slice(0, 1800),
+  };
+}
+
+async function sendSite(page, tabId, { remark = "", category = "" } = {}) {
+  const { site = DEFAULT_SITE, key = "" } = await chrome.storage.local.get(["site", "key"]);
+  const icon = page.icons?.[0];
+  await say(tabId, { state: "busy", text: "正在收藏…", sub: remark, thumb: icon });
+  try {
+    const res = await fetch(`${site}/api/collect/links`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ ...page, remark: remark.trim() || undefined, category: category || undefined }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `网站返回了 ${res.status}`);
+    chrome.runtime.sendMessage({ type: "inspair:collected" }).catch(() => {});
+    await say(tabId, {
+      state: "done",
+      text: data.duplicate ? "这个网站之前收藏过了" : "已收进收件箱",
+      sub: data.duplicate ? data.name : `收件箱里有 ${data.inbox} 个网站等 Claude 写好优势`,
+      thumb: icon,
+    });
+  } catch (e) {
+    await say(tabId, { state: "error", text: "没收藏成功", sub: e instanceof Error ? e.message : String(e), thumb: icon });
+  }
+}
+
+/** The link categories for the box, remembered and refreshed like the picture categories. */
+async function linkCategoriesOf(site, key) {
+  const { linkCategories } = await chrome.storage.local.get("linkCategories");
+  const refresh = fetch(`${site}/api/collect`, { headers: { Authorization: `Bearer ${key}` } })
+    .then((r) => (r.ok ? r.json() : {}))
+    .then((d) => (d.linkCategories ? chrome.storage.local.set({ linkCategories: d.linkCategories }).then(() => d.linkCategories) : linkCategories))
+    .catch(() => linkCategories);
+  return linkCategories?.length ? linkCategories : await refresh;
+}
 
 /** The site's categories for the box, remembered between collections and refreshed in the background. */
 async function categoriesOf(site, key) {
@@ -386,7 +489,7 @@ async function say(tabId, message) {
  * state "ask" is the box shown right after 收藏到 inspair: a rough category and a line about the picture,
  * sent with 收藏 (or Enter); Esc or the close button drops it. The other states report how sending went.
  */
-function showToast({ state, text, sub, thumb, token, job, categories, chain }) {
+function showToast({ state, text, sub, thumb, token, job, categories, chain, page }) {
   // Lucide shapes: check, circle-alert, loader-circle, x, bookmark-plus
   const icons = {
     done: '<path d="M20 6 9 17l-5-5"/>',
@@ -486,7 +589,7 @@ function showToast({ state, text, sub, thumb, token, job, categories, chain }) {
         ${chain ? `<button class="chain" type="button" aria-pressed="false"><img alt=""><span><b>接上一张</b><span class="of"></span></span><span class="tick">${svg("done")}</span></button>` : ""}
         <fieldset class="chips" aria-label="大概是哪一类"></fieldset>
         <div class="say">
-          <input name="remark" maxlength="300" autocomplete="off" placeholder="说一句，比如：这个按钮动效好看" aria-label="说一句这张图">
+          <input name="remark" maxlength="300" autocomplete="off" placeholder="${page ? "说一句，比如：找竞品流程先来这里" : "说一句，比如：这个按钮动效好看"}" aria-label="${page ? "说一句这个网站" : "说一句这张图"}">
           <button class="go" type="submit">收藏</button>
         </div>
       </form>` : ""}
@@ -544,7 +647,8 @@ function showToast({ state, text, sub, thumb, token, job, categories, chain }) {
   root.querySelector("form").addEventListener("submit", (e) => {
     e.preventDefault();
     host._token = null;
-    chrome.runtime.sendMessage({ type: "inspair:send", token, job, remark: input.value, category: groupWith ? "" : category, groupWith }).catch(() => {});
+    if (page) chrome.runtime.sendMessage({ type: "inspair:send-link", page, remark: input.value, category }).catch(() => {});
+    else chrome.runtime.sendMessage({ type: "inspair:send", token, job, remark: input.value, category: groupWith ? "" : category, groupWith }).catch(() => {});
   });
   input.focus({ preventScroll: true });
 }
