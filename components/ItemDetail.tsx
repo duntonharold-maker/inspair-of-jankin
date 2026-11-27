@@ -120,14 +120,6 @@ export default function ItemDetail({ item, site, heading: Title = "h2" }: { item
           </ul>
         )}
 
-        {item.prompt && (
-          // the prompt itself is long and often code-like: it is copied, not shown
-          <div className="prompt-bar">
-            <span className="prompt-label">Prompt</span>
-            <CopyButton text={fullPrompt(item)} label="复制提示词" what="提示词" />
-          </div>
-        )}
-
         {item.note && (
           <section className="detail-note">
             <Sub>笔记</Sub>
@@ -190,6 +182,8 @@ export default function ItemDetail({ item, site, heading: Title = "h2" }: { item
               原文件 <ArrowUpRight className="ic-out" />
             </a>
           )}
+          {/* the prompt itself is long and often code-like: it is copied, not shown */}
+          {item.prompt && <CopyButton className="copy-btn--prompt" text={fullPrompt(item)} label="复制提示词" what="提示词" />}
         </div>
       </aside>
     </div>

@@ -14,7 +14,19 @@ const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
  * to fit it. After a moment it rolls back. The springs are --spring-copy-roll, --spring-copy-icon and
  * --spring-copy-width in app/globals.css.
  */
-export default function CopyButton({ text, label = "复制", done = "已复制", what }: { text: string; label?: string; done?: string; what?: string }) {
+export default function CopyButton({
+  text,
+  label = "复制",
+  done = "已复制",
+  what,
+  className,
+}: {
+  text: string;
+  label?: string;
+  done?: string;
+  what?: string;
+  className?: string;
+}) {
   const button = useRef<HTMLButtonElement>(null);
   const iconCopy = useRef<SVGSVGElement>(null);
   const iconDone = useRef<SVGSVGElement>(null);
@@ -92,7 +104,7 @@ export default function CopyButton({ text, label = "复制", done = "已复制",
   };
 
   return (
-    <button ref={button} type="button" className="copy-btn" onClick={press} aria-label={`${label}：${what ?? text}`}>
+    <button ref={button} type="button" className={className ? `copy-btn ${className}` : "copy-btn"} onClick={press} aria-label={`${label}：${what ?? text}`}>
       <span className="copy-ic" aria-hidden="true">
         <Copy ref={iconCopy} />
         <Check ref={iconDone} className="copy-done" strokeWidth={2.5} />
