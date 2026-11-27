@@ -3,21 +3,21 @@
     "id": "20261127-p4jh2i",
     "title": "These cards are just so good",
     "category": "ui",
-    "note": "作者：Sean Galt (@seanaiux)\n采集自「Home / X」\n原文：These cards are just so good",
-    "source": "https://x.com/seanaiux/status/2125943404009808260",
-    "createdAt": "2026-11-27T05:16:52.455Z",
     "tags": [],
     "media": {
       "src": "/media/20261127-p4jh2i.mp4",
       "type": "video",
       "width": 1920,
       "height": 1080,
-      "duration": 14,
       "thumb": "/media/20261127-p4jh2i.thumb.webp",
-      "small": "/media/20261127-p4jh2i.small.mp4"
+      "small": "/media/20261127-p4jh2i.small.mp4",
+      "duration": 14
     },
+    "source": "https://x.com/seanaiux/status/2125943404009808260",
+    "note": "作者：Sean Galt (@seanaiux)\n采集自「Home / X」\n原文：These cards are just so good",
+    "inbox": true,
     "imageUrl": "https://video.twimg.com/amplify_video/2125611093561380864/vid/avc1/1920x1080/L8MPMXnOoFynC3w9.mp4",
-    "inbox": true
+    "createdAt": "2026-11-27T05:16:52.455Z"
   },
   {
     "id": "20261127-t19evi",
@@ -29,38 +29,33 @@
       "type": "image",
       "width": 2560,
       "height": 2926,
-      "thumb": "/media/20261127-t19evi.thumb.webp",
-      "origin": {
-        "title": "Image",
-        "category": "interface",
-        "note": "采集自「Home / X」\n图片说明：Image",
-        "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/2",
-        "createdAt": "2026-11-27T05:03:57.688Z"
-      }
+      "thumb": "/media/20261127-t19evi.thumb.webp"
     },
-    "gallery": [
-      {
-        "src": "/media/20261127-5da863.webp",
-        "type": "image",
-        "width": 2560,
-        "height": 2926,
-        "thumb": "/media/20261127-5da863.thumb.webp",
-        "imageUrl": "https://pbs.twimg.com/media/HX99HvgWsAAOKvl?format=jpg&name=orig",
-        "origin": {
-          "title": "Image",
-          "category": "interface",
-          "note": "采集自「Home / X」\n图片说明：Image",
-          "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/1",
-          "createdAt": "2026-11-27T05:03:52.191Z"
-        }
-      }
-    ],
     "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/2",
     "note": "采集自「Home / X」\n图片说明：Image",
     "inbox": true,
     "imageUrl": "https://pbs.twimg.com/media/HX99RWFWgAAKiTq?format=jpg&name=orig",
     "createdAt": "2026-11-27T05:03:57.688Z",
-    "updatedAt": "2026-11-27T05:13:26.281Z"
+    "updatedAt": "2026-11-27T05:20:59.646Z"
+  },
+  {
+    "id": "20261127-jpq84o",
+    "title": "Image",
+    "category": "interface",
+    "tags": [],
+    "media": {
+      "src": "/media/20261127-5da863.webp",
+      "type": "image",
+      "width": 2560,
+      "height": 2926,
+      "thumb": "/media/20261127-5da863.thumb.webp"
+    },
+    "source": "https://x.com/ItsPeterDesign/status/2125555553246249022/photo/1",
+    "inbox": true,
+    "createdAt": "2026-11-27T05:03:52.191Z",
+    "updatedAt": "2026-11-27T05:13:26.281Z",
+    "note": "采集自「Home / X」\n图片说明：Image",
+    "imageUrl": "https://pbs.twimg.com/media/HX99HvgWsAAOKvl?format=jpg&name=orig"
   },
   {
     "id": "20261127-9dgi6t",
