@@ -11,7 +11,7 @@ let labels = new Map(); // category id → label
 let filter = "all";
 let picked = []; // ids in the order they were picked: the first is the cover
 let openSet = null; // the id of the set shown in the set view
-const urls = new Map(); // `${id}/${n}` → object URL of the small picture
+const urls = new Map(); // a picture's own file (its key) → object URL of its small copy, wherever it moves
 const tiles = new Map(); // id → tile element, kept between renders so pictures don't reload
 
 /* ------------------------------------------------------------------ site */
@@ -26,38 +26,61 @@ async function call(path, init) {
   return data;
 }
 
-/** A picture of the inbox as an object URL (the site only hands them out with the key). */
-async function picture(id, n = 0, full = false) {
-  const key = `${id}/${n}`;
+/**
+ * A picture's cache key: its own file, which stays the same when it joins a set, leaves one or moves within
+ * one, so a change redraws from pictures already here instead of fetching them again.
+ */
+const keyOf = (item, n = 0) => item.sizes?.[n]?.key || `${item.id}/${n}`;
+const asking = new Map(); // key → the request already on its way
+
+/**
+ * A picture of the inbox as an object URL (the site only hands them out with the key). A change shown before
+ * the site has made it keeps where each picture still is on the site (`at`), to fetch it from there.
+ */
+async function picture(item, n = 0, full = false) {
+  const key = keyOf(item, n);
   if (!full && urls.has(key)) return urls.get(key);
+  if (!full && asking.has(key)) return asking.get(key);
+  const at = item.sizes?.[n]?.at || { id: item.id, n };
   const q = new URLSearchParams();
   if (full) q.set("full", "1");
-  if (n) q.set("n", String(n));
-  const res = await api(`/${encodeURIComponent(id)}${q.size ? `?${q}` : ""}`);
-  if (!res.ok) throw new Error(`网站返回了 ${res.status}`);
-  const url = URL.createObjectURL(await res.blob());
-  if (!full) urls.set(key, url);
-  return url;
+  if (at.n) q.set("n", String(at.n));
+  const run = api(`/${encodeURIComponent(at.id)}${q.size ? `?${q}` : ""}`).then(async (res) => {
+    if (!res.ok) throw new Error(`网站返回了 ${res.status}`);
+    const url = URL.createObjectURL(await res.blob());
+    if (!full) urls.set(key, url);
+    return url;
+  });
+  if (full) return run;
+  asking.set(key, run);
+  return run.finally(() => asking.delete(key));
 }
 
-/** Fill images a few at a time, in the order asked. */
+/** Fill images a few at a time, in the order asked; ones already here at once. */
 const queue = [];
 let running = 0;
-function load(img, id, n = 0) {
-  queue.push({ img, id, n });
+function load(img, item, n = 0) {
+  const ready = urls.get(keyOf(item, n));
+  if (ready) {
+    img.src = ready;
+    img.classList.add("ready");
+    return;
+  }
+  queue.push({ img, item, n });
   pump();
 }
 function pump() {
   while (running < 4 && queue.length) {
-    const { img, id, n } = queue.shift();
+    const { img, item, n } = queue.shift();
     running++;
-    picture(id, n)
+    picture(item, n)
       .then(async (url) => {
         img.src = url;
         await img.decode().catch(() => {});
         img.classList.add("ready");
       })
-      .catch(() => {})
+      // a picture that couldn't come: its tile is built again on the next refresh
+      .catch(() => img.closest(".tile")?.setAttribute("data-broken", ""))
       .finally(() => {
         running--;
         pump();
@@ -151,7 +174,30 @@ async function connect(site, key, { quiet = false } = {}) {
     $("refresh").classList.remove("spin");
   }
 }
-const reload = () => conn && connect(conn.site, conn.key, { quiet: true });
+/** Changes shown here before the site has made them; a refresh meanwhile would undo them on screen. */
+let pending = 0;
+let stale = false;
+const reload = () => {
+  if (!conn) return;
+  if (pending) return void (stale = true);
+  return connect(conn.site, conn.key, { quiet: true });
+};
+/** Run a change with the site, one after another so they reach it in the order made; held-back refreshes happen after. */
+let line = Promise.resolve();
+async function withSite(run) {
+  pending++;
+  const mine = line.then(run);
+  line = mine.catch(() => {});
+  try {
+    return await mine;
+  } finally {
+    pending--;
+    if (!pending && stale) {
+      stale = false;
+      reload();
+    }
+  }
+}
 $("refresh").addEventListener("click", reload);
 // a picture just collected from a page shows up here without a reload
 chrome.runtime.onMessage.addListener((msg) => {
@@ -194,9 +240,11 @@ for (const b of document.querySelectorAll(".seg button")) {
 }
 
 function render() {
+  const before = rects();
   // forget the pictures of items that are gone
   for (const [id, el] of tiles) if (!everything().some((i) => i.id === id)) (tiles.delete(id), el.remove());
-  for (const key of [...urls.keys()]) if (!items.some((i) => key.startsWith(`${i.id}/`))) (URL.revokeObjectURL(urls.get(key)), urls.delete(key));
+  const keep = new Set(items.flatMap((i) => range(i.pictures || 1).map((n) => keyOf(i, n))));
+  for (const key of [...urls.keys()]) if (!keep.has(key)) (URL.revokeObjectURL(urls.get(key)), urls.delete(key));
   picked = picked.filter((id) => items.some((i) => i.id === id));
   if (openSet && !items.some((i) => i.id === openSet && isSet(i))) closeSet();
   if (openSet) renderSet();
@@ -205,13 +253,14 @@ function render() {
   $("empty").hidden = list.length > 0;
   for (const item of list) {
     const old = tiles.get(item.id);
-    if (!old || old.dataset.sig !== signature(item)) {
+    if (!old || old.dataset.sig !== signature(item) || old.hasAttribute("data-broken")) {
       const el = isSite(item) ? siteTile(item) : isSet(item) ? folderTile(item) : pictureTile(item);
       if (old) old.replaceWith(el);
       tiles.set(item.id, el);
     }
   }
   layout(list);
+  glide(before);
   showPicks();
   for (const id of landed) {
     const el = tiles.get(id);
@@ -224,7 +273,66 @@ function render() {
   landed.clear();
 }
 // what a tile shows; when it changes the tile is built again
-const signature = (i) => JSON.stringify([i.kind, i.title, i.name, i.icon, i.note, i.category, i.source, i.pictures, i.remarks, i.sizes?.[0]]);
+const signature = (i) => JSON.stringify([i.kind, i.title, i.name, i.icon, i.note, i.category, i.source, i.pictures, i.remarks, i.sizes?.slice(0, 4).map((s) => [s.key, s.width, s.height, s.cutout, s.duration])]);
+
+/* ----------------------------------------------------------- motion */
+
+const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+/** Where each tile is on screen now, by id. */
+function rects() {
+  const out = new Map();
+  for (const [id, el] of tiles) if (el.isConnected) out.set(id, el.getBoundingClientRect());
+  return out;
+}
+/** Tiles slide from where they were to where the new layout puts them, instead of jumping. */
+function glide(before) {
+  if (still() || $("inbox-view").hidden) return;
+  for (const [id, was] of before) {
+    const el = tiles.get(id);
+    if (!el?.isConnected) continue;
+    const now = el.getBoundingClientRect();
+    const dx = was.left - now.left;
+    const dy = was.top - now.top;
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+    el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], { duration: 460, easing: EASE });
+  }
+}
+/**
+ * Tiles joining another: each is lifted out of the grid where it is, then flies into the tile it joins,
+ * shrinking as it goes. `change` redraws the grid in between.
+ */
+function flyInto(ids, target, change) {
+  const flying = [];
+  for (const id of ids) {
+    const el = tiles.get(id);
+    if (!el?.isConnected) continue;
+    const r = el.getBoundingClientRect();
+    tiles.delete(id);
+    if (still()) {
+      el.remove();
+      continue;
+    }
+    Object.assign(el.style, { position: "fixed", left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, margin: "0", zIndex: "30", pointerEvents: "none" });
+    el.classList.remove("dragging", "picked", "drop-target");
+    document.body.append(el);
+    flying.push({ el, r });
+  }
+  change();
+  const to = tiles.get(target)?.getBoundingClientRect();
+  for (const [k, { el, r }] of flying.entries()) {
+    const dx = to ? to.left + to.width / 2 - (r.left + r.width / 2) : 0;
+    const dy = to ? to.top + Math.min(to.height, 160) / 2 - (r.top + r.height / 2) : 0;
+    const scale = to ? Math.min(0.5, (to.width * 0.4) / r.width) : 0.5;
+    el.animate(
+      [
+        { transform: "none", opacity: 1 },
+        { transform: `translate(${dx}px, ${dy}px) scale(${scale}) rotate(${k % 2 ? 4 : -4}deg)`, opacity: 0.2 },
+      ],
+      { duration: 520, delay: k * 60, easing: EASE, fill: "forwards" },
+    ).finished.then(() => el.remove(), () => el.remove());
+  }
+}
 
 /** Masonry: each tile goes into the shortest column (estimated from the picture's shape). */
 let lastCols = 0;
@@ -262,7 +370,7 @@ function pictureTile(item) {
   pic.classList.toggle("cutout", Boolean(s.cutout));
   pic.setAttribute("aria-label", `查看大图：${item.title}`);
   pic.addEventListener("click", () => view(item, 0));
-  load(pic.querySelector("img"), item.id, 0);
+  load(pic.querySelector("img"), item, 0);
   el.querySelector(".dot").hidden = !item.remarks?.length;
   if (s.video) {
     const len = el.querySelector(".len");
@@ -296,13 +404,13 @@ function folderTile(item) {
   card.addEventListener("pointerleave", () => (card.style.removeProperty("--px"), card.style.removeProperty("--py")));
   const cover = el.querySelector(".fcover");
   cover.classList.toggle("cutout", Boolean(item.sizes?.[0]?.cutout));
-  load(cover.querySelector("img"), item.id, 0);
+  load(cover.querySelector("img"), item, 0);
   el.querySelector(".ftitle").textContent = item.title;
   const thumbs = el.querySelector(".fthumbs");
   for (let n = 1; n < Math.min(item.pictures, 4); n++) {
     const img = Object.assign(document.createElement("img"), { alt: "", decoding: "async", draggable: false });
     thumbs.append(img);
-    load(img, item.id, n);
+    load(img, item, n);
   }
   el.querySelector(".fcount").textContent = String(item.pictures);
   const label = labels.get(item.category);
@@ -403,23 +511,42 @@ $("bar-group").addEventListener("click", async () => {
   showPicks();
 });
 
-/** Make one set of these (the first is the cover), animate the others into it, offer undo. */
+/**
+ * Make one set of these (the first is the cover; the others' pictures follow in order, as the site does it).
+ * It shows at once: the others fly into the cover, which becomes the folder, drawn from the pictures already
+ * here. The site saves it meanwhile; if it can't, everything goes back as it was.
+ */
 async function merge(ids) {
-  const intoSet = ids.length === 2 && isSetId(ids[0]);
-  for (const id of ids.slice(1)) tiles.get(id)?.classList.add("joining");
-  try {
-    const data = await call("/group", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids }) });
-    picked = picked.filter((id) => !ids.includes(id));
-    for (const id of ids) forget(id);
-    landed.add(data.id);
-    await connect(conn.site, conn.key, { quiet: true });
-    toast(intoSet ? `放进了这一组，共 ${data.pictures} 张` : `合成了一组，共 ${data.pictures} 张`, data.undo);
-  } catch (e) {
-    for (const id of ids) tiles.get(id)?.classList.remove("joining");
-    toast(`没合成：${e.message}`);
-  }
+  const parts = ids.map((id) => items.find((i) => i.id === id)).filter(Boolean);
+  if (parts.length < 2) return;
+  const was = items;
+  const [cover, ...rest] = parts;
+  const intoSet = parts.length === 2 && isSet(cover);
+  const sizes = parts.flatMap((p) => range(p.pictures || 1).map((k) => ({ ...(p.sizes?.[k] || {}), key: keyOf(p, k), at: p.sizes?.[k]?.at || { id: p.id, n: k } })));
+  const set = {
+    ...cover,
+    pictures: sizes.length,
+    sizes,
+    category: cover.category || parts.find((p) => p.category)?.category,
+    remarks: [...new Set(parts.flatMap((p) => p.remarks || []))],
+  };
+  items = items.filter((i) => !rest.includes(i)).map((i) => (i === cover ? set : i));
+  picked = picked.filter((id) => !ids.includes(id));
+  landed.add(cover.id);
+  flyInto(rest.map((p) => p.id), cover.id, render);
+  toast(intoSet ? `放进了这一组，共 ${set.pictures} 张` : `合成了一组，共 ${set.pictures} 张`, null, { stay: true });
+  await withSite(async () => {
+    try {
+      const data = await call("/group", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids }) });
+      toast(intoSet ? `放进了这一组，共 ${data.pictures} 张` : `合成了一组，共 ${data.pictures} 张`, data.undo);
+      stale = true;
+    } catch (e) {
+      items = was;
+      render();
+      toast(`没合成：${e.message}`);
+    }
+  });
 }
-const isSetId = (id) => isSet(items.find((i) => i.id === id) || {});
 
 /* ------------------------------------------------- drag one onto another */
 
@@ -498,22 +625,23 @@ async function remove(item, el) {
 /** A short note at the bottom; with an undo token it offers 撤销 for a while. */
 let toastTimer;
 let undoToken = null;
-function toast(text, undo = null) {
+function toast(text, undo = null, { stay = false } = {}) {
   $("toast-text").textContent = text;
   undoToken = undo;
   $("toast-undo").hidden = !undo;
   $("toast").hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => ($("toast").hidden = true), undo ? 7000 : 3200);
+  // a change the site is still saving: the note stays until it is done
+  if (!stay) toastTimer = setTimeout(() => ($("toast").hidden = true), undo ? 7000 : 3200);
 }
 $("toast-undo").addEventListener("click", async () => {
   const token = undoToken;
   if (!token) return;
   undoToken = null;
-  $("toast-undo").hidden = true;
+  toast("正在撤销…", null, { stay: true });
   try {
     const data = await call("/undo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) });
-    for (const id of data.restored || []) forget(id), landed.add(id);
+    for (const id of data.restored || []) landed.add(id);
     if (openSet && !(data.restored || []).includes(openSet)) closeSet();
     await connect(conn.site, conn.key, { quiet: true });
     toast("已撤销");
@@ -522,12 +650,6 @@ $("toast-undo").addEventListener("click", async () => {
   }
 });
 
-/** Drop a tile and its cached pictures so it is built again from the site's answer. */
-function forget(id) {
-  for (const key of [...urls.keys()]) if (key.startsWith(`${id}/`)) (URL.revokeObjectURL(urls.get(key)), urls.delete(key));
-  tiles.get(id)?.remove();
-  tiles.delete(id);
-}
 /** Tiles that just came out of a change: they pop once when they appear. */
 const landed = new Set();
 
@@ -578,7 +700,7 @@ function renderSet() {
     pic.classList.toggle("cutout", Boolean(s.cutout));
     pic.setAttribute("aria-label", `查看第 ${n + 1} 张`);
     pic.addEventListener("click", () => view(item, n));
-    load(pic.querySelector("img"), item.id, n);
+    load(pic.querySelector("img"), item, n);
     const cover = el.querySelector(".cover");
     if (n === 0) cover.remove();
     else cover.addEventListener("click", () => arrange(item, { order: moveTo(item.pictures, n, 0) }, "已换封面"));
@@ -650,10 +772,20 @@ armed($("set-del"), () => {
 });
 
 async function arrange(item, spec, done, { back = false, onFail } = {}) {
+  // a new order (or cover) shows at once; taking pictures out waits for the new items' ids
+  const was = items;
+  const now = items.find((i) => i.id === item.id) || item;
+  if (spec.order && !spec.split?.length) {
+    const sizes = spec.order.map((k) => ({ ...(now.sizes?.[k] || {}), key: keyOf(now, k), at: now.sizes?.[k]?.at || { id: now.id, n: k } }));
+    items = items.map((i) => (i === now ? { ...now, sizes } : i));
+    render();
+  }
+  await withSite(() => send(item, spec, done, { back, onFail, was }));
+}
+async function send(item, spec, done, { back, onFail, was }) {
+  if (spec.split?.length) toast(back ? "正在拆开…" : "正在移出…", null, { stay: true });
   try {
     const data = await call("/arrange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: item.id, ...spec }) });
-    // pictures moved: what was cached under this set no longer matches
-    forget(item.id);
     for (const id of data.split_out || []) landed.add(id);
     if (back) {
       landed.add(item.id);
@@ -662,6 +794,8 @@ async function arrange(item, spec, done, { back = false, onFail } = {}) {
     await connect(conn.site, conn.key, { quiet: true });
     toast(done, data.undo);
   } catch (e) {
+    items = was;
+    render();
     onFail?.();
     toast(e.message);
   }
@@ -683,7 +817,7 @@ async function view(item, at = 0) {
   video.removeAttribute("src");
   video.hidden = true;
   img.hidden = false;
-  img.src = urls.get(`${item.id}/${at}`) || "";
+  img.src = urls.get(keyOf(item, at)) || "";
   img.alt = count > 1 ? `${item.title}（第 ${at + 1} 张）` : item.title;
   img.classList.toggle("cutout", Boolean(item.sizes?.[at]?.cutout));
   $("viewer-title").textContent = item.title;
@@ -695,7 +829,7 @@ async function view(item, at = 0) {
   }
   if (!viewer.open) viewer.showModal();
   try {
-    const full = await picture(item.id, at, true);
+    const full = await picture(item, at, true);
     if (token !== viewing) return;
     if (moving) {
       // the poster stays until the video can play

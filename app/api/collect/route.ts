@@ -48,6 +48,8 @@ export async function GET(req: Request) {
       pictures: picturesOf(i).length,
       // every picture's shape, so a set can be laid out before its pictures load
       sizes: picturesOf(i).map((m) => ({
+        // the picture's own file: it names the picture wherever it moves (another set, another place)
+        key: m.src,
         width: m.width,
         height: m.height,
         cutout: m.cutout,

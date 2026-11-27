@@ -319,7 +319,6 @@ svg { width: 1.125rem; height: 1.125rem; flex: none; fill: none; stroke: current
 .tile.drop-target .drop-hint { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .tile.drop-target .pic img { transform: scale(0.96); }
 /* the ones going into a set shrink towards it while the site answers */
-.tile.joining { opacity: 0.25; transform: scale(0.92); transition: opacity 0.3s var(--ease), transform 0.3s var(--ease); }
 /* what a change produced pops once */
 .tile.landed .mat, .tile.landed .fcard { animation: land 0.7s var(--ease) both; }
 @keyframes land {
