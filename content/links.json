@@ -1,5 +1,17 @@
 [
   {
+    "id": "20261127-vp7v03",
+    "url": "https://remocn.dev/docs/typography",
+    "name": "Remocn",
+    "category": "components",
+    "pros": [],
+    "tags": [],
+    "icon": "/media/link-20261127-vp7v03.png",
+    "excerpt": "标题：Typography: 256 animated text effects for Remotion · Remocn\n简介：256 free, MIT-licensed animated text effects for Remotion: reveals, highlights, word swaps, counters, glitches and kinetic type. Install any one with npx shadcn@latest add @remocn/<name>.\n# Typography: 256 animated text effects for Remotion 256 free, MIT-licensed animated text effects for Remotion: reveals, highlights, word swaps, counters, glitches and kinetic type. Install any one with npx shadcn@latest add @remocn/<name>. # Pick a text effect by job # Find a text effect by what it looks like # Reveals Entrances for a headline or a line of copy: by word, by letter, through blur or through a mask. staggered-fade-up is the neutral default; soft-blur-in and focus-blur-resolve read premium. Inline Word Roll Rotating word animation for Remotion: the start of a headline stays put while the last word rolls vertically like a slot machine, speeding up through audiences or outcomes. Shader Text Reveal Reveal words through the original OpenShaders hero material, then settle into white type Type Fossil A readable word carries layers of fine contours, revises itself, then compresses into a clean typographic imprint Soft Blur In Per-character fade-in with a gentle blur and upward motion Per Character Rise Letters slide up from below with no blur - crisp and kinetic Bottom-Up Letters Letter-by-letter rise for Remotion: each letter of a short word or acronym rises from below in a clear staircase, one character after another. Top-Down Letters Letters descend from above in a pronounced staircase, one symbol at a time Spring Scale In Words pop in with a soft overshoot scale, like a spring settling into place Micro Scale Fade A calm, tiny scale pop for subtle premium polish on labels and headings Scale Down Fade Subtle premium settle-in with a restrained scale-down fade on ex",
+    "inbox": true,
+    "createdAt": "2026-11-27T00:54:01.500Z"
+  },
+  {
     "id": "20261127-hf3bgf",
     "url": "https://motionsites.ai",
     "name": "AI Website Prompts & Design Inspiration",
