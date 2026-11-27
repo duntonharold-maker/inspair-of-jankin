@@ -3,99 +3,158 @@
     "id": "20261127-bztilq",
     "url": "https://kinetics.colorion.co",
     "name": "Kinetics",
-    "category": "components",
-    "pros": [],
-    "tags": [],
+    "category": "motion",
+    "pros": [
+      "162 个界面动效示例，可预览、复制 CSS 代码",
+      "99 个有 React 版本，153 个附 AI 提示词",
+      "覆盖磁吸按钮、标签胶囊滑动、拖拽关闭等常见交互"
+    ],
+    "tags": [
+      "弹簧动画",
+      "CSS",
+      "React"
+    ],
     "icon": "/media/link-20261127-bztilq.png",
-    "excerpt": "标题：Kinetics — CSS & React Spring Animation Examples\n简介：Explore 162 animated UI examples with CSS snippets, 99 React examples, and 153 AI prompts. Preview, learn, and copy the code.\n# SPRING ANIMATION EXAMPLES FOR CSS AND REACT. Motion that has weight. Explore 162 interface animations, from spring-like CSS easing to interactive JavaScript effects. Preview each pattern and copy its snippets, with 99 React examples and 153 AI prompts available across the library. No effects match “”. Production-ready React versions of these effects are coming. Typed, accessible, reduced-motion ready, and installed with one command. Buttondown opens in a new tab to confirm. Unsubscribe anytime. # INTERACTION & INPUT # Card Resize # Magnetic Button # Number Counter # Toast Overshoot # Tab Pill Glide Springs respond to interruption naturally — duration-based easing can't. Pure CSS, no layout thrash, GPU-composited. # Accordion Spring # Drag to Dismiss # Ripple Feedback # Hold to Confirm # Rubber-band Slider # Like Burst # Cursor Trail # Push Button # Star Rating # Floating Label # Copy Button # Quantity Stepper # Choice Chips # PIN Input # Password Meter # Pointer Tooltip # Swipe to Reveal # Rotary Knob # Reorderable List # Expanding Search # Squish Button # Toggle Pills # Value Scrubber # Speed-Dial FAB # Swatch Picker # Slide to Unlock # Tag Input # Keycap Press # Orbital Action Menu # Contextual Dock # Inertial Dial # Elastic Lasso # Hover Intent Gate # Gesture Chord # Liquid Glass Press # Bento Expand # Snap Rail # Kinetic XY Pad # Command Palette Bloom # Momentum Picker # Prompt Composer # Filmstrip Scrubber press & drag # Drag Stack Collect # Focus Relay # Hold to Talk # Lattice Snap # Velocity Button # Directional Hover # Gesture Compass # FEEDBACK & STATE # Scramble",
-    "inbox": true,
-    "createdAt": "2026-11-27T00:55:11.770Z"
+    "createdAt": "2026-11-27T00:55:11.770Z",
+    "pitch": "CSS / React 弹簧动效示例库",
+    "price": "free",
+    "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
     "id": "20261127-rvy8o3",
     "url": "https://www.morphicons.com",
     "name": "morphicons",
-    "category": "",
-    "pros": [],
-    "tags": [],
-    "note": "Icon",
+    "category": "icons",
+    "pros": [
+      "任意两个 SVG 图标之间平滑变形，弹簧物理驱动",
+      "支持 Lucide、Tabler、Heroicons、Material Symbols，描边和填充都行",
+      "React、Vue、Svelte、React Native、Astro 和原生 JS，零依赖"
+    ],
+    "tags": [
+      "图标动画",
+      "SVG"
+    ],
     "icon": "/media/link-20261127-rvy8o3.png",
-    "excerpt": "标题：morphicons — SVG icon morphing library for React, Vue & Svelte\n简介：Morph any SVG icon into any other with spring physics: Lucide, Tabler, Heroicons, Material Symbols, stroked or filled. React, Vue, Svelte, React Native, Astro or vanilla JS. Zero dependencies.\n# Morph any SVG icon into any other. Lucide, Tabler, Heroicons or any icon set, stroked or filled. Spring physics, zero dependencies, nothing to configure. Click an icon to add it to your set. Any icon morphs into any other: across libraries, grids, and outline to fill. That is the whole thing, in React, Vue, Svelte, React Native or Astro. No wrappers, keys or configuration. Swap the pair for any two icons above. # Closed-form math, no config. morphicons solves the rotation, scale and translation that best map one icon onto the other, in closed form. Shapes that match under rotation simply rotate, and filled icons morph as filled shapes. Icons are consumed as data, not components: a d attribute or Lucide’s IconNode format. No per-library setup. Works with any icon set, stroked or filled, on any grid via fitIcon. Lucide Tabler Heroicons Iconoir Material Symbols Phosphor Hugeicons shadcn registry",
-    "inbox": true,
-    "createdAt": "2026-11-27T00:55:04.585Z"
+    "createdAt": "2026-11-27T00:55:04.585Z",
+    "pitch": "SVG 图标变形动画库",
+    "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
     "id": "20261127-kg3bfy",
     "url": "https://www.rewampui.com/components/pill-expand-navbar",
     "name": "RewampUI",
     "category": "components",
-    "pros": [],
-    "tags": [],
+    "pros": [
+      "组件可在线预览交互，比如可展开的胶囊导航",
+      "用 npx rewampui add 把源码直接加进项目",
+      "基于 Framer Motion，组件改起来自由"
+    ],
+    "tags": [
+      "React",
+      "动效组件"
+    ],
     "icon": "/media/link-20261127-kg3bfy.png",
-    "excerpt": "标题：RewampUI - Component Showcase Dashboard\nHover or click tabs to expand",
-    "inbox": true,
-    "createdAt": "2026-11-27T00:54:56.159Z"
+    "createdAt": "2026-11-27T00:54:56.159Z",
+    "pitch": "带动效的 React 组件库",
+    "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
     "id": "20261127-a1vc2e",
     "url": "https://lucianlabs.dev/en/uxui-prompt",
     "name": "lucianLabs",
     "category": "components",
-    "pros": [],
-    "tags": [],
+    "pros": [
+      "480 个可交互的 UI 元素，深浅两种主题",
+      "每个元素附提示词，复制给 Claude 或 Codex 就能做进项目，也附代码",
+      "按登录注册、提示反馈、定价、表单、导航等分类"
+    ],
+    "tags": [
+      "AI 提示词",
+      "UI 元素"
+    ],
     "icon": "/media/link-20261127-a1vc2e.png",
-    "excerpt": "标题：Lucian UX/UI Prompt\n简介：Explore 480 interactive UX/UI templates and take the prompts and code.\n# Lucian UX/UI Prompt 480 UI elements, running live. Press Claude or Codex on a card, paste it into your agent, and it builds the element into your project. 480 elements Dark · Light Code included Read the introduction → Use it from an AI agent → Sign-in & Sign-up · 402 Sign-in & Sign-up · 401 Alerts & Feedback · 435 # Delete this project? All files in “Spring campaign” will be removed. This can’t be undone. Alerts & Feedback · 436 Up to 20 members Unlimited AI notes 1,000 automations a month Commerce & Pricing · 423 Forms & Input · 409 Product Pricing Customers Blog Navigation · 412 # Shorter meetings, faster results Notes and tasks connect on their own. Hero & Backgrounds · 419 Is there a free trial? Yes — try any plan for 14 days, no card needed. Yes — try any plan for 14 days, no card needed. Can I cancel anytime? Cancel right from Settings and keep access until the period ends. Cancel right from Settings and keep access until the period ends. How many people can I invite? Up to 20 on Pro, and as many as you like on Team. Up to 20 on Pro, and as many as you like on Team. Is my data safe? Everything is encrypted at rest and backed up daily. Everything is encrypted at rest and backed up daily. Sections & Content · 424 Trusted by 3,200 teams Velora NORTHPINE paperkite Orbita Mintleaf TESSEL Kestrel Brightwell Social Proof · 421 Social Proof · 422 Features Changelog About Careers Help Contact Status Navigation · 418 # Bring it into your project Watch, then try it. Each element plays a short demo on a loop while it is on screen. Tap it or tab into it and the demo stops so yo",
-    "inbox": true,
-    "createdAt": "2026-11-27T00:54:50.429Z"
+    "createdAt": "2026-11-27T00:54:50.429Z",
+    "pitch": "能直接交给 AI 生成的 UI 元素库",
+    "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
     "id": "20261127-cz8j7z",
     "url": "https://designeer.xyz",
     "name": "Designeer",
     "category": "inspiration",
-    "pros": [],
-    "tags": [],
+    "pros": [
+      "分灵感、资源、工具、作品集四类，每条都经人工审核",
+      "首页持续更新设计师和开发者分享的作品",
+      "可以建文件夹收藏"
+    ],
+    "tags": [
+      "灵感",
+      "资源导航"
+    ],
     "icon": "/media/link-20261127-cz8j7z.png",
-    "excerpt": "标题：Designeer: Inspiration, resources, tools & portfolios\n简介：Browse design references, reusable resources, practical tools, and portfolios from designers and developers.\n# Browse Finds Inspiration Resources Tools Portfolios # Folders Create folder A curated collection of interface craft, component libraries, AI tools, and resources for builders. # Designeer is a curated catalogue for designers and developers. Design inspiration, UI resources, tools and portfolios, each reviewed by hand. Below, the latest visual work picked from across the web. Find by shaahid: A voice interface that… Find by Soumik: pixel daisy Find by Bimanshu Vatsa: Look mom, My site got… Find by keshav: storage scanner so good you'll… Find by keshav: dragging events on a calendar… Find by Bogdan: Our team having fun with… Find by Ann Nguyen: some interactive christmas… Find by sarthak: i love coding agents, fun… Find by Ciprian Titire: i bet you think this… Find by Raunak: ASCII effects I created this… Find by Dash: 12 agents. One goal: 100,000… Find by Dhruv: fushimi inari shrine made using… Find by keshav: deleting your account can be… Find by Juliette: 42 years of the switch,… Find by Dash: 🫪 Find by Dmitry Kurash: Embossed holo Find by jaz 🍊: brutalist inspired boxing match Find by noclipepe: I made a loading bar you… Find by Dhruv: nothing escapes the watcher Find by Dev 🍁: Add to bag button Find by Muddasir: 👀 Static is safe, Motion is… Find by Burak Aslan: Added my card to Find by Harshit: Road to 10k Find by JACKⒿ: Swarm manifestation experiment #1 Find by Nitish Khagwal: back up interaction ⎯⟡° Find by Manik: I made the poor man's liquid… Find by Shivani: built a digital sketchbook… Find by Damir Sokolovsky: Unslopping a… Find by Cristian Javier: Liquid glas",
-    "inbox": true,
-    "createdAt": "2026-11-27T00:54:41.384Z"
+    "createdAt": "2026-11-27T00:54:41.384Z",
+    "pitch": "人工筛选的设计灵感与资源目录",
+    "price": "free",
+    "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
     "id": "20261127-h3fh7o",
     "url": "https://lucide.dev/icons",
     "name": "Lucide",
-    "category": "",
-    "pros": [],
-    "tags": [],
-    "note": "Icon",
+    "category": "icons",
+    "pros": [
+      "一千多个图标，统一 2px 描边",
+      "按分类浏览，可在线调颜色、粗细、尺寸后复制 SVG",
+      "React、Vue 等都有现成的包，本站的图标就用它"
+    ],
+    "tags": [
+      "图标",
+      "开源"
+    ],
     "icon": "/media/link-20261127-h3fh7o.png",
-    "excerpt": "标题：Icons – Lucide\n简介：Browse all Lucide icons.\nIcons Guide Resources Packages Showcase MCP SOON Merch # Customizer # Include external libs # View Accessibility 36 Accounts & access 122 AI 20 Animals 26 Arrows 210 Buildings 37 Charts 46 Communication 88 Connectivity 71 Cursors 37 Design 193 Coding & development 272 Devices 190 Education 31 Emoji 38 File icons 175 Finance 75 Food & beverage 87 Gaming 129 Home 79 Layout 196 Letters & digits 103 Logistics 27 Mail 30 Mathematics 83 Medical 50 Multimedia 155 Nature 29 Navigation & places 103 Notifications 55 People 21 Photography 81 Science 52 Security 71 Shapes 62 Shopping 57 Social 128 Sports 25 Sustainability 24 Text formatting 268 Time & calendar 75 Tools 59 Transportation 73 Travel 82 Weather 45 # Keyboard shortcuts",
-    "inbox": true,
-    "createdAt": "2026-11-27T00:54:12.108Z"
+    "createdAt": "2026-11-27T00:54:12.108Z",
+    "pitch": "开源线性图标库",
+    "price": "free",
+    "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
     "id": "20261127-vp7v03",
     "url": "https://remocn.dev/docs/typography",
     "name": "Remocn",
-    "category": "components",
-    "pros": [],
-    "tags": [],
+    "category": "motion",
+    "pros": [
+      "256 个免费文字动效（MIT 协议）：逐字出现、高亮、换词、数字滚动、故障等",
+      "按用途和视觉效果挑选",
+      "一行 shadcn 命令安装"
+    ],
+    "tags": [
+      "Remotion",
+      "文字动效",
+      "视频"
+    ],
     "icon": "/media/link-20261127-vp7v03.png",
-    "excerpt": "标题：Typography: 256 animated text effects for Remotion · Remocn\n简介：256 free, MIT-licensed animated text effects for Remotion: reveals, highlights, word swaps, counters, glitches and kinetic type. Install any one with npx shadcn@latest add @remocn/<name>.\n# Typography: 256 animated text effects for Remotion 256 free, MIT-licensed animated text effects for Remotion: reveals, highlights, word swaps, counters, glitches and kinetic type. Install any one with npx shadcn@latest add @remocn/<name>. # Pick a text effect by job # Find a text effect by what it looks like # Reveals Entrances for a headline or a line of copy: by word, by letter, through blur or through a mask. staggered-fade-up is the neutral default; soft-blur-in and focus-blur-resolve read premium. Inline Word Roll Rotating word animation for Remotion: the start of a headline stays put while the last word rolls vertically like a slot machine, speeding up through audiences or outcomes. Shader Text Reveal Reveal words through the original OpenShaders hero material, then settle into white type Type Fossil A readable word carries layers of fine contours, revises itself, then compresses into a clean typographic imprint Soft Blur In Per-character fade-in with a gentle blur and upward motion Per Character Rise Letters slide up from below with no blur - crisp and kinetic Bottom-Up Letters Letter-by-letter rise for Remotion: each letter of a short word or acronym rises from below in a clear staircase, one character after another. Top-Down Letters Letters descend from above in a pronounced staircase, one symbol at a time Spring Scale In Words pop in with a soft overshoot scale, like a spring settling into place Micro Scale Fade A calm, tiny scale pop for subtle premium polish on labels and headings Scale Down Fade Subtle premium settle-in with a restrained scale-down fade on ex",
-    "inbox": true,
-    "createdAt": "2026-11-27T00:54:01.500Z"
+    "createdAt": "2026-11-27T00:54:01.500Z",
+    "pitch": "Remotion 视频文字动效合集",
+    "price": "free",
+    "updatedAt": "2026-11-27T00:58:27.111Z"
   },
   {
     "id": "20261127-hf3bgf",
     "url": "https://motionsites.ai",
-    "name": "AI Website Prompts & Design Inspiration",
-    "category": "",
-    "pros": [],
-    "tags": [],
-    "note": "Web",
+    "name": "MotionSites",
+    "category": "inspiration",
+    "pros": [
+      "收录大量带动效的网站首屏：3D、粒子、卡片隧道等",
+      "每个设计配可以直接拿去让 AI 生成的提示词",
+      "适合找首屏动效方向"
+    ],
+    "tags": [
+      "网页动效",
+      "提示词"
+    ],
     "icon": "/media/link-20261127-hf3bgf.png",
-    "excerpt": "标题：AI Website Prompts & Design Inspiration | MotionSites\n简介：Discover MotionSites website prompts, motion designs and ready-to-build AI inspiration.\n# Smoothie Slider # Forge Gate # Flower Valley # Shelf Hero # Moss Island # Coastal Cards # Card Tunnel # Dark Portfolio # Loops Virtual Store # AI Philosophy # Particle Brain # Anchor AI # Outfit Carousel # Protein Bars # 3D Portfolio # Print Gallery # Style Studio # Ice Monastery # Noodle Twirl # Zenith Realty # Particle Self # Virtual Store # Orbit Sphere # OYLA",
-    "inbox": true,
-    "createdAt": "2026-11-27T00:53:47.613Z"
+    "createdAt": "2026-11-27T00:53:47.613Z",
+    "pitch": "带动效的网站灵感与 AI 建站提示词",
+    "updatedAt": "2026-11-27T00:58:27.111Z"
   }
 ]
