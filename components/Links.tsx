@@ -107,9 +107,6 @@ export default function Links({ site, links }: { site: Site; links: Link[] }) {
       ) : (
         <div className="gallery-empty">
           <p>{links.length ? "没有符合条件的网站。" : "还没有收藏网站。"}</p>
-          <p className="muted">
-            {links.length ? "换个关键词或分类试试。" : "在任意网页上右键「收藏这个网站」，或者跟 Claude 说「收藏 https://… 」。"}
-          </p>
         </div>
       )}
     </section>
