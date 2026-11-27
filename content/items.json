@@ -33,29 +33,33 @@
           "source": "https://pbs.twimg.com/media/HYD8Em2WcAA9zKE?format=jpg&name=4096x4096",
           "createdAt": "2026-11-27T04:36:07.639Z"
         }
-      },
-      {
-        "src": "/media/20261127-84h58b.jpg",
-        "type": "image",
-        "width": 1600,
-        "height": 1200,
-        "thumb": "/media/20261127-84h58b.thumb.webp",
-        "imageUrl": "https://pbs.twimg.com/media/HYB0ERzbkAABjGz?format=jpg&name=orig",
-        "origin": {
-          "title": "Image",
-          "category": "ui",
-          "note": "采集自「Home / X」\n图片说明：Image",
-          "source": "https://x.com/uixsiam09/status/2125826652307599418/photo/1",
-          "createdAt": "2026-11-27T04:38:34.470Z"
-        }
       }
     ],
     "source": "https://pbs.twimg.com/media/HYD8EmpW8AAQkTG?format=jpg&name=4096x4096",
-    "note": "采集自「HYD8EmpW8AAQkTG (1632×2912)」\n采集自「HYD8Em2WcAA9zKE (2464×1856)」\n采集自「Home / X」\n图片说明：Image",
+    "note": "采集自「HYD8EmpW8AAQkTG (1632×2912)」\n采集自「HYD8Em2WcAA9zKE (2464×1856)」",
     "inbox": true,
     "imageUrl": "https://pbs.twimg.com/media/HYD8EmpW8AAQkTG?format=jpg&name=orig",
     "createdAt": "2026-11-27T04:36:33.946Z",
-    "updatedAt": "2026-11-27T04:59:45.131Z"
+    "updatedAt": "2026-11-27T04:59:53.265Z"
+  },
+  {
+    "id": "20261127-al9k7c",
+    "title": "Image",
+    "category": "ui",
+    "tags": [],
+    "media": {
+      "src": "/media/20261127-84h58b.jpg",
+      "type": "image",
+      "width": 1600,
+      "height": 1200,
+      "thumb": "/media/20261127-84h58b.thumb.webp"
+    },
+    "source": "https://x.com/uixsiam09/status/2125826652307599418/photo/1",
+    "inbox": true,
+    "createdAt": "2026-11-27T04:38:34.470Z",
+    "updatedAt": "2026-11-27T04:59:45.131Z",
+    "note": "采集自「Home / X」\n图片说明：Image",
+    "imageUrl": "https://pbs.twimg.com/media/HYB0ERzbkAABjGz?format=jpg&name=orig"
   },
   {
     "id": "20261126-qxgi5b",
