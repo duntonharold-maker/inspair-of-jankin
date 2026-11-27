@@ -1,23 +1,43 @@
 [
   {
+    "id": "20261127-a1rzy6",
+    "title": "看点丝滑小动画吧",
+    "category": "ui",
+    "note": "作者：ktiays (@ktiays)\n采集自「Home / X」\n原文：看点丝滑小动画吧",
+    "source": "https://x.com/ktiays/status/2125866738202100123",
+    "createdAt": "2026-11-27T07:26:33.985Z",
+    "tags": [],
+    "media": {
+      "src": "/media/20261127-a1rzy6.mp4",
+      "type": "video",
+      "width": 720,
+      "height": 1400,
+      "duration": 4.7,
+      "thumb": "/media/20261127-a1rzy6.thumb.webp",
+      "small": "/media/20261127-a1rzy6.small.mp4"
+    },
+    "imageUrl": "https://video.twimg.com/amplify_video/2125866699060834304/vid/avc1/720x1400/sk1m00JckaKJuDQ1.mp4?tag=14",
+    "inbox": true
+  },
+  {
     "id": "20261127-bvw1g4",
     "title": "Had way too much fun building this vinyl shop watch with sou",
     "category": "interface",
-    "note": "作者：abhay solanki (@abhay8769)\n采集自「Home / X」\n原文：Had way too much fun building this vinyl shop watch with sound on 🔊 pull a record from the shelf, drop the needle, and drag the pitch fader - it slows down both the spinning vinyl and the real audio.",
-    "source": "https://x.com/abhay8769/status/2126186253783830748",
-    "createdAt": "2026-11-27T07:16:45.074Z",
     "tags": [],
     "media": {
       "src": "/media/20261127-bvw1g4.mp4",
       "type": "video",
       "width": 1280,
       "height": 720,
-      "duration": 20,
       "thumb": "/media/20261127-bvw1g4.thumb.webp",
-      "small": "/media/20261127-bvw1g4.small.mp4"
+      "small": "/media/20261127-bvw1g4.small.mp4",
+      "duration": 20
     },
+    "source": "https://x.com/abhay8769/status/2126186253783830748",
+    "note": "作者：abhay solanki (@abhay8769)\n采集自「Home / X」\n原文：Had way too much fun building this vinyl shop watch with sound on 🔊 pull a record from the shelf, drop the needle, and drag the pitch fader - it slows down both the spinning vinyl and the real audio.",
+    "inbox": true,
     "imageUrl": "https://video.twimg.com/amplify_video/2126171728414130176/vid/avc1/1280x720/phZw-w6hz-_rCAuH.mp4",
-    "inbox": true
+    "createdAt": "2026-11-27T07:16:45.074Z"
   },
   {
     "id": "20261127-205y8k",
