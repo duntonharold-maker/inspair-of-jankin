@@ -13,6 +13,10 @@ const LIMIT = 4 * 1024 * 1024;
 const CHAIN_MS = 15 * 60 * 1000;
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
+  // tabs already open don't get picker.js until they reload: give it to them now, so a right-click there
+  // is remembered too (after an update, without refreshing every page)
+  for (const t of await chrome.tabs.query({ url: ["http://*/*", "https://*/*"] }))
+    chrome.scripting.executeScript({ target: { tabId: t.id, allFrames: true }, files: ["picker.js"] }).catch(() => {});
   await chrome.contextMenus.removeAll();
   // everywhere, not only on <img>: many sites cover their pictures with a layer or paint them as backgrounds
   chrome.contextMenus.create({ id: MENU, title: "收藏到 inspair", contexts: ["image", "page", "link", "frame", "video"] });
@@ -61,18 +65,28 @@ async function collect(info, tab) {
     const post = await run(tabId, frameId, postAt);
     if (post?.video) return collectVideo(info, tab, { video: { src: "", poster: post.poster } }, { site, key });
   }
-  const shown = clicked || page.src;
+  let shown = clicked || page.src;
+  // an image generator's work page is about one picture: when none was found under the pointer, the work's own
+  let ai = null;
+  if (GENERATORS.some((g) => g.test.test(tab?.url || ""))) {
+    ai = await generated(tab.url, shown || "", tabId, frameId);
+    shown ||= ai?.best?.[0] || "";
+  }
   if (!shown) {
     await say(tabId, {
       state: "error",
-      text: "这里没找到图片",
-      sub: onX ? "X 的视频：在推文的文字或空白处右键。图片：在图片正上方右键。" : "在图片或视频正上方右键再试；画在 canvas 里的图暂时采不了。",
+      text: page.lost ? "刷新这个页面再试" : "这里没找到图片",
+      sub: page.lost
+        ? "插件没记下刚才右键的位置：这个页面是在插件装好或更新之前打开的。"
+        : onX
+          ? "X 的视频：在推文的文字或空白处右键。图片：在图片正上方右键。"
+          : "在图片或视频正上方右键再试；画在 canvas 里的图暂时采不了。",
     });
     return;
   }
   const job = { shown, best: page.best || shown, pageUrl: info.pageUrl || tab?.url || "", title: page.title || tab?.title || "", alt: page.alt || "", frameId };
   // made with an image generator: its prompt, model and settings, and the full-size picture
-  const ai = await generated(tab?.url || job.pageUrl, shown, tabId, frameId);
+  ai ??= await generated(tab?.url || job.pageUrl, shown, tabId, frameId);
   if (ai) {
     job.ai = ai;
     if (ai.title) job.title = `${ai.title} - ${ai.site}`;
@@ -144,13 +158,17 @@ async function run(tabId, frameId, func) {
 /** Runs in the page: the X post under the right-click (its id), and the poster of its video there. */
 function postAt() {
   const point = window.__inspairPoint;
-  const el = point && document.elementFromPoint(point.x, point.y);
-  const post = el?.closest("article");
-  if (!post) return null;
+  const fresh = point && Date.now() - point.at < 60000;
+  const el = fresh ? document.elementFromPoint(point.x, point.y) : null;
+  const own = /\/status\/(\d+)/.exec(location.pathname)?.[1];
+  // no right-click remembered: on a post's own page, that post
+  const mine = (a) => [...a.querySelectorAll('a[href*="/status/"]')].some((l) => l.querySelector("time") && l.getAttribute("href").endsWith(`/status/${own}`));
+  const post = el?.closest("article") || (!fresh && own ? [...document.querySelectorAll("article")].find(mine) : null);
+  if (!post) return !fresh && own ? { id: own, poster: "", video: true } : null;
   // the post's own link is the one on its time; a quoted post inside has its own article
   const link = [...post.querySelectorAll('a[href*="/status/"]')].find((a) => a.querySelector("time") && a.closest("article") === post);
   const id = /\/status\/(\d+)/.exec(link?.getAttribute("href") || "")?.[1];
-  const video = el.closest("[data-testid='videoComponent'], [data-testid='videoPlayer']")?.querySelector("video") || post.querySelector("video");
+  const video = el?.closest("[data-testid='videoComponent'], [data-testid='videoPlayer']")?.querySelector("video") || post.querySelector("video");
   return { id: id || null, poster: video?.poster || "", video: Boolean(video) };
 }
 
@@ -554,7 +572,7 @@ async function pickAt(tabId, frameId) {
  */
 function findPicture() {
   const point = window.__inspairPoint;
-  if (!point || Date.now() - point.at > 60000) return {};
+  if (!point || Date.now() - point.at > 60000) return { lost: true, title: document.title };
   const { x, y } = point;
   const abs = (u) => {
     try {
