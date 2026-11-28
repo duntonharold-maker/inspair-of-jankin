@@ -1,23 +1,43 @@
 [
   {
+    "id": "20261128-mkug72",
+    "title": "this button has more due diligence than my CA",
+    "category": "ui",
+    "note": "作者：keshav (@kshvbgde)\n采集自「Home / X」\n原文：this button has more due diligence than my CA",
+    "source": "https://x.com/kshvbgde/status/2126561365318066473",
+    "createdAt": "2026-11-28T09:08:07.589Z",
+    "tags": [],
+    "media": {
+      "src": "/media/20261128-mkug72.mp4",
+      "type": "video",
+      "width": 1256,
+      "height": 1256,
+      "duration": 6.8,
+      "thumb": "/media/20261128-mkug72.thumb.webp",
+      "small": "/media/20261128-mkug72.small.mp4"
+    },
+    "imageUrl": "https://video.twimg.com/amplify_video/2126560082620268544/vid/avc1/1256x1256/C0IT5La2FO_o8RZr.mp4",
+    "inbox": true
+  },
+  {
     "id": "20261128-k0a8lz",
     "title": "this jacket store has no product grid 🤯 the jackets spin in",
     "category": "interface",
-    "note": "作者：Viktor Oddy (@viktoroddy)\n采集自「Home / X」\n原文：this jacket store has no product grid 🤯 the jackets spin in a ring, and the one you pick shows up on a model next to it it's a real working website you can click through, not a video",
-    "source": "https://x.com/viktoroddy/status/2126466135470338404",
-    "createdAt": "2026-11-28T06:07:15.562Z",
     "tags": [],
     "media": {
       "src": "/media/20261128-k0a8lz.mp4",
       "type": "video",
       "width": 1440,
       "height": 810,
-      "duration": 6.3,
       "thumb": "/media/20261128-k0a8lz.thumb.webp",
-      "small": "/media/20261128-k0a8lz.small.mp4"
+      "small": "/media/20261128-k0a8lz.small.mp4",
+      "duration": 6.3
     },
+    "source": "https://x.com/viktoroddy/status/2126466135470338404",
+    "note": "作者：Viktor Oddy (@viktoroddy)\n采集自「Home / X」\n原文：this jacket store has no product grid 🤯 the jackets spin in a ring, and the one you pick shows up on a model next to it it's a real working website you can click through, not a video",
+    "inbox": true,
     "imageUrl": "https://video.twimg.com/amplify_video/2126466001546137600/vid/avc1/1440x810/yEiiq6WqXYAb9P7X.mp4",
-    "inbox": true
+    "createdAt": "2026-11-28T06:07:15.562Z"
   },
   {
     "id": "20261128-2qlfgl",
