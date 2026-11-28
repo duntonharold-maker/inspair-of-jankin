@@ -140,6 +140,7 @@ chrome.storage.local.get(["site", "key"]).then(({ site, key }) => {
 
 /** Check the key and load the inbox; a problem opens the settings with what went wrong. */
 async function connect(site, key, { quiet = false } = {}) {
+  let drawing = false;
   $("save").disabled = true;
   $("refresh").classList.add("spin");
   if (!quiet) status("正在连接…");
@@ -163,9 +164,12 @@ async function connect(site, key, { quiet = false } = {}) {
     siteLabels = new Map((data.linkCategories || []).map((c) => [c.id, c.label]));
     if (data.linkCategories) chrome.storage.local.set({ linkCategories: data.linkCategories });
     if (first && !settings.hidden) showSettings(false);
+    drawing = true;
     render();
   } catch (e) {
-    const text = e instanceof TypeError ? "连不上这个网址：检查地址是否正确、网站是否在线。" : e.message;
+    // only a request that never got an answer is a connection problem; anything else is said as it is
+    const offline = e instanceof TypeError && /fetch|network/i.test(e.message);
+    const text = drawing ? `连上了，但这一页出错了：${e.message}` : offline ? "连不上这个网址：检查地址是否正确、网站是否在线。" : e.message;
     status(text, "bad");
     $("gear").querySelector(".alert").hidden = false;
     if (!quiet) showSettings(true);
@@ -489,6 +493,8 @@ function showPicks() {
   for (const [id, el] of tiles) {
     const k = picked.indexOf(id);
     const pick = el.querySelector(".pick");
+    // a saved website's tile can't be picked into a set
+    if (!pick) continue;
     pick.setAttribute("aria-pressed", String(k !== -1));
     pick.querySelector(".n").textContent = k === -1 ? "" : String(k + 1);
     el.classList.toggle("picked", k !== -1);
