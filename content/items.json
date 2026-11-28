@@ -1,23 +1,43 @@
 [
   {
+    "id": "20261128-ebgzaz",
+    "title": "A non minimalist dashboard",
+    "category": "ui",
+    "note": "作者：Sean Galt (@seanaiux)\n采集自「Home / X」\n原文：A non minimalist dashboard",
+    "source": "https://x.com/seanaiux/status/2126369964320084049",
+    "createdAt": "2026-11-28T03:01:27.281Z",
+    "tags": [],
+    "media": {
+      "src": "/media/20261128-ebgzaz.mp4",
+      "type": "video",
+      "width": 1440,
+      "height": 900,
+      "duration": 13,
+      "thumb": "/media/20261128-ebgzaz.thumb.webp",
+      "small": "/media/20261128-ebgzaz.small.mp4"
+    },
+    "imageUrl": "https://video.twimg.com/amplify_video/2126313104074215424/vid/avc1/1440x900/RXOQG_t-GfU9U_J3.mp4",
+    "inbox": true
+  },
+  {
     "id": "20261127-a1rzy6",
     "title": "看点丝滑小动画吧",
     "category": "ui",
-    "note": "作者：ktiays (@ktiays)\n采集自「Home / X」\n原文：看点丝滑小动画吧",
-    "source": "https://x.com/ktiays/status/2125866738202100123",
-    "createdAt": "2026-11-27T07:26:33.985Z",
     "tags": [],
     "media": {
       "src": "/media/20261127-a1rzy6.mp4",
       "type": "video",
       "width": 720,
       "height": 1400,
-      "duration": 4.7,
       "thumb": "/media/20261127-a1rzy6.thumb.webp",
-      "small": "/media/20261127-a1rzy6.small.mp4"
+      "small": "/media/20261127-a1rzy6.small.mp4",
+      "duration": 4.7
     },
+    "source": "https://x.com/ktiays/status/2125866738202100123",
+    "note": "作者：ktiays (@ktiays)\n采集自「Home / X」\n原文：看点丝滑小动画吧",
+    "inbox": true,
     "imageUrl": "https://video.twimg.com/amplify_video/2125866699060834304/vid/avc1/720x1400/sk1m00JckaKJuDQ1.mp4?tag=14",
-    "inbox": true
+    "createdAt": "2026-11-27T07:26:33.985Z"
   },
   {
     "id": "20261127-bvw1g4",
