@@ -1,16 +1,34 @@
 [
   {
+    "id": "20261128-k0a8lz",
+    "title": "this jacket store has no product grid 🤯 the jackets spin in",
+    "category": "interface",
+    "note": "作者：Viktor Oddy (@viktoroddy)\n采集自「Home / X」\n原文：this jacket store has no product grid 🤯 the jackets spin in a ring, and the one you pick shows up on a model next to it it's a real working website you can click through, not a video",
+    "source": "https://x.com/viktoroddy/status/2126466135470338404",
+    "createdAt": "2026-11-28T06:07:15.562Z",
+    "tags": [],
+    "media": {
+      "src": "/media/20261128-k0a8lz.mp4",
+      "type": "video",
+      "width": 1440,
+      "height": 810,
+      "duration": 6.3,
+      "thumb": "/media/20261128-k0a8lz.thumb.webp",
+      "small": "/media/20261128-k0a8lz.small.mp4"
+    },
+    "imageUrl": "https://video.twimg.com/amplify_video/2126466001546137600/vid/avc1/1440x810/yEiiq6WqXYAb9P7X.mp4",
+    "inbox": true
+  },
+  {
     "id": "20261128-2qlfgl",
+    "title": "One Shape — A Continuous UI Loop",
+    "category": "motion",
     "tags": [
       "动效",
       "组件设计",
       "极简现代",
       "黑白极简"
     ],
-    "title": "One Shape — A Continuous UI Loop",
-    "category": "motion",
-    "source": "https://www.nickstudio.cn/en/one-shape-ui-loop.html?lang=en",
-    "note": "14 秒循环动效：一个形状不断变成按钮、加载、音乐播放器、开关、图表、命令面板等 UI 状态。",
     "media": {
       "src": "/media/20261128-2qlfgl.mp4",
       "type": "video",
@@ -18,6 +36,8 @@
       "height": 1440,
       "duration": 14
     },
+    "source": "https://www.nickstudio.cn/en/one-shape-ui-loop.html?lang=en",
+    "note": "14 秒循环动效：一个形状不断变成按钮、加载、音乐播放器、开关、图表、命令面板等 UI 状态。",
     "createdAt": "2026-11-28T04:16:48.501Z"
   },
   {
