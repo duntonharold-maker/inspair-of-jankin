@@ -1,23 +1,44 @@
 [
   {
+    "id": "20261128-2qlfgl",
+    "tags": [
+      "动效",
+      "组件设计",
+      "极简现代",
+      "黑白极简"
+    ],
+    "title": "One Shape — A Continuous UI Loop",
+    "category": "motion",
+    "source": "https://www.nickstudio.cn/en/one-shape-ui-loop.html?lang=en",
+    "note": "14 秒循环动效：一个形状不断变成按钮、加载、音乐播放器、开关、图表、命令面板等 UI 状态。",
+    "media": {
+      "src": "/media/20261128-2qlfgl.mp4",
+      "type": "video",
+      "width": 1440,
+      "height": 1440,
+      "duration": 14
+    },
+    "createdAt": "2026-11-28T04:16:48.501Z"
+  },
+  {
     "id": "20261128-ebgzaz",
     "title": "A non minimalist dashboard",
     "category": "ui",
-    "note": "作者：Sean Galt (@seanaiux)\n采集自「Home / X」\n原文：A non minimalist dashboard",
-    "source": "https://x.com/seanaiux/status/2126369964320084049",
-    "createdAt": "2026-11-28T03:01:27.281Z",
     "tags": [],
     "media": {
       "src": "/media/20261128-ebgzaz.mp4",
       "type": "video",
       "width": 1440,
       "height": 900,
-      "duration": 13,
       "thumb": "/media/20261128-ebgzaz.thumb.webp",
-      "small": "/media/20261128-ebgzaz.small.mp4"
+      "small": "/media/20261128-ebgzaz.small.mp4",
+      "duration": 13
     },
+    "source": "https://x.com/seanaiux/status/2126369964320084049",
+    "note": "作者：Sean Galt (@seanaiux)\n采集自「Home / X」\n原文：A non minimalist dashboard",
+    "inbox": true,
     "imageUrl": "https://video.twimg.com/amplify_video/2126313104074215424/vid/avc1/1440x900/RXOQG_t-GfU9U_J3.mp4",
-    "inbox": true
+    "createdAt": "2026-11-28T03:01:27.281Z"
   },
   {
     "id": "20261127-a1rzy6",
